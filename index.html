@@ -1,1 +1,1452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Territorios Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
+    <style>
+        :root {
+            --bg: #f0f1f5;
+            --surface: #ffffff;
+            --surface2: #f7f8fa;
+            --accent: #1a56db;
+            --accent2: #7c3aed;
+            --text: #111827;
+            --text2: #6b7280;
+            --border: #e5e7eb;
+            --danger: #ef4444;
+            --morning: #1a56db;
+            --afternoon: #d97706;
+            --badge-bg: #1a3a7a;
+            --rec-grad: linear-gradient(135deg, #1a56db 0%, #7c3aed 100%);
+            --shadow: 0 4px 24px rgba(0,0,0,0.07);
+            --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+        }
+
+        [data-theme="dark"] {
+            --bg: #0d0f14;
+            --surface: #181c26;
+            --surface2: #1e2230;
+            --accent: #3b82f6;
+            --accent2: #a78bfa;
+            --text: #f3f4f6;
+            --text2: #9ca3af;
+            --border: #2d3348;
+            --badge-bg: #1e3a8a;
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* ── NAV ── */
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0;
+            padding: 0 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-brand {
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: -0.3px;
+            color: var(--accent);
+            padding: 16px 0;
+            margin-right: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-brand svg { width: 20px; height: 20px; }
+
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+        }
+
+        .nav-tab {
+            padding: 8px 18px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text2);
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
+            white-space: nowrap;
+        }
+
+        .nav-tab.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .nav-tab:hover:not(.active) {
+            background: var(--surface2);
+            color: var(--text);
+        }
+
+        .theme-btn {
+            margin-left: 12px;
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.18s;
+        }
+
+        .theme-btn:hover { background: var(--border); }
+
+        /* ── VIEWS ── */
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* ══════════════════════════════════════
+           VISTA 1: PROGRAMACIÓN SEMANAL
+        ══════════════════════════════════════ */
+
+        #view-schedule {
+            padding: 24px 20px;
+            max-width: 1140px;
+            margin: 0 auto;
+        }
+
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .schedule-title h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .schedule-title p {
+            color: var(--text2);
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        .date-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 16px;
+        }
+
+        .date-box label {
+            display: block;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .date-box input[type="date"] {
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* Recomendaciones semanales */
+        .rec-section {
+            background: var(--surface);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .rec-section-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text2);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rec-section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .rec-week-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+        }
+
+        .rec-day-col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .rec-day-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text2);
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        .rec-chip {
+            background: var(--rec-grad);
+            border-radius: 10px;
+            padding: 8px 4px;
+            text-align: center;
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.15s;
+            position: relative;
+        }
+
+        .rec-chip:hover {
+            opacity: 0.85;
+            transform: translateY(-1px);
+        }
+
+        .rec-chip .rnum {
+            font-family: 'DM Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 500;
+            display: block;
+        }
+
+        .rec-chip .rdate {
+            font-size: 0.62rem;
+            opacity: 0.85;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .rec-chip .rshift {
+            font-size: 0.58rem;
+            opacity: 0.75;
+            display: block;
+            margin-top: 1px;
+        }
+
+        .rec-chip.shift-m { background: linear-gradient(135deg, #1a56db, #3b82f6); }
+        .rec-chip.shift-t { background: linear-gradient(135deg, #d97706, #f59e0b); }
+
+        .add-to-slot-btn {
+            font-size: 0.6rem;
+            font-weight: 700;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            padding: 2px 5px;
+            margin-top: 4px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        /* Grilla semanal */
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 14px;
+        }
+
+        .day-col { display: flex; flex-direction: column; gap: 14px; }
+
+        .day-card {
+            background: var(--surface);
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            padding: 14px;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: var(--shadow);
+            transition: box-shadow 0.2s;
+        }
+
+        .day-card:hover { box-shadow: var(--shadow-lg); }
+
+        .day-header { margin-bottom: 8px; }
+        .day-name { font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3px; }
+        .day-date { font-size: 0.65rem; color: var(--text2); font-weight: 500; }
+
+        .shift-label {
+            font-size: 0.58rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 2px 7px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+
+        .shift-label.m { background: rgba(26,86,219,0.12); color: var(--morning); }
+        .shift-label.t { background: rgba(217,119,6,0.12); color: var(--afternoon); }
+
+        .t-list {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-content: center;
+            justify-content: center;
+        }
+
+        .t-badge {
+            background: var(--badge-bg);
+            color: white;
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'DM Mono', monospace;
+            font-size: 1.05rem;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+            transition: transform 0.12s, opacity 0.12s;
+        }
+
+        .t-badge:hover { transform: scale(1.08); opacity: 0.85; }
+
+        .btn-add {
+            position: absolute;
+            bottom: 10px; right: 10px;
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            border: none;
+            background: var(--surface2);
+            color: var(--accent);
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s;
+        }
+
+        .btn-add:hover { background: var(--border); }
+
+        /* Acciones */
+        .schedule-actions {
+            margin-top: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .btn-danger { background: none; border: none; color: var(--danger); cursor: pointer; font-family: inherit; font-size: 0.85rem; font-weight: 600; }
+        
+        .btn-export {
+            background: var(--text);
+            color: var(--bg);
+            border: none;
+            padding: 12px 22px;
+            border-radius: 12px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: opacity 0.15s;
+        }
+
+        .btn-export:hover { opacity: 0.8; }
+
+        /* ══════════════════════════════════════
+           VISTA 2: BASE DE DATOS
+        ══════════════════════════════════════ */
+
+        #view-database {
+            padding: 24px 20px;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        .db-header {
+            margin-bottom: 24px;
+        }
+
+        .db-header h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .db-header p {
+            color: var(--text2);
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        .form-card {
+            background: var(--surface);
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            padding: 22px;
+            margin-bottom: 28px;
+            box-shadow: var(--shadow);
+        }
+
+        .form-group { margin-bottom: 18px; }
+
+        .form-group label {
+            display: block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text2);
+            margin-bottom: 7px;
+        }
+
+        .form-group select,
+        .form-group input[type="date"] {
+            width: 100%;
+            padding: 13px 14px;
+            border-radius: 11px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus { border-color: var(--accent); }
+
+        .btn-main {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            background: var(--accent);
+            color: white;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+
+        .btn-main:hover { opacity: 0.85; }
+
+        .history-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 14px;
+            color: var(--text);
+        }
+
+        .record-item {
+            background: var(--surface);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            padding: 15px 18px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+
+        .record-info .rname {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .record-info .rdate {
+            color: var(--text2);
+            font-size: 0.82rem;
+            margin-top: 2px;
+        }
+
+        .record-info .rdel {
+            color: var(--danger);
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-top: 6px;
+            display: inline-block;
+            font-weight: 600;
+        }
+
+        .tag {
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .tag.mañana { background: rgba(26,86,219,0.1); color: var(--morning); }
+        .tag.tarde { background: rgba(217,119,6,0.1); color: var(--afternoon); }
+
+        /* ══════════════════════════════════════
+           MODAL
+        ══════════════════════════════════════ */
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            backdrop-filter: blur(6px);
+            align-items: center;
+            justify-content: center;
+            z-index: 500;
+        }
+
+        .modal.open { display: flex; }
+
+        .modal-box {
+            background: var(--surface);
+            border-radius: 22px;
+            padding: 24px;
+            width: 340px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-box h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .modal-box .modal-sub {
+            font-size: 0.8rem;
+            color: var(--text2);
+            margin-bottom: 16px;
+        }
+
+        .num-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 7px;
+            max-height: 240px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            padding: 2px;
+        }
+
+        .num-btn {
+            aspect-ratio: 1/1;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            background: var(--surface2);
+            color: var(--text);
+            font-family: 'DM Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.13s;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .num-btn:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .btn-cancel {
+            width: 100%;
+            padding: 11px;
+            border-radius: 11px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* ── IMPORT / EXPORT PANEL ── */
+        .io-panel {
+            background: var(--surface);
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            padding: 20px 22px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .io-panel-title {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text2);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .io-panel-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .io-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn-io {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 11px 14px;
+            border-radius: 11px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-io:hover { background: var(--border); }
+
+        .btn-io.import { border-color: var(--accent); color: var(--accent); background: rgba(26,86,219,0.06); }
+        .btn-io.import:hover { background: rgba(26,86,219,0.12); }
+
+        .btn-io svg { flex-shrink: 0; }
+
+        .import-note {
+            font-size: 0.72rem;
+            color: var(--text2);
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #111827;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 999;
+            transition: transform 0.3s ease;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* ── CAPTURE FRAME ── */
+        #capture-frame {
+            padding: 40px;
+            background: var(--bg);
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 700px) {
+            .week-grid, .rec-week-grid { grid-template-columns: repeat(3, 1fr); }
+            .nav-tab { padding: 8px 12px; font-size: 0.8rem; }
+        }
+
+        @media (max-width: 440px) {
+            .week-grid, .rec-week-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* Fade in */
+        .view.active {
+            animation: fadeIn 0.22s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+    <div class="nav-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        Territorios Pro
+    </div>
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchView('schedule', this)">Programación</button>
+        <button class="nav-tab" onclick="switchView('database', this)">Base de Datos</button>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
+</nav>
+
+<!-- ══════════════════════════════════════
+     VISTA 1: PROGRAMACIÓN SEMANAL
+══════════════════════════════════════ -->
+<div id="view-schedule" class="view active">
+    <div id="capture-frame">
+        <div id="view-schedule-inner" style="max-width:1100px; margin:0 auto;">
+
+            <div class="schedule-header">
+                <div class="schedule-title">
+                    <h2>Programación Semanal</h2>
+                    <p id="week-label">Selecciona el lunes para comenzar</p>
+                </div>
+                <div class="date-box" id="date-box-ui">
+                    <label>Lunes de la semana</label>
+                    <input type="date" id="monday-picker" onchange="updateWeek()">
+                </div>
+            </div>
+
+            <!-- Recomendaciones -->
+            <div class="rec-section" id="rec-section-ui">
+                <div class="rec-section-title">Sugerencia semanal · según historial</div>
+                <div class="rec-week-grid" id="rec-week-grid"></div>
+            </div>
+
+            <!-- Grilla -->
+            <div class="week-grid" id="main-grid"></div>
+
+            <div class="schedule-actions" id="schedule-actions-ui">
+                <button class="btn-danger" onclick="clearSchedule()">Reiniciar semana</button>
+                <button class="btn-export" onclick="exportImage()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Compartir imagen
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     VISTA 2: BASE DE DATOS
+══════════════════════════════════════ -->
+<div id="view-database" class="view">
+    <div id="view-database-inner" style="max-width:520px; margin: 0 auto; padding: 24px 20px;">
+
+        <div class="db-header">
+            <h2>Base de Datos</h2>
+            <p>Registra cuándo se completó cada territorio</p>
+        </div>
+
+        <!-- Panel Importar / Exportar -->
+        <div class="io-panel">
+            <div class="io-panel-title">Importar · Exportar historial</div>
+            <div class="io-btns">
+                <button class="btn-io import" onclick="document.getElementById('file-import').click()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Importar CSV / Excel
+                </button>
+                <button class="btn-io" onclick="exportCSV()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Exportar CSV
+                </button>
+                <button class="btn-io" onclick="exportExcel()" style="grid-column: span 2;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                    Exportar Excel (.xlsx)
+                </button>
+            </div>
+            <p class="import-note">
+                El archivo debe tener columnas: <strong>Territorio</strong>, <strong>Fecha</strong> (DD/MM/YYYY) y <strong>Turno</strong>. Al importar, los datos existentes se fusionan manteniendo siempre el registro más reciente por territorio.
+            </p>
+            <input type="file" id="file-import" accept=".csv,.xlsx,.xls" style="display:none" onchange="importFile(this)">
+        </div>
+
+        <div class="form-card">
+            <div class="form-group">
+                <label>Territorio</label>
+                <select id="db-territorio"></select>
+            </div>
+            <div class="form-group">
+                <label>Fecha de completado</label>
+                <input type="date" id="db-fecha">
+            </div>
+            <div class="form-group">
+                <label>Jornada</label>
+                <select id="db-turno">
+                    <option value="Mañana">Mañana</option>
+                    <option value="Tarde">Tarde</option>
+                </select>
+            </div>
+            <button class="btn-main" onclick="saveRecord()">Registrar</button>
+        </div>
+
+        <div class="history-title">Historial reciente</div>
+        <div id="record-list"></div>
+
+    </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="modal">
+    <div class="modal-box">
+        <h3>Asignar Territorio</h3>
+        <div class="modal-sub" id="modal-sub">Elige un número</div>
+        <div class="num-grid" id="num-grid"></div>
+        <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+    </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div id="confirm-modal" class="modal">
+    <div class="modal-box" style="max-width:320px;">
+        <h3 id="confirm-title" style="margin-bottom:6px;"></h3>
+        <p id="confirm-sub" style="font-size:0.82rem; color:var(--text2); margin-bottom:20px;"></p>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-cancel" style="flex:1;" onclick="closeConfirm()">Cancelar</button>
+            <button id="confirm-ok" style="flex:1; padding:11px; border-radius:11px; border:none; background:var(--danger); color:white; font-family:inherit; font-size:0.9rem; font-weight:700; cursor:pointer;">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  ESTADO GLOBAL
+// ═══════════════════════════════════════════════
+
+const DAYS = [
+    { name: 'Lunes',     offset: 0, slots: ['M'] },
+    { name: 'Martes',    offset: 1, slots: ['M'] },
+    { name: 'Miércoles', offset: 2, slots: ['M', 'T'] },
+    { name: 'Jueves',    offset: 3, slots: ['M'] },
+    { name: 'Viernes',   offset: 4, slots: ['M', 'T'] },
+    { name: 'Domingo',   offset: 6, slots: ['M'] }
+];
+
+const SHIFT_LABEL = { M: 'Mañana', T: 'Tarde' };
+
+let scheduleData   = JSON.parse(localStorage.getItem('tp_schedule'))   || {};
+let selectedMonday = localStorage.getItem('tp_monday') || '';
+let records        = JSON.parse(localStorage.getItem('tp_records'))    || [];
+let activeSlotId   = null;
+
+// ═══════════════════════════════════════════════
+//  TEMA
+// ═══════════════════════════════════════════════
+
+function toggleTheme() {
+    const isDark = document.body.getAttribute('data-theme') === 'dark';
+    document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    document.getElementById('theme-btn').textContent = isDark ? '🌙' : '☀️';
+    localStorage.setItem('tp_theme', isDark ? 'light' : 'dark');
+}
+
+(function initTheme() {
+    const t = localStorage.getItem('tp_theme') || 'light';
+    if (t === 'dark') {
+        document.body.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-btn').textContent = '☀️';
+    }
+})();
+
+// ═══════════════════════════════════════════════
+//  NAVEGACIÓN
+// ═══════════════════════════════════════════════
+
+function switchView(view, btn) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById('view-' + view).classList.add('active');
+    btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════
+//  UTILIDADES DE FECHA
+// ═══════════════════════════════════════════════
+
+function dateFromMonday(monday, offsetDays) {
+    const d = new Date(monday + 'T00:00:00');
+    d.setDate(d.getDate() + offsetDays);
+    return d;
+}
+
+function formatShort(dateObj) {
+    const day = dateObj.getDate();
+    const month = dateObj.toLocaleString('es-ES', { month: 'short' }).replace('.', '');
+    return `${day} ${month}`;
+}
+
+function daysBetween(dateStr) {
+    if (!dateStr || dateStr === '0000-00-00') return null;
+    const d = new Date(dateStr + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    return Math.floor((today - d) / 86400000);
+}
+
+// ═══════════════════════════════════════════════
+//  RECOMENDACIONES SEMANALES
+// ═══════════════════════════════════════════════
+
+function getRecommendations() {
+    // Construir lista de todos los territorios con su última fecha
+    const states = [];
+    for (let i = 1; i <= 36; i++) {
+        const rec = records.find(r => parseInt(r.territorio) === i);
+        states.push({
+            num: i,
+            fecha: rec ? rec.fecha : '0000-00-00',
+            days: rec ? daysBetween(rec.fecha) : 9999
+        });
+    }
+    // Ordenar: el más antiguo (más días sin hacerse) primero
+    states.sort((a, b) => b.days - a.days);
+
+    // Necesitamos 8 recomendaciones en orden:
+    // Lu(M), Ma(M), Mi(M), Mi(T), Ju(M), Vi(M), Vi(T), Do(M)
+    const slots = [
+        { dayIdx:0, shift:'M' },
+        { dayIdx:1, shift:'M' },
+        { dayIdx:2, shift:'M' },
+        { dayIdx:2, shift:'T' },
+        { dayIdx:3, shift:'M' },
+        { dayIdx:4, shift:'M' },
+        { dayIdx:4, shift:'T' },
+        { dayIdx:5, shift:'M' }
+    ];
+
+    return slots.map((s, i) => ({
+        ...s,
+        territory: states[i] ? states[i].num : '?',
+        fecha: states[i] ? states[i].fecha : null,
+        days: states[i] ? states[i].days : null
+    }));
+}
+
+function renderRecommendations() {
+    const grid = document.getElementById('rec-week-grid');
+    grid.innerHTML = '';
+    const recs = getRecommendations();
+
+    DAYS.forEach((day, dIdx) => {
+        const col = document.createElement('div');
+        col.className = 'rec-day-col';
+
+        const lbl = document.createElement('div');
+        lbl.className = 'rec-day-label';
+        lbl.textContent = day.name;
+        col.appendChild(lbl);
+
+        // Slots para este día
+        const dayRecs = recs.filter(r => r.dayIdx === dIdx);
+        dayRecs.forEach(rec => {
+            const chip = document.createElement('div');
+            chip.className = 'rec-chip ' + (rec.shift === 'M' ? 'shift-m' : 'shift-t');
+
+            let subtitle = '';
+            if (rec.days === 9999) subtitle = 'Sin asignar';
+            else if (rec.days !== null) subtitle = `hace ${rec.days}d`;
+
+            const slotId = `slot-${dIdx}-${day.slots.indexOf(rec.shift)}`;
+
+            chip.innerHTML = `
+                <span class="rnum">${rec.territory}</span>
+                <span class="rdate">${subtitle}</span>
+                <span class="rshift">${SHIFT_LABEL[rec.shift]}</span>
+                <button class="add-to-slot-btn" onclick="applyRec('${slotId}', ${rec.territory}, event)">+ Añadir</button>
+            `;
+            col.appendChild(chip);
+        });
+
+        grid.appendChild(col);
+    });
+}
+
+function applyRec(slotId, num, e) {
+    e.stopPropagation();
+    if (!scheduleData[slotId]) scheduleData[slotId] = [];
+    if (!scheduleData[slotId].includes(num)) {
+        scheduleData[slotId].push(num);
+        saveSchedule();
+    }
+}
+
+// ═══════════════════════════════════════════════
+//  VISTA PROGRAMACIÓN
+// ═══════════════════════════════════════════════
+
+function initSchedule() {
+    if (selectedMonday) {
+        document.getElementById('monday-picker').value = selectedMonday;
+    } else {
+        const today = new Date();
+        const day = today.getDay();
+        const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(today.setDate(diff));
+        selectedMonday = monday.toISOString().split('T')[0];
+        document.getElementById('monday-picker').value = selectedMonday;
+        localStorage.setItem('tp_monday', selectedMonday);
+    }
+    renderSchedule();
+}
+
+function updateWeek() {
+    selectedMonday = document.getElementById('monday-picker').value;
+    localStorage.setItem('tp_monday', selectedMonday);
+    renderSchedule();
+}
+
+function renderSchedule() {
+    const grid = document.getElementById('main-grid');
+    const label = document.getElementById('week-label');
+    grid.innerHTML = '';
+
+    if (!selectedMonday) {
+        label.textContent = 'Selecciona el lunes para comenzar';
+        renderRecommendations();
+        return;
+    }
+
+    const startDate = dateFromMonday(selectedMonday, 0);
+    const endDate   = dateFromMonday(selectedMonday, 6);
+    const year      = startDate.getFullYear();
+    label.textContent = `Semana del ${formatShort(startDate)} al ${formatShort(endDate)} de ${year}`;
+
+    renderRecommendations();
+
+    DAYS.forEach((day, dIdx) => {
+        const col = document.createElement('div');
+        col.className = 'day-col';
+        const dateStr = formatShort(dateFromMonday(selectedMonday, day.offset));
+
+        day.slots.forEach((shift, sIdx) => {
+            const id = `slot-${dIdx}-${sIdx}`;
+            const territories = scheduleData[id] || [];
+
+            const card = document.createElement('div');
+            card.className = 'day-card';
+
+            const shiftClass = shift === 'M' ? 'm' : 't';
+            const shiftText  = SHIFT_LABEL[shift];
+
+            let badges = territories.map((n, i) =>
+                `<div class="t-badge" onclick="removeTerritory('${id}', ${i}, event)" title="Clic para quitar">${n}</div>`
+            ).join('');
+
+            card.innerHTML = `
+                <div class="day-header">
+                    <div class="day-name">${day.name}</div>
+                    <div class="day-date">${dateStr}</div>
+                </div>
+                ${day.slots.length > 1 ? `<span class="shift-label ${shiftClass}">${shiftText}</span>` : ''}
+                <div class="t-list">${badges}</div>
+                <button class="btn-add" onclick="openModal('${id}', '${day.name} ${shiftText}')">+</button>
+            `;
+            col.appendChild(card);
+        });
+
+        grid.appendChild(col);
+    });
+}
+
+function removeTerritory(id, idx, e) {
+    e.stopPropagation();
+    scheduleData[id].splice(idx, 1);
+    saveSchedule();
+}
+
+function saveSchedule() {
+    localStorage.setItem('tp_schedule', JSON.stringify(scheduleData));
+    renderSchedule();
+}
+
+function clearSchedule() {
+    showConfirm('¿Reiniciar todos los territorios de esta semana?', 'Las fechas se mantienen.', () => {
+        scheduleData = {};
+        saveSchedule();
+    });
+}
+
+// ═══════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════
+
+function openModal(slotId, label) {
+    activeSlotId = slotId;
+    document.getElementById('modal-sub').textContent = label || 'Elige un número';
+    document.getElementById('modal').classList.add('open');
+
+    const grid = document.getElementById('num-grid');
+    grid.innerHTML = '';
+    for (let i = 1; i <= 36; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'num-btn';
+        btn.textContent = i;
+        btn.onclick = () => {
+            if (!scheduleData[activeSlotId]) scheduleData[activeSlotId] = [];
+            scheduleData[activeSlotId].push(i);
+            saveSchedule();
+            closeModal();
+        };
+        grid.appendChild(btn);
+    }
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+}
+
+document.getElementById('modal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('modal')) closeModal();
+});
+
+// ═══════════════════════════════════════════════
+//  EXPORTAR IMAGEN
+// ═══════════════════════════════════════════════
+
+function exportImage() {
+    const actionsUI = document.getElementById('schedule-actions-ui');
+    const dateBoxUI = document.getElementById('date-box-ui');
+    const recSec    = document.getElementById('rec-section-ui');
+    const addBtns   = document.querySelectorAll('.btn-add');
+    const badges    = document.querySelectorAll('.t-badge');
+
+    actionsUI.style.display = 'none';
+    dateBoxUI.style.display = 'none';
+    recSec.style.display    = 'none';
+    addBtns.forEach(b => b.style.display = 'none');
+    // Deshabilita hover cursors para captura limpia
+    badges.forEach(b => b.style.cursor = 'default');
+
+    html2canvas(document.getElementById('capture-frame'), {
+        scale: 3,
+        backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg').trim() || '#f0f1f5',
+        useCORS: true,
+        logging: false
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Programacion_${selectedMonday || 'semana'}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+
+        actionsUI.style.display = '';
+        dateBoxUI.style.display = '';
+        recSec.style.display    = '';
+        addBtns.forEach(b => b.style.display = '');
+        badges.forEach(b => b.style.cursor = '');
+    });
+}
+
+// ═══════════════════════════════════════════════
+//  BASE DE DATOS
+// ═══════════════════════════════════════════════
+
+(function initDB() {
+    const sel = document.getElementById('db-territorio');
+    for (let i = 1; i <= 36; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = `Territorio ${i}`;
+        sel.appendChild(opt);
+    }
+
+    const today = new Date();
+    const offset = today.getTimezoneOffset();
+    document.getElementById('db-fecha').value =
+        new Date(today.getTime() - offset * 60000).toISOString().split('T')[0];
+})();
+
+function saveRecord() {
+    const n = document.getElementById('db-territorio').value;
+    const f = document.getElementById('db-fecha').value;
+    const t = document.getElementById('db-turno').value;
+    if (!f) return;
+
+    // Reemplaza registro anterior del mismo territorio
+    records = records.filter(r => r.territorio !== n);
+    records.unshift({ id: Date.now(), territorio: n, fecha: f, turno: t });
+    records.sort((a, b) => b.fecha.localeCompare(a.fecha));
+
+    localStorage.setItem('tp_records', JSON.stringify(records));
+    renderRecords();
+    renderRecommendations(); // Actualiza sugerencias en programación
+}
+
+function deleteRecord(id) {
+    showConfirm('¿Eliminar este registro?', 'Esta acción no se puede deshacer.', () => {
+        records = records.filter(r => r.id !== id);
+        localStorage.setItem('tp_records', JSON.stringify(records));
+        renderRecords();
+        renderRecommendations();
+    });
+}
+
+function renderRecords() {
+    const list = document.getElementById('record-list');
+    list.innerHTML = '';
+    if (records.length === 0) {
+        list.innerHTML = '<p style="color:var(--text2); font-size:0.85rem; text-align:center; padding:20px 0;">Sin registros aún.</p>';
+        return;
+    }
+    records.forEach(r => {
+        const [y, m, d] = r.fecha.split('-');
+        const turnoCls = r.turno.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        list.innerHTML += `
+            <div class="record-item">
+                <div class="record-info">
+                    <div class="rname">Territorio ${r.territorio}</div>
+                    <div class="rdate">${d}/${m}/${y}</div>
+                    <span class="rdel" onclick="deleteRecord(${r.id})">Eliminar</span>
+                </div>
+                <span class="tag ${turnoCls}">${r.turno}</span>
+            </div>`;
+    });
+}
+
+// ═══════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════
+
+function showToast(msg, duration = 3000) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), duration);
+}
+
+let _confirmCallback = null;
+
+function showConfirm(title, sub, callback) {
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-sub').textContent = sub;
+    _confirmCallback = callback;
+    document.getElementById('confirm-modal').classList.add('open');
+}
+
+function closeConfirm() {
+    document.getElementById('confirm-modal').classList.remove('open');
+    _confirmCallback = null;
+}
+
+document.getElementById('confirm-ok').onclick = () => {
+    if (_confirmCallback) _confirmCallback();
+    closeConfirm();
+};
+
+// ═══════════════════════════════════════════════
+//  IMPORT / EXPORT
+// ═══════════════════════════════════════════════
+
+// Convierte DD/MM/YYYY → YYYY-MM-DD (formato interno)
+function parseDateDDMMYYYY(str) {
+    if (!str) return null;
+    str = String(str).trim();
+    // Si ya viene como YYYY-MM-DD (por si acaso)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    // DD/MM/YYYY
+    const m = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+    if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    return null;
+}
+
+// Convierte número de serie Excel a fecha YYYY-MM-DD
+function excelSerialToDate(serial) {
+    // Excel epoch: 1 Jan 1900 = 1 (con bug de año bisiesto 1900)
+    const utc = (serial - 25569) * 86400 * 1000;
+    const d = new Date(utc);
+    return d.toISOString().split('T')[0];
+}
+
+function parseRowsToRecords(rows) {
+    // rows: array de objetos con keys Territorio, Fecha, Turno
+    const parsed = [];
+    rows.forEach(row => {
+        const num = String(row['Territorio'] || '').trim();
+        let fecha = row['Fecha'];
+        const turno = String(row['Turno'] || 'Mañana').trim();
+
+        if (!num || isNaN(parseInt(num))) return;
+
+        // Si la fecha es un número (serial Excel)
+        if (typeof fecha === 'number') {
+            fecha = excelSerialToDate(fecha);
+        } else {
+            fecha = parseDateDDMMYYYY(String(fecha));
+        }
+
+        if (!fecha) return;
+        if (parseInt(num) < 1 || parseInt(num) > 36) return;
+
+        parsed.push({ id: Date.now() + Math.random(), territorio: num, fecha, turno });
+    });
+    return parsed;
+}
+
+function mergeRecords(incoming) {
+    // Fusiona: por cada territorio conserva el registro con fecha más reciente
+    const map = {};
+    [...records, ...incoming].forEach(r => {
+        const key = String(r.territorio);
+        if (!map[key] || r.fecha > map[key].fecha) {
+            map[key] = r;
+        }
+    });
+    return Object.values(map).sort((a, b) => b.fecha.localeCompare(a.fecha));
+}
+
+function importFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+        try {
+            let rows = [];
+
+            if (ext === 'csv') {
+                // Parsear CSV manualmente
+                const text = e.target.result;
+                const lines = text.trim().split('\n');
+                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue;
+                    const vals = lines[i].split(',').map(v => v.trim().replace(/"/g,''));
+                    const obj = {};
+                    headers.forEach((h, idx) => obj[h] = vals[idx] || '');
+                    rows.push(obj);
+                }
+            } else {
+                // Excel con SheetJS
+                const data = new Uint8Array(e.target.result);
+                const wb = XLSX.read(data, { type: 'array', cellDates: false });
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+            }
+
+            const incoming = parseRowsToRecords(rows);
+            if (incoming.length === 0) {
+                showToast('⚠️ No se encontraron datos válidos en el archivo.');
+                input.value = '';
+                return;
+            }
+
+            records = mergeRecords(incoming);
+            localStorage.setItem('tp_records', JSON.stringify(records));
+            renderRecords();
+            renderRecommendations();
+            showToast(`✅ ${incoming.length} registros importados correctamente.`);
+        } catch (err) {
+            showToast('❌ Error al leer el archivo. Verifica el formato.');
+            console.error(err);
+        }
+        input.value = '';
+    };
+
+    if (ext === 'csv') {
+        reader.readAsText(file, 'UTF-8');
+    } else {
+        reader.readAsArrayBuffer(file);
+    }
+}
+
+function exportCSV() {
+    if (records.length === 0) { showToast('No hay registros para exportar.'); return; }
+    let csv = 'Territorio,Fecha,Turno\n';
+    records.forEach(r => {
+        const [y, m, d] = r.fecha.split('-');
+        csv += `${r.territorio},${d}/${m}/${y},${r.turno}\n`;
+    });
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Territorios_Backup_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast('✅ CSV exportado correctamente.');
+}
+
+function exportExcel() {
+    if (records.length === 0) { showToast('No hay registros para exportar.'); return; }
+    const data = records.map(r => {
+        const [y, m, d] = r.fecha.split('-');
+        return { Territorio: parseInt(r.territorio), Fecha: `${d}/${m}/${y}`, Turno: r.turno };
+    });
+    const ws = XLSX.utils.json_to_sheet(data);
+
+    // Ancho de columnas
+    ws['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 10 }];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Territorios');
+    XLSX.writeFile(wb, `Territorios_Backup_${new Date().toISOString().split('T')[0]}.xlsx`);
+    showToast('✅ Excel exportado correctamente.');
+}
+
+// ═══════════════════════════════════════════════
+//  INICIO
+// ═══════════════════════════════════════════════
+initSchedule();
+renderRecords();
+</script>
+</body>
+</html>
