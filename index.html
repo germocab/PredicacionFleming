@@ -3,11 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Predicación en Fleming</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
-<link rel="manifest" href="favicon_io/site.webmanifest">
+    <title>Territorios Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
@@ -431,27 +427,8 @@
            VISTA 2: BASE DE DATOS
         ══════════════════════════════════════ */
 
-        #view-database {
-            padding: 24px 20px;
-            max-width: 520px;
-            margin: 0 auto;
-        }
 
-        .db-header {
-            margin-bottom: 24px;
-        }
 
-        .db-header h2 {
-            font-size: 1.6rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        .db-header p {
-            color: var(--text2);
-            font-size: 0.9rem;
-            margin-top: 4px;
-        }
 
         .form-card {
             background: var(--surface);
@@ -507,44 +484,8 @@
 
         .btn-main:hover { opacity: 0.85; }
 
-        .history-title {
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 14px;
-            color: var(--text);
-        }
 
-        .record-item {
-            background: var(--surface);
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            padding: 15px 18px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: var(--shadow);
-        }
 
-        .record-info .rname {
-            font-weight: 700;
-            font-size: 1rem;
-        }
-
-        .record-info .rdate {
-            color: var(--text2);
-            font-size: 0.82rem;
-            margin-top: 2px;
-        }
-
-        .record-info .rdel {
-            color: var(--danger);
-            font-size: 0.75rem;
-            cursor: pointer;
-            margin-top: 6px;
-            display: inline-block;
-            font-weight: 600;
-        }
 
         .tag {
             padding: 5px 14px;
@@ -636,6 +577,149 @@
             cursor: pointer;
         }
 
+        /* ══════════════════════════════════════
+           VISTA 2: HISTORIAL (página completa)
+        ══════════════════════════════════════ */
+
+        #view-database { display: none; flex-direction: column; }
+        #view-database.active { display: flex; }
+
+        .hist-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 28px 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+            max-width: 1140px;
+            width: 100%;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        .hist-page-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin: 0;
+        }
+
+        .hist-page-sub {
+            color: var(--text2);
+            font-size: 0.85rem;
+            margin-top: 3px;
+        }
+
+        .hist-page-grid-wrap {
+            flex: 1;
+            padding: 0 28px 48px;
+            max-width: 1140px;
+            width: 100%;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        #history-grid {
+            align-items: stretch;
+            grid-template-columns: repeat(6, 1fr);
+            width: 100%;
+            gap: 14px;
+        }
+
+        /* Botón Más */
+        .btn-mas {
+            width: 42px; height: 42px;
+            border-radius: 999px;
+            border: none;
+            background: var(--accent);
+            color: white;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 14px rgba(26,86,219,0.3);
+            transition: opacity 0.15s, transform 0.15s;
+            flex-shrink: 0;
+        }
+
+        .btn-mas:hover { opacity: 0.85; transform: scale(1.05); }
+        .btn-mas.open { background: var(--danger); transform: rotate(45deg); }
+
+        /* Panel flotante */
+        .db-panel-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            backdrop-filter: blur(6px);
+            z-index: 300;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .db-panel-overlay.open {
+            display: flex;
+        }
+
+        .db-panel {
+            position: relative;
+            width: 420px;
+            max-width: 95vw;
+            max-height: 88vh;
+            background: var(--surface);
+            border-radius: 28px;
+            border: 1px solid var(--border);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+            z-index: 400;
+            padding: 28px 28px 36px;
+            overflow-y: auto;
+            transform: scale(0.93) translateY(12px);
+            opacity: 0;
+            transition: transform 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease;
+            pointer-events: none;
+        }
+
+        .db-panel.open {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .db-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .db-panel-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .db-panel-close {
+            width: 32px; height: 32px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s;
+        }
+
+        .db-panel-close:hover { background: var(--border); }
+
+        /* Historial grilla full-page */
+
+        #history-grid .day-card {
+            aspect-ratio: unset;
+            min-height: 160px;
+            height: 100%;
+        }
+
+        #history-grid .day-col {
+            align-items: stretch;
+        }
+
         /* ── IMPORT / EXPORT PANEL ── */
         .io-panel {
             background: var(--surface);
@@ -723,14 +807,6 @@
         .toast.show { transform: translateX(-50%) translateY(0); }
 
         /* ── HISTORY WEEK VIEW ── */
-        .history-week-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 18px;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
 
         .history-nav {
             display: flex;
@@ -768,6 +844,78 @@
             pointer-events: none;
         }
 
+
+        /* ── TERRITORY INFO POPUP ── */
+        .tpop-img-wrap {
+            width: 100%;
+            height: 200px;
+            background: var(--surface2);
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border);
+            border-radius: 28px 28px 0 0;
+        }
+
+        .tpop-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .tpop-img-placeholder {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 100%;
+            color: var(--text2);
+            font-size: 0.8rem;
+        }
+
+        .tpop-img-wrap.no-img img { display: none; }
+        .tpop-img-wrap.no-img .tpop-img-placeholder { display: flex; }
+
+        .tpop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .tpop-num {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .tpop-last {
+            font-size: 0.82rem;
+            color: var(--text2);
+            margin-top: 3px;
+        }
+
+        .btn-tpop-delete {
+            width: 100%;
+            padding: 13px;
+            border-radius: 999px;
+            border: 1.5px solid var(--danger);
+            background: transparent;
+            color: var(--danger);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.15s;
+        }
+
+        .btn-tpop-delete:hover { background: var(--danger); color: white; }
+
         /* Historia badge con botón eliminar */
         .hist-badge-wrap {
             position: relative;
@@ -803,7 +951,109 @@
         .t-badge.shift-m { background: var(--morning); }
         .t-badge.shift-t { background: var(--afternoon); }
 
-        /* ── CAPTURE FRAME ── */
+
+        /* ── TERRITORY POPUP ── */
+        .t-popup-box {
+            width: 380px;
+            max-width: 95vw;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .t-popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 22px 22px 16px;
+        }
+
+        .t-popup-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text2);
+            margin-bottom: 2px;
+        }
+
+        .t-popup-num {
+            font-family: 'DM Mono', monospace;
+            font-size: 2.2rem;
+            font-weight: 500;
+            line-height: 1;
+            color: var(--text);
+        }
+
+        .t-popup-img-wrap {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: var(--surface2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .t-popup-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .t-popup-img-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: var(--text2);
+            font-size: 0.78rem;
+            font-weight: 500;
+        }
+
+        .t-popup-info {
+            padding: 16px 22px 0;
+        }
+
+        .t-popup-info-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text2);
+            margin-bottom: 4px;
+        }
+
+        .t-popup-info-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .t-popup-delete-btn {
+            margin: 18px 22px 22px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 20px;
+            border-radius: 999px;
+            border: 1.5px solid var(--danger);
+            background: transparent;
+            color: var(--danger);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .t-popup-delete-btn:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* ── TOAST ── */
         #capture-frame {
             padding: 40px;
             background: var(--bg);
@@ -880,7 +1130,7 @@
 
             <!-- Recomendaciones -->
             <div class="rec-section" id="rec-section-ui">
-                <div class="rec-section-title">territorios sugeridos · Arrastra al día que prefieras</div>
+                <div class="rec-section-title">5 territorios sugeridos · arrastra al día que prefieras</div>
                 <div class="rec-row" id="rec-week-grid"></div>
             </div>
 
@@ -906,67 +1156,17 @@
 </div>
 
 <!-- ══════════════════════════════════════
-     VISTA 2: BASE DE DATOS
+     VISTA 2: HISTORIAL
 ══════════════════════════════════════ -->
 <div id="view-database" class="view">
-    <!-- Formulario + IO: ancho reducido, centrado -->
-    <div style="max-width:520px; margin: 0 auto; padding: 24px 20px 0;">
 
-        <div class="db-header">
-            <h2>Historial</h2>
-            <p>Registra cuándo se completó cada territorio</p>
+    <!-- Cabecera de historial -->
+    <div class="hist-page-header">
+        <div>
+            <h2 class="hist-page-title">Historial</h2>
+            <div id="history-week-label" class="hist-page-sub"></div>
         </div>
-
-        <!-- Panel Importar / Exportar -->
-        <div class="io-panel">
-            <div class="io-panel-title">Importar · Exportar historial</div>
-            <div class="io-btns">
-                <button class="btn-io import" onclick="document.getElementById('file-import').click()">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    Importar CSV / Excel
-                </button>
-                <button class="btn-io" onclick="exportCSV()">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    Exportar CSV
-                </button>
-                <button class="btn-io" onclick="exportExcel()" style="grid-column: span 2;">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-                    Exportar Excel (.xlsx)
-                </button>
-            </div>
-            <p class="import-note">
-                El archivo debe tener columnas: <strong>Territorio</strong>, <strong>Fecha</strong> (DD/MM/YYYY) y <strong>Turno</strong>. Al importar, los datos existentes se fusionan manteniendo siempre el registro más reciente por territorio.
-            </p>
-            <input type="file" id="file-import" accept=".csv,.xlsx,.xls" style="display:none" onchange="importFile(this)">
-        </div>
-
-        <div class="form-card">
-            <div class="form-group">
-                <label>Territorio</label>
-                <select id="db-territorio"></select>
-            </div>
-            <div class="form-group">
-                <label>Fecha de completado</label>
-                <input type="date" id="db-fecha">
-            </div>
-            <div class="form-group">
-                <label>Jornada</label>
-                <select id="db-turno">
-                    <option value="Mañana">Mañana</option>
-                    <option value="Tarde">Tarde</option>
-                </select>
-            </div>
-            <button class="btn-main" onclick="saveRecord()">Registrar</button>
-        </div>
-    </div>
-
-    <!-- Historial semanal: ancho completo -->
-    <div style="max-width:1140px; margin: 0 auto; padding: 0 20px 40px;">
-        <div class="history-week-header">
-            <div>
-                <div class="history-title">Historial por semana</div>
-                <div id="history-week-label" style="color:var(--text2); font-size:0.85rem; margin-top:2px;"></div>
-            </div>
+        <div style="display:flex; align-items:center; gap:10px;">
             <div class="history-nav">
                 <button class="hist-nav-btn" id="hist-prev" onclick="historyNavWeek(-1)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
@@ -976,10 +1176,71 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
             </div>
+            <!-- Botón Más -->
+            <button class="btn-mas" onclick="toggleDbPanel()" id="btn-mas" title="Registrar / Importar / Exportar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
         </div>
-        <div class="week-grid" id="history-grid"></div>
-        <div id="history-empty" style="display:none; text-align:center; color:var(--text2); font-size:0.85rem; padding:40px 0;">Sin registros aún.</div>
     </div>
+
+    <!-- Grilla historial -->
+    <div class="hist-page-grid-wrap">
+        <div class="week-grid" id="history-grid"></div>
+        <div id="history-empty" style="display:none; text-align:center; color:var(--text2); font-size:0.85rem; padding:60px 0;">Sin registros aún.</div>
+    </div>
+
+</div>
+
+<!-- Panel flotante de historial -->
+<div id="db-panel-overlay" class="db-panel-overlay" onclick="closeDbPanel()">
+<div id="db-panel" class="db-panel" onclick="event.stopPropagation()">
+    <div class="db-panel-header">
+        <span class="db-panel-title">Registrar territorio</span>
+        <button class="db-panel-close" onclick="closeDbPanel()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+
+    <div class="form-group">
+        <label>Territorio</label>
+        <select id="db-territorio"></select>
+    </div>
+    <div class="form-group">
+        <label>Fecha de completado</label>
+        <input type="date" id="db-fecha">
+    </div>
+    <div class="form-group">
+        <label>Jornada</label>
+        <select id="db-turno">
+            <option value="Mañana">Mañana</option>
+            <option value="Tarde">Tarde</option>
+        </select>
+    </div>
+    <button class="btn-main" onclick="saveRecord()" style="margin-bottom:24px;">Registrar</button>
+
+    <div class="io-panel-title" style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text2); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+        Importar · Exportar
+        <span style="flex:1; height:1px; background:var(--border); display:block;"></span>
+    </div>
+    <div class="io-btns">
+        <button class="btn-io import" onclick="document.getElementById('file-import').click()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Importar CSV / Excel
+        </button>
+        <button class="btn-io" onclick="exportCSV()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Exportar CSV
+        </button>
+        <button class="btn-io" onclick="exportExcel()" style="grid-column: span 2;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            Exportar Excel (.xlsx)
+        </button>
+    </div>
+    <p class="import-note" style="margin-top:10px;">
+        Columnas requeridas: <strong>Territorio</strong>, <strong>Fecha</strong> (DD/MM/YYYY) y <strong>Turno</strong>.
+    </p>
+    <input type="file" id="file-import" accept=".csv,.xlsx,.xls" style="display:none" onchange="importFile(this)">
+</div>
 </div>
 
 <!-- MODAL -->
@@ -1001,6 +1262,44 @@
             <button class="btn-cancel" style="flex:1;" onclick="closeConfirm()">Cancelar</button>
             <button id="confirm-ok" style="flex:1; padding:11px; border-radius:11px; border:none; background:var(--danger); color:white; font-family:inherit; font-size:0.9rem; font-weight:700; cursor:pointer;">Confirmar</button>
         </div>
+    </div>
+</div>
+
+<!-- TERRITORY INFO POPUP -->
+<!-- TERRITORY POPUP -->
+<div id="t-popup-overlay" class="modal" onclick="closeTerritoryPopup()">
+    <div class="modal-box t-popup-box" onclick="event.stopPropagation()">
+        <!-- Header -->
+        <div class="t-popup-header">
+            <div>
+                <div class="t-popup-label">Territorio</div>
+                <div class="t-popup-num" id="t-popup-num">—</div>
+            </div>
+            <button class="db-panel-close" onclick="closeTerritoryPopup()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+
+        <!-- Imagen del territorio -->
+        <div class="t-popup-img-wrap">
+            <img id="t-popup-img" src="" alt="" onerror="this.style.display='none'; document.getElementById('t-popup-img-placeholder').style.display='flex';">
+            <div id="t-popup-img-placeholder" class="t-popup-img-placeholder">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>Imagen no disponible</span>
+            </div>
+        </div>
+
+        <!-- Info último contacto -->
+        <div class="t-popup-info">
+            <div class="t-popup-info-label">Último contacto</div>
+            <div class="t-popup-info-value" id="t-popup-last">—</div>
+        </div>
+
+        <!-- Acción -->
+        <button class="t-popup-delete-btn" id="t-popup-delete">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            Eliminar asignación
+        </button>
     </div>
 </div>
 
@@ -1051,6 +1350,30 @@ function updateThemeIcon(isDark) {
         updateThemeIcon(true);
     }
 })();
+
+// ═══════════════════════════════════════════════
+//  PANEL FLOTANTE HISTORIAL
+// ═══════════════════════════════════════════════
+
+function toggleDbPanel() {
+    const overlay = document.getElementById('db-panel-overlay');
+    const panel   = document.getElementById('db-panel');
+    const btn     = document.getElementById('btn-mas');
+    const isOpen  = panel.classList.contains('open');
+    if (isOpen) {
+        closeDbPanel();
+    } else {
+        overlay.classList.add('open');
+        panel.classList.add('open');
+        btn.classList.add('open');
+    }
+}
+
+function closeDbPanel() {
+    document.getElementById('db-panel').classList.remove('open');
+    document.getElementById('db-panel-overlay').classList.remove('open');
+    document.getElementById('btn-mas').classList.remove('open');
+}
 
 // ═══════════════════════════════════════════════
 //  NAVEGACIÓN
@@ -1291,7 +1614,7 @@ function renderSchedule() {
             const shiftText  = SHIFT_LABEL[shift];
 
             let badges = territories.map((n, i) =>
-                `<div class="t-badge" onclick="removeTerritory('${id}', ${i}, event)" title="Clic para quitar">${n}</div>`
+                `<div class="t-badge" onclick="openTerritoryPopup('${id}', ${i}, ${n}, event)">${n}</div>`
             ).join('');
 
             card.innerHTML = `
@@ -1506,7 +1829,7 @@ function deleteRecord(id) {
 }
 
 // ═══════════════════════════════════════════════
-//  HISTORIAL SEMANAL (Base de Datos)
+//  HISTORIAL SEMANAL
 // ═══════════════════════════════════════════════
 
 let historyWeekIndex = 0; // 0 = más reciente
@@ -1637,8 +1960,54 @@ function deleteRecordFromHistory(id) {
 }
 
 // ═══════════════════════════════════════════════
-//  TOAST
+//  POPUP INFORMACIÓN DE TERRITORIO
 // ═══════════════════════════════════════════════
+
+// Mapa de imágenes: clave = número, valor = URL/ruta
+// Cuando el usuario suba sus imágenes, se cargarán aquí automáticamente
+// o se puede completar manualmente: territoryImages[1] = 'img/t1.jpg'
+const territoryImages = {};
+
+function openTerritoryPopup(slotId, idx, num, e) {
+    e.stopPropagation();
+
+    // Datos del territorio
+    const rec = records.find(r => parseInt(r.territorio) === num);
+    let lastContact = 'Sin registros';
+    if (rec) {
+        const [y, m, d] = rec.fecha.split('-');
+        const days = daysBetween(rec.fecha);
+        lastContact = `${d}/${m}/${y} · hace ${days} día${days !== 1 ? 's' : ''} (${rec.turno})`;
+    }
+
+    // Rellenar popup
+    document.getElementById('t-popup-num').textContent = num;
+    document.getElementById('t-popup-last').textContent = lastContact;
+
+    // Imagen — carpeta "territorios/", nombre "{num}.png"
+    const img = document.getElementById('t-popup-img');
+    const placeholder = document.getElementById('t-popup-img-placeholder');
+    img.src = `territorios/${num}.png`;
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+    img.onerror = () => {
+        img.style.display = 'none';
+        placeholder.style.display = 'flex';
+    };
+
+    // Botón eliminar
+    document.getElementById('t-popup-delete').onclick = () => {
+        scheduleData[slotId].splice(idx, 1);
+        saveSchedule();
+        closeTerritoryPopup();
+    };
+
+    document.getElementById('t-popup-overlay').classList.add('open');
+}
+
+function closeTerritoryPopup() {
+    document.getElementById('t-popup-overlay').classList.remove('open');
+}
 
 function showToast(msg, duration = 3000) {
     const t = document.getElementById('toast');
