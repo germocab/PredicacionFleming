@@ -774,6 +774,38 @@
             pointer-events: none;
         }
 
+        /* Historia badge con botón eliminar */
+        .hist-badge-wrap {
+            position: relative;
+            display: inline-flex;
+        }
+
+        .hist-badge-del {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 16px;
+            height: 16px;
+            border-radius: 999px;
+            border: none;
+            background: var(--danger);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.7);
+            transition: opacity 0.15s, transform 0.15s;
+            z-index: 10;
+            padding: 0;
+        }
+
+        .hist-badge-wrap:hover .hist-badge-del {
+            opacity: 1;
+            transform: scale(1);
+        }
+
         .t-badge.shift-m { background: var(--morning); }
         .t-badge.shift-t { background: var(--afternoon); }
 
@@ -1488,16 +1520,31 @@ function renderHistoryWeek() {
             );
 
             const card = document.createElement('div');
-            card.className = 'day-card readonly';
+            card.className = 'day-card';
 
             const shiftClass = shift === 'M' ? 'm' : 't';
 
-            let badges = '';
-            if (matching.length > 0) {
-                badges = matching.map(r =>
-                    `<div class="t-badge shift-${shiftClass}">${r.territorio}</div>`
-                ).join('');
-            }
+            const tList = document.createElement('div');
+            tList.className = 't-list';
+
+            matching.forEach(r => {
+                const wrap = document.createElement('div');
+                wrap.className = 'hist-badge-wrap';
+
+                const badge = document.createElement('div');
+                badge.className = `t-badge shift-${shiftClass}`;
+                badge.textContent = r.territorio;
+
+                const del = document.createElement('button');
+                del.className = 'hist-badge-del';
+                del.innerHTML = `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+                del.title = `Eliminar Territorio ${r.territorio}`;
+                del.onclick = () => deleteRecordFromHistory(r.id);
+
+                wrap.appendChild(badge);
+                wrap.appendChild(del);
+                tList.appendChild(wrap);
+            });
 
             card.innerHTML = `
                 <div class="day-header">
@@ -1505,13 +1552,21 @@ function renderHistoryWeek() {
                     <div class="day-date">${dateDisp}</div>
                 </div>
                 ${day.slots.length > 1 ? `<span class="shift-label ${shiftClass}">${shiftLabel}</span>` : ''}
-                <div class="t-list">${badges}</div>
             `;
+            card.appendChild(tList);
             col.appendChild(card);
         });
 
         grid.appendChild(col);
     });
+}
+
+function deleteRecordFromHistory(id) {
+    records = records.filter(r => r.id !== id);
+    localStorage.setItem('tp_records', JSON.stringify(records));
+    renderRecords();
+    renderRecommendations();
+    showToast('🗑 Registro eliminado.');
 }
 
 // ═══════════════════════════════════════════════
