@@ -709,6 +709,55 @@
 
         .toast.show { transform: translateX(-50%) translateY(0); }
 
+        /* ── HISTORY WEEK VIEW ── */
+        .history-week-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .history-nav {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 4px 6px;
+            box-shadow: var(--shadow);
+        }
+
+        .hist-nav-btn {
+            width: 32px; height: 32px;
+            border-radius: 999px;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s;
+        }
+
+        .hist-nav-btn:hover:not(:disabled) { background: var(--surface2); }
+        .hist-nav-btn:disabled { opacity: 0.3; cursor: default; }
+
+        /* Read-only day cards for history */
+        .day-card.readonly {
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .day-card.readonly .t-badge {
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .t-badge.shift-m { background: var(--morning); }
+        .t-badge.shift-t { background: var(--afternoon); }
+
         /* ── CAPTURE FRAME ── */
         #capture-frame {
             padding: 40px;
@@ -809,7 +858,8 @@
      VISTA 2: BASE DE DATOS
 ══════════════════════════════════════ -->
 <div id="view-database" class="view">
-    <div id="view-database-inner" style="max-width:520px; margin: 0 auto; padding: 24px 20px;">
+    <!-- Formulario + IO: ancho reducido, centrado -->
+    <div style="max-width:520px; margin: 0 auto; padding: 24px 20px 0;">
 
         <div class="db-header">
             <h2>Base de Datos</h2>
@@ -857,10 +907,27 @@
             </div>
             <button class="btn-main" onclick="saveRecord()">Registrar</button>
         </div>
+    </div>
 
-        <div class="history-title">Historial reciente</div>
-        <div id="record-list"></div>
-
+    <!-- Historial semanal: ancho completo -->
+    <div style="max-width:1140px; margin: 0 auto; padding: 0 20px 40px;">
+        <div class="history-week-header">
+            <div>
+                <div class="history-title">Historial por semana</div>
+                <div id="history-week-label" style="color:var(--text2); font-size:0.85rem; margin-top:2px;"></div>
+            </div>
+            <div class="history-nav">
+                <button class="hist-nav-btn" id="hist-prev" onclick="historyNavWeek(-1)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <span id="hist-page-label" style="font-size:0.8rem; font-weight:600; color:var(--text2); min-width:60px; text-align:center;"></span>
+                <button class="hist-nav-btn" id="hist-next" onclick="historyNavWeek(1)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="week-grid" id="history-grid"></div>
+        <div id="history-empty" style="display:none; text-align:center; color:var(--text2); font-size:0.85rem; padding:40px 0;">Sin registros aún.</div>
     </div>
 </div>
 
@@ -1266,25 +1333,111 @@ function deleteRecord(id) {
     });
 }
 
+// ═══════════════════════════════════════════════
+//  HISTORIAL SEMANAL (Base de Datos)
+// ═══════════════════════════════════════════════
+
+let historyWeekIndex = 0; // 0 = más reciente
+let historyWeeks = [];    // array de lunes (YYYY-MM-DD), ordenados más reciente primero
+
+// Dado una fecha YYYY-MM-DD, retorna el lunes de esa semana
+function getMondayOf(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const day = d.getDay(); // 0=Dom
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    return d.toISOString().split('T')[0];
+}
+
+function buildHistoryWeeks() {
+    const mondaySet = new Set();
+    records.forEach(r => {
+        if (r.fecha && r.fecha !== '0000-00-00') {
+            mondaySet.add(getMondayOf(r.fecha));
+        }
+    });
+    // Ordenar más reciente primero
+    historyWeeks = Array.from(mondaySet).sort((a, b) => b.localeCompare(a));
+}
+
 function renderRecords() {
-    const list = document.getElementById('record-list');
-    list.innerHTML = '';
-    if (records.length === 0) {
-        list.innerHTML = '<p style="color:var(--text2); font-size:0.85rem; text-align:center; padding:20px 0;">Sin registros aún.</p>';
+    buildHistoryWeeks();
+    // Asegurar índice válido
+    if (historyWeeks.length === 0) {
+        document.getElementById('history-grid').innerHTML = '';
+        document.getElementById('history-empty').style.display = 'block';
+        document.getElementById('history-week-label').textContent = '';
+        document.getElementById('hist-page-label').textContent = '';
         return;
     }
-    records.forEach(r => {
-        const [y, m, d] = r.fecha.split('-');
-        const turnoCls = r.turno.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-        list.innerHTML += `
-            <div class="record-item">
-                <div class="record-info">
-                    <div class="rname">Territorio ${r.territorio}</div>
-                    <div class="rdate">${d}/${m}/${y}</div>
-                    <span class="rdel" onclick="deleteRecord(${r.id})">Eliminar</span>
+    document.getElementById('history-empty').style.display = 'none';
+    if (historyWeekIndex >= historyWeeks.length) historyWeekIndex = 0;
+    renderHistoryWeek();
+}
+
+function historyNavWeek(dir) {
+    historyWeekIndex = Math.max(0, Math.min(historyWeeks.length - 1, historyWeekIndex + dir));
+    renderHistoryWeek();
+}
+
+function renderHistoryWeek() {
+    const monday = historyWeeks[historyWeekIndex];
+    const grid = document.getElementById('history-grid');
+    const weekLabel = document.getElementById('history-week-label');
+    const pageLabel = document.getElementById('hist-page-label');
+    const prevBtn = document.getElementById('hist-prev');
+    const nextBtn = document.getElementById('hist-next');
+
+    // Navegación
+    prevBtn.disabled = historyWeekIndex <= 0;
+    nextBtn.disabled = historyWeekIndex >= historyWeeks.length - 1;
+    pageLabel.textContent = `${historyWeekIndex + 1} / ${historyWeeks.length}`;
+
+    // Etiqueta de semana
+    const startDate = dateFromMonday(monday, 0);
+    const endDate   = dateFromMonday(monday, 6);
+    weekLabel.textContent = `Semana del ${formatShort(startDate)} al ${formatShort(endDate)} de ${startDate.getFullYear()}`;
+
+    grid.innerHTML = '';
+
+    DAYS.forEach((day, dIdx) => {
+        const col = document.createElement('div');
+        col.className = 'day-col';
+        const dateObj  = dateFromMonday(monday, day.offset);
+        const dateStr  = dateObj.toISOString().split('T')[0];
+        const dateDisp = formatShort(dateObj);
+
+        day.slots.forEach((shift, sIdx) => {
+            // Buscar registros que caigan exactamente en esta fecha
+            const shiftLabel = SHIFT_LABEL[shift];
+            const matching = records.filter(r =>
+                r.fecha === dateStr && r.turno === shiftLabel
+            );
+
+            const card = document.createElement('div');
+            card.className = 'day-card readonly';
+
+            const shiftClass = shift === 'M' ? 'm' : 't';
+
+            let badges = '';
+            if (matching.length > 0) {
+                badges = matching.map(r =>
+                    `<div class="t-badge shift-${shiftClass}">${r.territorio}</div>`
+                ).join('');
+            }
+
+            card.innerHTML = `
+                <div class="day-header">
+                    <div class="day-name">${day.name}</div>
+                    <div class="day-date">${dateDisp}</div>
                 </div>
-                <span class="tag ${turnoCls}">${r.turno}</span>
-            </div>`;
+                ${day.slots.length > 1 ? `<span class="shift-label ${shiftClass}">${shiftLabel}</span>` : ''}
+                <div class="t-list">${badges}</div>
+            `;
+            col.appendChild(card);
+        });
+
+        grid.appendChild(col);
     });
 }
 
