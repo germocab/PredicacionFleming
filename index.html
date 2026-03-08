@@ -196,13 +196,13 @@
             cursor: pointer;
         }
 
-        /* Recomendaciones semanales */
+        /* Contenedor sugerencias */
         .rec-section {
             background: var(--surface);
             border-radius: 28px;
             border: 1px solid var(--border);
-            padding: 20px;
-            margin-bottom: 24px;
+            padding: 20px 24px;
+            margin-bottom: 36px;
             box-shadow: var(--shadow);
         }
 
@@ -212,7 +212,7 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             color: var(--text2);
-            margin-bottom: 14px;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -225,79 +225,69 @@
             background: var(--border);
         }
 
-        .rec-week-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 10px;
-        }
-
-        .rec-day-col {
+        .rec-row {
             display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .rec-day-label {
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--text2);
-            text-align: center;
-            letter-spacing: 0.5px;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .rec-chip {
             background: var(--rec-grad);
-            border-radius: 16px;
-            padding: 10px 4px;
-            text-align: center;
+            border-radius: 24px;
+            width: 110px;
+            height: 110px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
             color: white;
-            cursor: pointer;
-            transition: opacity 0.15s, transform 0.15s;
-            position: relative;
+            cursor: grab;
+            user-select: none;
             box-shadow: var(--rec-chip-shadow);
+            transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+            touch-action: none;
+            flex-shrink: 0;
         }
 
-        .rec-chip:hover {
-            opacity: 0.85;
-            transform: translateY(-2px);
+        .rec-chip:active { cursor: grabbing; }
+
+        .rec-chip.dragging {
+            opacity: 0.4;
+            transform: scale(0.93);
         }
 
         .rec-chip .rnum {
             font-family: 'DM Mono', monospace;
-            font-size: 1.1rem;
+            font-size: 1.6rem;
             font-weight: 500;
-            display: block;
+            line-height: 1;
         }
 
         .rec-chip .rdate {
+            font-size: 0.68rem;
+            opacity: 0.88;
+        }
+
+        .rec-chip .add-to-slot-btn {
             font-size: 0.62rem;
-            opacity: 0.85;
-            display: block;
-            margin-top: 2px;
-        }
-
-        .rec-chip .rshift {
-            font-size: 0.58rem;
-            opacity: 0.75;
-            display: block;
-            margin-top: 1px;
-        }
-
-        .rec-chip.shift-m { background: linear-gradient(135deg, #16a34a, #22c55e); }
-        .rec-chip.shift-t { background: linear-gradient(135deg, #d97706, #f59e0b); }
-
-        .add-to-slot-btn {
-            font-size: 0.6rem;
             font-weight: 700;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.25);
             border: none;
-            border-radius: 5px;
+            border-radius: 999px;
             color: white;
-            padding: 2px 5px;
-            margin-top: 4px;
+            padding: 3px 8px;
             cursor: pointer;
-            display: inline-block;
+            align-self: flex-start;
+            transition: background 0.15s;
+        }
+
+        .rec-chip .add-to-slot-btn:hover { background: rgba(255,255,255,0.4); }
+
+        /* Drop zone highlight */
+        .day-card.drag-over {
+            border-color: #16a34a;
+            box-shadow: 0 0 0 3px rgba(22,163,74,0.25);
+            background: rgba(22,163,74,0.04);
         }
 
         /* Grilla semanal */
@@ -843,7 +833,7 @@
     <div class="nav-pill-wrap">
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="switchView('schedule', this)">Programación</button>
-            <button class="nav-tab" onclick="switchView('database', this)">Historial</button>
+            <button class="nav-tab" onclick="switchView('database', this)">Base de Datos</button>
         </div>
         <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
             <!-- Sol (modo claro visible) -->
@@ -886,8 +876,8 @@
 
             <!-- Recomendaciones -->
             <div class="rec-section" id="rec-section-ui">
-                <div class="rec-section-title">Sugerencia semanal · según historial</div>
-                <div class="rec-week-grid" id="rec-week-grid"></div>
+                <div class="rec-section-title">5 territorios sugeridos · arrastra al día que prefieras</div>
+                <div class="rec-row" id="rec-week-grid"></div>
             </div>
 
             <!-- Grilla -->
@@ -1094,11 +1084,12 @@ function daysBetween(dateStr) {
 }
 
 // ═══════════════════════════════════════════════
-//  RECOMENDACIONES SEMANALES
+//  RECOMENDACIONES — 5 chips arrastrables
 // ═══════════════════════════════════════════════
 
+let dragTerritory = null; // número arrastrado actualmente
+
 function getRecommendations() {
-    // Construir lista de todos los territorios con su última fecha
     const states = [];
     for (let i = 1; i <= 36; i++) {
         const rec = records.find(r => parseInt(r.territorio) === i);
@@ -1108,76 +1099,132 @@ function getRecommendations() {
             days: rec ? daysBetween(rec.fecha) : 9999
         });
     }
-    // Ordenar: el más antiguo (más días sin hacerse) primero
     states.sort((a, b) => b.days - a.days);
-
-    // Necesitamos 8 recomendaciones en orden:
-    // Lu(M), Ma(M), Mi(M), Mi(T), Ju(M), Vi(M), Vi(T), Do(M)
-    const slots = [
-        { dayIdx:0, shift:'M' },
-        { dayIdx:1, shift:'M' },
-        { dayIdx:2, shift:'M' },
-        { dayIdx:2, shift:'T' },
-        { dayIdx:3, shift:'M' },
-        { dayIdx:4, shift:'M' },
-        { dayIdx:4, shift:'T' },
-        { dayIdx:5, shift:'M' }
-    ];
-
-    return slots.map((s, i) => ({
-        ...s,
-        territory: states[i] ? states[i].num : '?',
-        fecha: states[i] ? states[i].fecha : null,
-        days: states[i] ? states[i].days : null
-    }));
+    return states.slice(0, 5);
 }
 
 function renderRecommendations() {
-    const grid = document.getElementById('rec-week-grid');
-    grid.innerHTML = '';
+    const row = document.getElementById('rec-week-grid');
+    row.innerHTML = '';
     const recs = getRecommendations();
 
-    DAYS.forEach((day, dIdx) => {
-        const col = document.createElement('div');
-        col.className = 'rec-day-col';
+    recs.forEach(rec => {
+        const chip = document.createElement('div');
+        chip.className = 'rec-chip';
+        chip.draggable = true;
+        chip.dataset.territory = rec.num;
 
-        const lbl = document.createElement('div');
-        lbl.className = 'rec-day-label';
-        lbl.textContent = day.name;
-        col.appendChild(lbl);
+        const subtitle = rec.days === 9999 ? 'Sin asignar' : `hace ${rec.days}d`;
 
-        // Slots para este día
-        const dayRecs = recs.filter(r => r.dayIdx === dIdx);
-        dayRecs.forEach(rec => {
-            const chip = document.createElement('div');
-            chip.className = 'rec-chip ' + (rec.shift === 'M' ? 'shift-m' : 'shift-t');
+        chip.innerHTML = `
+            <span class="rnum">${rec.num}</span>
+            <span class="rdate">${subtitle}</span>
+            <button class="add-to-slot-btn" onclick="openAddModal(${rec.num}, event)">+ Añadir</button>
+        `;
 
-            let subtitle = '';
-            if (rec.days === 9999) subtitle = 'Sin asignar';
-            else if (rec.days !== null) subtitle = `hace ${rec.days}d`;
-
-            const slotId = `slot-${dIdx}-${day.slots.indexOf(rec.shift)}`;
-
-            chip.innerHTML = `
-                <span class="rnum">${rec.territory}</span>
-                <span class="rdate">${subtitle}</span>
-                <span class="rshift">${SHIFT_LABEL[rec.shift]}</span>
-                <button class="add-to-slot-btn" onclick="applyRec('${slotId}', ${rec.territory}, event)">+ Añadir</button>
-            `;
-            col.appendChild(chip);
+        // ── Drag (desktop) ──
+        chip.addEventListener('dragstart', e => {
+            dragTerritory = rec.num;
+            chip.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'copy';
+            e.dataTransfer.setData('text/plain', String(rec.num));
+        });
+        chip.addEventListener('dragend', () => {
+            dragTerritory = null;
+            chip.classList.remove('dragging');
         });
 
-        grid.appendChild(col);
+        // ── Touch (mobile) ──
+        let touchClone = null;
+        chip.addEventListener('touchstart', e => {
+            dragTerritory = rec.num;
+            const touch = e.touches[0];
+            touchClone = chip.cloneNode(true);
+            touchClone.style.cssText = `
+                position:fixed; pointer-events:none; z-index:9999;
+                opacity:0.85; transform:scale(1.05);
+                left:${touch.clientX - chip.offsetWidth/2}px;
+                top:${touch.clientY - 30}px;
+            `;
+            document.body.appendChild(touchClone);
+        }, { passive: true });
+
+        chip.addEventListener('touchmove', e => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            if (touchClone) {
+                touchClone.style.left = `${touch.clientX - chip.offsetWidth/2}px`;
+                touchClone.style.top  = `${touch.clientY - 30}px`;
+            }
+            // Highlight card under finger
+            document.querySelectorAll('.day-card').forEach(c => c.classList.remove('drag-over'));
+            const el = document.elementFromPoint(touch.clientX, touch.clientY);
+            const card = el ? el.closest('.day-card') : null;
+            if (card && card.dataset.slotId) card.classList.add('drag-over');
+        }, { passive: false });
+
+        chip.addEventListener('touchend', e => {
+            if (touchClone) { touchClone.remove(); touchClone = null; }
+            document.querySelectorAll('.day-card').forEach(c => c.classList.remove('drag-over'));
+            const touch = e.changedTouches[0];
+            const el = document.elementFromPoint(touch.clientX, touch.clientY);
+            const card = el ? el.closest('.day-card') : null;
+            if (card && card.dataset.slotId && dragTerritory !== null) {
+                dropOnSlot(card.dataset.slotId, dragTerritory);
+            }
+            dragTerritory = null;
+        });
+
+        row.appendChild(chip);
+    });
+}
+
+function dropOnSlot(slotId, num) {
+    if (!scheduleData[slotId]) scheduleData[slotId] = [];
+    if (!scheduleData[slotId].includes(num)) {
+        scheduleData[slotId].push(num);
+        saveSchedule();
+        showToast(`✅ Territorio ${num} añadido.`);
+    } else {
+        showToast(`⚠️ El territorio ${num} ya está en ese día.`);
+    }
+}
+
+// Abre el modal de selección de slot cuando se pulsa "+ Añadir"
+function openAddModal(num, e) {
+    e.stopPropagation();
+    // Construir lista de slots disponibles
+    const slots = [];
+    DAYS.forEach((day, dIdx) => {
+        day.slots.forEach((shift, sIdx) => {
+            slots.push({ id: `slot-${dIdx}-${sIdx}`, label: `${day.name} · ${SHIFT_LABEL[shift]}` });
+        });
+    });
+    // Reutilizar el modal existente mostrando los días como opciones
+    activeSlotId = null;
+    document.getElementById('modal-sub').textContent = `¿A qué día añadir el Territorio ${num}?`;
+    document.getElementById('modal').classList.add('open');
+
+    const grid = document.getElementById('num-grid');
+    grid.style.gridTemplateColumns = '1fr';
+    grid.innerHTML = '';
+    slots.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'num-btn';
+        btn.style.cssText = 'aspect-ratio:unset; padding:12px 16px; border-radius:999px; font-family:inherit; font-size:0.85rem; justify-content:flex-start;';
+        btn.textContent = s.label;
+        btn.onclick = () => {
+            dropOnSlot(s.id, num);
+            closeModal();
+            grid.style.gridTemplateColumns = '';
+        };
+        grid.appendChild(btn);
     });
 }
 
 function applyRec(slotId, num, e) {
     e.stopPropagation();
-    if (!scheduleData[slotId]) scheduleData[slotId] = [];
-    if (!scheduleData[slotId].includes(num)) {
-        scheduleData[slotId].push(num);
-        saveSchedule();
-    }
+    dropOnSlot(slotId, num);
 }
 
 // ═══════════════════════════════════════════════
@@ -1234,6 +1281,7 @@ function renderSchedule() {
 
             const card = document.createElement('div');
             card.className = 'day-card';
+            card.dataset.slotId = id;
 
             const shiftClass = shift === 'M' ? 'm' : 't';
             const shiftText  = SHIFT_LABEL[shift];
@@ -1251,6 +1299,21 @@ function renderSchedule() {
                 <div class="t-list">${badges}</div>
                 <button class="btn-add" onclick="openModal('${id}', '${day.name} ${shiftText}')">+</button>
             `;
+
+            // ── Drop events (desktop) ──
+            card.addEventListener('dragover', e => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+                card.classList.add('drag-over');
+            });
+            card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+            card.addEventListener('drop', e => {
+                e.preventDefault();
+                card.classList.remove('drag-over');
+                const num = parseInt(e.dataTransfer.getData('text/plain'));
+                if (!isNaN(num)) dropOnSlot(id, num);
+            });
+
             col.appendChild(card);
         });
 
