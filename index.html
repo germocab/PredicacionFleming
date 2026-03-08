@@ -395,6 +395,25 @@
         }
 
         .btn-danger { background: none; border: none; color: var(--danger); cursor: pointer; font-family: inherit; font-size: 0.85rem; font-weight: 600; }
+
+        .btn-confirm-week {
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 999px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(22,163,74,0.3);
+            transition: opacity 0.15s, transform 0.15s;
+        }
+
+        .btn-confirm-week:hover { opacity: 0.88; transform: translateY(-1px); }
         
         .btn-export {
             background: var(--text);
@@ -844,10 +863,16 @@
 
             <div class="schedule-actions" id="schedule-actions-ui">
                 <button class="btn-danger" onclick="clearSchedule()">Reiniciar semana</button>
-                <button class="btn-export" onclick="exportImage()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    Compartir imagen
-                </button>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                    <button class="btn-confirm-week" onclick="confirmWeekToDatabase()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Confirmar semana
+                    </button>
+                    <button class="btn-export" onclick="exportImage()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Compartir imagen
+                    </button>
+                </div>
             </div>
 
         </div>
@@ -1217,6 +1242,54 @@ function clearSchedule() {
         scheduleData = {};
         saveSchedule();
     });
+}
+
+function confirmWeekToDatabase() {
+    if (!selectedMonday) {
+        showToast('⚠️ Selecciona primero la semana a confirmar.');
+        return;
+    }
+
+    // Recopilar todos los territorios asignados con su fecha y turno
+    const toRegister = [];
+
+    DAYS.forEach((day, dIdx) => {
+        day.slots.forEach((shift, sIdx) => {
+            const id = `slot-${dIdx}-${sIdx}`;
+            const territories = scheduleData[id] || [];
+            const fecha = dateFromMonday(selectedMonday, day.offset).toISOString().split('T')[0];
+            const turno = SHIFT_LABEL[shift];
+
+            territories.forEach(num => {
+                toRegister.push({ territorio: String(num), fecha, turno });
+            });
+        });
+    });
+
+    if (toRegister.length === 0) {
+        showToast('⚠️ No hay territorios asignados esta semana.');
+        return;
+    }
+
+    showConfirm(
+        `¿Confirmar ${toRegister.length} territorio${toRegister.length > 1 ? 's' : ''} en la base de datos?`,
+        'Se registrarán con la fecha de cada día planificado, reemplazando registros anteriores.',
+        () => {
+            // Reemplazar siempre: quitar los que ya existen y añadir los nuevos
+            toRegister.forEach(entry => {
+                records = records.filter(r => String(r.territorio) !== entry.territorio);
+                records.unshift({ id: Date.now() + Math.random(), ...entry });
+            });
+
+            // Reordenar por fecha descendente
+            records.sort((a, b) => b.fecha.localeCompare(a.fecha));
+            localStorage.setItem('tp_records', JSON.stringify(records));
+
+            renderRecords();
+            renderRecommendations();
+            showToast(`✅ ${toRegister.length} territorios registrados en la base de datos.`);
+        }
+    );
 }
 
 // ═══════════════════════════════════════════════
