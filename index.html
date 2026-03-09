@@ -2129,8 +2129,6 @@ function renderTerritories() {
         `;
         // Apply dominant color to the card number pill
         const numEl = card.querySelector(`#tcard-num-${num}`);
-        numEl.style.cssText = 'display:inline-block; min-width:36px; text-align:center; padding:2px 10px; border-radius:999px; transition: background 0.3s;';
-        applyTerritoryColor(numEl, num);
         card.style.cursor = 'pointer';
         card.addEventListener('click', () => openTdetail(num));
         grid.appendChild(card);
