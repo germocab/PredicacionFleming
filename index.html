@@ -2002,8 +2002,6 @@ function renderRecommendations() {
             <button class="add-to-slot-btn" onclick="openAddModal(${rec.num}, event)">+ Añadir</button>
         `;
 
-        applyTerritoryColor(chip, rec.num);
-
         // ── Drag (desktop) ──
         chip.addEventListener('dragstart', e => {
             dragTerritory = rec.num;
