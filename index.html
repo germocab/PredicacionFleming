@@ -1763,22 +1763,30 @@ function renderRecommendations() {
         row.appendChild(chip);
     });
 
-    // ── Ocultar chips que no caben: cálculo matemático (no depende del paint del DOM) ──
-    // Ancho disponible = ancho interno del contenedor (.rec-section) descontando su padding horizontal
-    // Chip: 110px fijo + gap: 12px entre chips
+    // ── Mostrar todos inicialmente y luego recortar con ResizeObserver ──
+    // ResizeObserver se dispara cuando el contenedor tiene dimensiones reales,
+    // funciona correctamente en móvil y se actualiza si cambia el tamaño de ventana
     const container = row.parentElement; // .rec-section
-    const containerStyle = getComputedStyle(container);
-    const availableWidth = container.clientWidth
-        - parseFloat(containerStyle.paddingLeft)
-        - parseFloat(containerStyle.paddingRight);
-    const chipWidth = 110;
-    const chipGap   = 12;
-    // Cuántos chips caben: floor((ancho + gap) / (chip + gap))
-    const maxVisible = Math.floor((availableWidth + chipGap) / (chipWidth + chipGap));
-    const chips = row.querySelectorAll('.rec-chip');
-    chips.forEach((chip, i) => {
-        chip.style.visibility = i < maxVisible ? 'visible' : 'hidden';
-    });
+
+    function trimChips() {
+        const containerStyle = getComputedStyle(container);
+        const availableWidth = container.clientWidth
+            - parseFloat(containerStyle.paddingLeft)
+            - parseFloat(containerStyle.paddingRight);
+        if (availableWidth <= 0) return; // aún sin dimensiones, esperar
+        const chipWidth = 110;
+        const chipGap   = 12;
+        const maxVisible = Math.floor((availableWidth + chipGap) / (chipWidth + chipGap));
+        row.querySelectorAll('.rec-chip').forEach((chip, i) => {
+            chip.style.visibility = i < maxVisible ? 'visible' : 'hidden';
+        });
+    }
+
+    // Desconectar observer anterior si existe (evita acumulación entre renders)
+    if (container._chipObserver) container._chipObserver.disconnect();
+    const observer = new ResizeObserver(() => trimChips());
+    observer.observe(container);
+    container._chipObserver = observer;
 }
 
 function dropOnSlot(slotId, num) {
