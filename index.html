@@ -204,6 +204,7 @@
             padding: 20px 24px;
             margin-bottom: 36px;
             box-shadow: var(--shadow);
+            overflow: hidden; /* evita desbordamiento del contenedor */
         }
 
         .rec-section-title {
@@ -225,10 +226,12 @@
             background: var(--border);
         }
 
+        /* ── MODIFICACIÓN: flex-wrap nowrap + overflow hidden para corte limpio ── */
         .rec-row {
             display: flex;
             gap: 12px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;   /* ← CAMBIADO: sin wrap */
+            overflow: hidden;    /* ← CAMBIADO: oculta los que sobran */
         }
 
         .rec-chip {
@@ -246,7 +249,7 @@
             box-shadow: var(--rec-chip-shadow);
             transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
             touch-action: none;
-            flex-shrink: 0;
+            flex-shrink: 0; /* ← importante: no comprimir chips */
         }
 
         .rec-chip:active { cursor: grabbing; }
@@ -404,7 +407,7 @@
         }
 
         .btn-confirm-week:hover { opacity: 0.88; transform: translateY(-1px); }
-        
+
         .btn-export {
             background: var(--text);
             color: var(--bg);
@@ -426,9 +429,6 @@
         /* ══════════════════════════════════════
            VISTA 2: BASE DE DATOS
         ══════════════════════════════════════ */
-
-
-
 
         .form-card {
             background: var(--surface);
@@ -483,9 +483,6 @@
         }
 
         .btn-main:hover { opacity: 0.85; }
-
-
-
 
         .tag {
             padding: 5px 14px;
@@ -712,7 +709,6 @@
         .db-panel-close:hover { background: var(--border); }
 
         /* Historial grilla full-page */
-
         #history-grid .day-card {
             aspect-ratio: unset;
             min-height: 160px;
@@ -810,7 +806,6 @@
         .toast.show { transform: translateX(-50%) translateY(0); }
 
         /* ── HISTORY WEEK VIEW ── */
-
         .history-nav {
             display: flex;
             align-items: center;
@@ -846,7 +841,6 @@
             cursor: default;
             pointer-events: none;
         }
-
 
         /* ══════════════════════════════════════
            VISTA 3: TERRITORIOS
@@ -1112,7 +1106,6 @@
         .t-badge.shift-m { background: var(--morning); }
         .t-badge.shift-t { background: var(--afternoon); }
 
-
         /* ── TERRITORY POPUP ── */
         .t-popup-box {
             width: 380px;
@@ -1252,7 +1245,6 @@
             <button class="nav-tab" onclick="switchView('territories', this)">Territorios</button>
         </div>
         <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
-            <!-- Sol (modo claro visible) -->
             <svg id="icon-sun" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="5"/>
                 <line x1="12" y1="2" x2="12" y2="4"/>
@@ -1264,7 +1256,6 @@
                 <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
                 <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
             </svg>
-            <!-- Luna (modo oscuro visible) -->
             <svg id="icon-moon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:none">
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
             </svg>
@@ -1322,7 +1313,6 @@
 ══════════════════════════════════════ -->
 <div id="view-database" class="view">
 
-    <!-- Cabecera de historial -->
     <div class="hist-page-header">
         <div>
             <h2 class="hist-page-title">Historial</h2>
@@ -1338,14 +1328,12 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
             </div>
-            <!-- Botón Más -->
             <button class="btn-mas" onclick="toggleDbPanel()" id="btn-mas" title="Registrar / Importar / Exportar">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
         </div>
     </div>
 
-    <!-- Grilla historial -->
     <div class="hist-page-grid-wrap">
         <div class="week-grid" id="history-grid"></div>
         <div id="history-empty" style="display:none; text-align:center; color:var(--text2); font-size:0.85rem; padding:60px 0;">Sin registros aún.</div>
@@ -1445,11 +1433,9 @@
     </div>
 </div>
 
-<!-- TERRITORY INFO POPUP -->
 <!-- TERRITORY POPUP -->
 <div id="t-popup-overlay" class="modal" onclick="closeTerritoryPopup()">
     <div class="modal-box t-popup-box" onclick="event.stopPropagation()">
-        <!-- Header -->
         <div class="t-popup-header">
             <div>
                 <div class="t-popup-label">Territorio</div>
@@ -1460,7 +1446,6 @@
             </button>
         </div>
 
-        <!-- Imagen del territorio -->
         <div class="t-popup-img-wrap">
             <img id="t-popup-img" src="" alt="" onerror="this.style.display='none'; document.getElementById('t-popup-img-placeholder').style.display='flex';">
             <div id="t-popup-img-placeholder" class="t-popup-img-placeholder">
@@ -1469,13 +1454,11 @@
             </div>
         </div>
 
-        <!-- Info último contacto -->
         <div class="t-popup-info">
             <div class="t-popup-info-label">Último contacto</div>
             <div class="t-popup-info-value" id="t-popup-last">—</div>
         </div>
 
-        <!-- Acción -->
         <button class="t-popup-delete-btn" id="t-popup-delete">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
             Eliminar asignación
@@ -1511,24 +1494,36 @@ let activeSlotId   = null;
 //  TEMA
 // ═══════════════════════════════════════════════
 
+function applyTheme(isDark) {
+    document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    updateThemeIcon(isDark);
+}
+
 function toggleTheme() {
     const isDark = document.body.getAttribute('data-theme') === 'dark';
-    document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-    updateThemeIcon(!isDark);
+    // Preferencia manual: se guarda y tiene prioridad sobre el sistema
     localStorage.setItem('tp_theme', isDark ? 'light' : 'dark');
+    applyTheme(!isDark);
 }
 
 function updateThemeIcon(isDark) {
-    document.getElementById('icon-sun').style.display  = isDark ? 'none'  : '';
-    document.getElementById('icon-moon').style.display = isDark ? ''      : 'none';
+    document.getElementById('icon-sun').style.display  = isDark ? 'none' : '';
+    document.getElementById('icon-moon').style.display = isDark ? ''     : 'none';
 }
 
 (function initTheme() {
-    const t = localStorage.getItem('tp_theme') || 'light';
-    if (t === 'dark') {
-        document.body.setAttribute('data-theme', 'dark');
-        updateThemeIcon(true);
-    }
+    const saved = localStorage.getItem('tp_theme');
+    const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    // Preferencia manual tiene prioridad; si no hay, seguir al sistema
+    applyTheme(saved ? saved === 'dark' : sysDark);
+
+    // Reaccionar a cambios del sistema en tiempo real (solo si no hay preferencia manual)
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        if (!localStorage.getItem('tp_theme')) {
+            applyTheme(e.matches);
+        }
+    });
 })();
 
 // ═══════════════════════════════════════════════
@@ -1571,7 +1566,7 @@ function switchView(view, btn) {
 //  VISTA TERRITORIOS
 // ═══════════════════════════════════════════════
 
-let territoriesSort = 'num'; // 'num' | 'freq'
+let territoriesSort = 'num';
 
 function setTerritorySort(mode, btn) {
     territoriesSort = mode;
@@ -1584,11 +1579,9 @@ function renderTerritories() {
     const grid = document.getElementById('territories-grid');
     if (!grid) return;
 
-    // Generar lista de 1-36
     let list = Array.from({length: 36}, (_, i) => i + 1);
 
     if (territoriesSort === 'freq') {
-        // Hecho más recientemente primero (días ascendente), sin registro al final
         list.sort((a, b) => {
             const ra = records.find(r => parseInt(r.territorio) === a);
             const rb = records.find(r => parseInt(r.territorio) === b);
@@ -1598,7 +1591,6 @@ function renderTerritories() {
             return daysBetween(ra.fecha) - daysBetween(rb.fecha);
         });
     }
-    // 'num' → ya está ordenado 1-36
 
     grid.innerHTML = '';
 
@@ -1606,7 +1598,6 @@ function renderTerritories() {
         const rec  = records.find(r => parseInt(r.territorio) === num);
         const days = rec ? daysBetween(rec.fecha) : null;
 
-        // Etiqueta de antigüedad
         let daysLabel, daysClass;
         if (days === null) {
             daysLabel = 'Sin registro'; daysClass = 'never';
@@ -1618,7 +1609,6 @@ function renderTerritories() {
             daysLabel = `Hace ${days} días`; daysClass = 'old';
         }
 
-        // Fecha legible
         let dateStr = '–';
         if (rec) {
             const [y, m, d] = rec.fecha.split('-');
@@ -1670,25 +1660,35 @@ function daysBetween(dateStr) {
 }
 
 // ═══════════════════════════════════════════════
-//  RECOMENDACIONES — 5 chips arrastrables
+//  RECOMENDACIONES
+//  — Muestra todos los territorios con más de 60 días sin visitar
+//  — Ordenados de más antiguo a más reciente
+//  — Solo los que caben visualmente en el contenedor (sin scroll ni wrap)
 // ═══════════════════════════════════════════════
 
-let dragTerritory = null; // número arrastrado actualmente
+let dragTerritory = null;
 
+// ── MODIFICADO: devuelve todos los territorios con > 60 días sin visitar ──
 function getRecommendations() {
     const states = [];
     for (let i = 1; i <= 36; i++) {
         const rec = records.find(r => parseInt(r.territorio) === i);
-        states.push({
-            num: i,
-            fecha: rec ? rec.fecha : '0000-00-00',
-            days: rec ? daysBetween(rec.fecha) : 9999
-        });
+        const days = rec ? daysBetween(rec.fecha) : 9999;
+        // Solo incluir si llevan más de 60 días sin visitar (o nunca visitados)
+        if (days > 60) {
+            states.push({
+                num: i,
+                fecha: rec ? rec.fecha : '0000-00-00',
+                days
+            });
+        }
     }
+    // Ordenar de más antiguo a más reciente
     states.sort((a, b) => b.days - a.days);
-    return states.slice(0, 5);
+    return states;
 }
 
+// ── MODIFICADO: renderiza todos y oculta los que no caben en el contenedor ──
 function renderRecommendations() {
     const row = document.getElementById('rec-week-grid');
     row.innerHTML = '';
@@ -1742,7 +1742,6 @@ function renderRecommendations() {
                 touchClone.style.left = `${touch.clientX - chip.offsetWidth/2}px`;
                 touchClone.style.top  = `${touch.clientY - 30}px`;
             }
-            // Highlight card under finger
             document.querySelectorAll('.day-card').forEach(c => c.classList.remove('drag-over'));
             const el = document.elementFromPoint(touch.clientX, touch.clientY);
             const card = el ? el.closest('.day-card') : null;
@@ -1763,6 +1762,21 @@ function renderRecommendations() {
 
         row.appendChild(chip);
     });
+
+    // ── Ocultar chips que se desborden del contenedor (sin scroll, sin wrap) ──
+    // Se usa requestAnimationFrame para esperar a que el DOM haya pintado los chips
+    requestAnimationFrame(() => {
+        const container = row.parentElement; // .rec-section
+        const containerRect = container.getBoundingClientRect();
+        // Margen interior derecho del contenedor (padding: 20px 24px)
+        const maxRight = containerRect.right - 4;
+        const chips = row.querySelectorAll('.rec-chip');
+        chips.forEach(chip => {
+            const chipRect = chip.getBoundingClientRect();
+            // Ocultar si el borde derecho del chip supera el área disponible
+            chip.style.visibility = chipRect.right <= maxRight ? 'visible' : 'hidden';
+        });
+    });
 }
 
 function dropOnSlot(slotId, num) {
@@ -1776,17 +1790,14 @@ function dropOnSlot(slotId, num) {
     }
 }
 
-// Abre el modal de selección de slot cuando se pulsa "+ Añadir"
 function openAddModal(num, e) {
     e.stopPropagation();
-    // Construir lista de slots disponibles
     const slots = [];
     DAYS.forEach((day, dIdx) => {
         day.slots.forEach((shift, sIdx) => {
             slots.push({ id: `slot-${dIdx}-${sIdx}`, label: `${day.name} · ${SHIFT_LABEL[shift]}` });
         });
     });
-    // Reutilizar el modal existente mostrando los días como opciones
     activeSlotId = null;
     document.getElementById('modal-sub').textContent = `¿A qué día añadir el Territorio ${num}?`;
     document.getElementById('modal').classList.add('open');
@@ -1886,7 +1897,6 @@ function renderSchedule() {
                 <button class="btn-add" onclick="openModal('${id}', '${day.name} ${shiftText}')">+</button>
             `;
 
-            // ── Drop events (desktop) ──
             card.addEventListener('dragover', e => {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'copy';
@@ -1931,7 +1941,6 @@ function confirmWeekToDatabase() {
         return;
     }
 
-    // Recopilar todos los territorios asignados con su fecha y turno
     const toRegister = [];
 
     DAYS.forEach((day, dIdx) => {
@@ -1956,13 +1965,11 @@ function confirmWeekToDatabase() {
         `¿Confirmar ${toRegister.length} territorio${toRegister.length > 1 ? 's' : ''} en la base de datos?`,
         'Se registrarán con la fecha de cada día planificado, reemplazando registros anteriores.',
         () => {
-            // Reemplazar siempre: quitar los que ya existen y añadir los nuevos
             toRegister.forEach(entry => {
                 records = records.filter(r => String(r.territorio) !== entry.territorio);
                 records.unshift({ id: Date.now() + Math.random(), ...entry });
             });
 
-            // Reordenar por fecha descendente
             records.sort((a, b) => b.fecha.localeCompare(a.fecha));
             localStorage.setItem('tp_records', JSON.stringify(records));
 
@@ -2021,7 +2028,6 @@ function exportImage() {
     dateBoxUI.style.display = 'none';
     recSec.style.display    = 'none';
     addBtns.forEach(b => b.style.display = 'none');
-    // Deshabilita hover cursors para captura limpia
     badges.forEach(b => b.style.cursor = 'default');
 
     html2canvas(document.getElementById('capture-frame'), {
@@ -2068,14 +2074,13 @@ function saveRecord() {
     const t = document.getElementById('db-turno').value;
     if (!f) return;
 
-    // Reemplaza registro anterior del mismo territorio
     records = records.filter(r => r.territorio !== n);
     records.unshift({ id: Date.now(), territorio: n, fecha: f, turno: t });
     records.sort((a, b) => b.fecha.localeCompare(a.fecha));
 
     localStorage.setItem('tp_records', JSON.stringify(records));
     renderRecords();
-    renderRecommendations(); // Actualiza sugerencias en programación
+    renderRecommendations();
 }
 
 function deleteRecord(id) {
@@ -2091,13 +2096,12 @@ function deleteRecord(id) {
 //  HISTORIAL SEMANAL
 // ═══════════════════════════════════════════════
 
-let historyWeekIndex = 0; // 0 = más reciente
-let historyWeeks = [];    // array de lunes (YYYY-MM-DD), ordenados más reciente primero
+let historyWeekIndex = 0;
+let historyWeeks = [];
 
-// Dado una fecha YYYY-MM-DD, retorna el lunes de esa semana
 function getMondayOf(dateStr) {
     const d = new Date(dateStr + 'T00:00:00');
-    const day = d.getDay(); // 0=Dom
+    const day = d.getDay();
     const diff = day === 0 ? -6 : 1 - day;
     d.setDate(d.getDate() + diff);
     return d.toISOString().split('T')[0];
@@ -2110,13 +2114,11 @@ function buildHistoryWeeks() {
             mondaySet.add(getMondayOf(r.fecha));
         }
     });
-    // Ordenar más reciente primero
     historyWeeks = Array.from(mondaySet).sort((a, b) => b.localeCompare(a));
 }
 
 function renderRecords() {
     buildHistoryWeeks();
-    // Asegurar índice válido
     if (historyWeeks.length === 0) {
         document.getElementById('history-grid').innerHTML = '';
         document.getElementById('history-empty').style.display = 'block';
@@ -2142,12 +2144,10 @@ function renderHistoryWeek() {
     const prevBtn = document.getElementById('hist-prev');
     const nextBtn = document.getElementById('hist-next');
 
-    // Navegación
     prevBtn.disabled = historyWeekIndex <= 0;
     nextBtn.disabled = historyWeekIndex >= historyWeeks.length - 1;
     pageLabel.textContent = `${historyWeekIndex + 1} / ${historyWeeks.length}`;
 
-    // Etiqueta de semana
     const startDate = dateFromMonday(monday, 0);
     const endDate   = dateFromMonday(monday, 6);
     weekLabel.textContent = `Semana del ${formatShort(startDate)} al ${formatShort(endDate)} de ${startDate.getFullYear()}`;
@@ -2162,7 +2162,6 @@ function renderHistoryWeek() {
         const dateDisp = formatShort(dateObj);
 
         day.slots.forEach((shift, sIdx) => {
-            // Buscar registros que caigan exactamente en esta fecha
             const shiftLabel = SHIFT_LABEL[shift];
             const matching = records.filter(r =>
                 r.fecha === dateStr && r.turno === shiftLabel
@@ -2222,15 +2221,11 @@ function deleteRecordFromHistory(id) {
 //  POPUP INFORMACIÓN DE TERRITORIO
 // ═══════════════════════════════════════════════
 
-// Mapa de imágenes: clave = número, valor = URL/ruta
-// Cuando el usuario suba sus imágenes, se cargarán aquí automáticamente
-// o se puede completar manualmente: territoryImages[1] = 'img/t1.jpg'
 const territoryImages = {};
 
 function openTerritoryPopup(slotId, idx, num, e) {
     e.stopPropagation();
 
-    // Datos del territorio
     const rec = records.find(r => parseInt(r.territorio) === num);
     let lastContact = 'Sin registros';
     if (rec) {
@@ -2239,11 +2234,9 @@ function openTerritoryPopup(slotId, idx, num, e) {
         lastContact = `${d}/${m}/${y} · hace ${days} día${days !== 1 ? 's' : ''} (${rec.turno})`;
     }
 
-    // Rellenar popup
     document.getElementById('t-popup-num').textContent = num;
     document.getElementById('t-popup-last').textContent = lastContact;
 
-    // Imagen — carpeta "territorios/", nombre "{num}.png"
     const img = document.getElementById('t-popup-img');
     const placeholder = document.getElementById('t-popup-img-placeholder');
     img.src = `territorios/${num}.png`;
@@ -2254,7 +2247,6 @@ function openTerritoryPopup(slotId, idx, num, e) {
         placeholder.style.display = 'flex';
     };
 
-    // Botón eliminar
     document.getElementById('t-popup-delete').onclick = () => {
         scheduleData[slotId].splice(idx, 1);
         saveSchedule();
@@ -2298,28 +2290,22 @@ document.getElementById('confirm-ok').onclick = () => {
 //  IMPORT / EXPORT
 // ═══════════════════════════════════════════════
 
-// Convierte DD/MM/YYYY → YYYY-MM-DD (formato interno)
 function parseDateDDMMYYYY(str) {
     if (!str) return null;
     str = String(str).trim();
-    // Si ya viene como YYYY-MM-DD (por si acaso)
     if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
-    // DD/MM/YYYY
     const m = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
     if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
     return null;
 }
 
-// Convierte número de serie Excel a fecha YYYY-MM-DD
 function excelSerialToDate(serial) {
-    // Excel epoch: 1 Jan 1900 = 1 (con bug de año bisiesto 1900)
     const utc = (serial - 25569) * 86400 * 1000;
     const d = new Date(utc);
     return d.toISOString().split('T')[0];
 }
 
 function parseRowsToRecords(rows) {
-    // rows: array de objetos con keys Territorio, Fecha, Turno
     const parsed = [];
     rows.forEach(row => {
         const num = String(row['Territorio'] || '').trim();
@@ -2328,7 +2314,6 @@ function parseRowsToRecords(rows) {
 
         if (!num || isNaN(parseInt(num))) return;
 
-        // Si la fecha es un número (serial Excel)
         if (typeof fecha === 'number') {
             fecha = excelSerialToDate(fecha);
         } else {
@@ -2344,7 +2329,6 @@ function parseRowsToRecords(rows) {
 }
 
 function mergeRecords(incoming) {
-    // Fusiona: por cada territorio conserva el registro con fecha más reciente
     const map = {};
     [...records, ...incoming].forEach(r => {
         const key = String(r.territorio);
@@ -2367,7 +2351,6 @@ function importFile(input) {
             let rows = [];
 
             if (ext === 'csv') {
-                // Parsear CSV manualmente
                 const text = e.target.result;
                 const lines = text.trim().split('\n');
                 const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
@@ -2379,7 +2362,6 @@ function importFile(input) {
                     rows.push(obj);
                 }
             } else {
-                // Excel con SheetJS
                 const data = new Uint8Array(e.target.result);
                 const wb = XLSX.read(data, { type: 'array', cellDates: false });
                 const ws = wb.Sheets[wb.SheetNames[0]];
@@ -2436,10 +2418,7 @@ function exportExcel() {
         return { Territorio: parseInt(r.territorio), Fecha: `${d}/${m}/${y}`, Turno: r.turno };
     });
     const ws = XLSX.utils.json_to_sheet(data);
-
-    // Ancho de columnas
     ws['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 10 }];
-
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Territorios');
     XLSX.writeFile(wb, `Territorios_Backup_${new Date().toISOString().split('T')[0]}.xlsx`);
