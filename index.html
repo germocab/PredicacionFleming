@@ -1374,6 +1374,12 @@ async function doLogin() {
     btn.disabled = true; btn.textContent = 'Verificando...';
 
     try {
+        if (!sbClient) {
+            errEl.textContent = 'Error: Supabase no está inicializado. Recarga la página.';
+            btn.disabled = false; btn.textContent = 'Entrar';
+            return;
+        }
+
         const { data, error } = await sbClient
             .from('tp_users')
             .select('*')
@@ -1381,7 +1387,14 @@ async function doLogin() {
             .eq('password', password)
             .single();
 
-        if (error || !data) {
+        if (error) {
+            // Show exact error so we can debug
+            errEl.textContent = 'Error: ' + (error.message || error.code || JSON.stringify(error));
+            btn.disabled = false; btn.textContent = 'Entrar';
+            return;
+        }
+
+        if (!data) {
             errEl.textContent = 'Usuario o contraseña incorrectos.';
             btn.disabled = false; btn.textContent = 'Entrar';
             return;
