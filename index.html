@@ -582,7 +582,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         .date-box input[type="date"] { border: none; background: transparent; font-family: inherit; font-size: 0.9rem; font-weight: 600; color: var(--text); outline: none; cursor: pointer; }
 
         .rec-section { background: var(--surface); border-radius: 28px; border: 1px solid var(--border); padding: 20px 24px; margin-bottom: 36px; box-shadow: var(--shadow); }
-        .rec-section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .rec-section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); display: flex; align-items: center; gap: 8px; flex: 1; }
         .rec-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
         .rec-row { display: flex; gap: 12px; flex-wrap: wrap; }
 
@@ -976,6 +976,37 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
             font-size: 0.8rem; font-weight: 700;
             padding: 2px 8px; border-radius: 7px;
             backdrop-filter: blur(4px);
+        }
+
+        
+        /* ══ REC SECTION REVERT ══ */
+        .rec-section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; margin-bottom: 16px;
+        }
+        .btn-revert-rec {
+            display: none;
+            align-items: center; gap: 6px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            border: 1.5px solid var(--border);
+            background: var(--surface2);
+            color: var(--text2);
+            font-family: inherit; font-size: 0.72rem; font-weight: 700;
+            cursor: pointer;
+            transition: border-color 0.18s, color 0.18s, background 0.18s;
+            white-space: nowrap; flex-shrink: 0;
+        }
+        .btn-revert-rec:hover {
+            border-color: var(--accent); color: var(--accent);
+            background: rgba(26,86,219,0.06);
+        }
+        .btn-revert-rec.visible { display: flex; }
+        .rec-chip.moved-out {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: scale(0.7) !important;
+            transition: opacity 0.25s ease, transform 0.25s ease !important;
         }
 
         </style>
@@ -1997,16 +2028,17 @@ function renderRecommendations() {
     updateRevertButton();
 }
 
-function dropOnSlot(slotId, num, fromRecTray = false) {
+function dropOnSlot(slotId, num) {
     if (!scheduleData[slotId]) scheduleData[slotId] = [];
     if (!scheduleData[slotId].includes(num)) {
         scheduleData[slotId].push(num);
-        // If dragged from rec tray (either by dragstart from chip or touch), mark it
-        const recNums = recOriginalList || getRecommendations().map(r => r.num);
-        if (recNums.includes(num)) {
+        // Track if this territory was in the rec tray
+        if (!recOriginalList) recOriginalList = getRecommendations().map(r => r.num);
+        if (recOriginalList.includes(num)) {
             recMovedTerritories.add(num);
         }
-        saveSchedule();
+        saveScheduleToCloud();
+        renderSchedule(); // re-renders calendar + calls renderRecommendations → applies moved-out
         showToast(`✅ Territorio ${num} añadido.`);
     } else {
         showToast(`⚠️ El territorio ${num} ya está en ese día.`);
