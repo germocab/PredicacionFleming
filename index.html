@@ -192,7 +192,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
             position: fixed;
             inset: 0;
             background: var(--bg);
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             z-index: 1001;
@@ -1325,8 +1325,8 @@ let supabase = null;
 
 function getSupabaseConfig() {
     return {
-        url: localStorage.getItem('tp_sb_url') || '',
-        key: localStorage.getItem('tp_sb_key') || ''
+        url: 'https://sqhgwbchjeeizsnzyccd.supabase.co',
+        key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxaGd3YmNoamVlaXpzbnp5Y2NkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTUwOTMsImV4cCI6MjA4ODczMTA5M30.okAy9iEs5ZgomMU7mKFOsQtGvdHCvvhcXoX8q5zsO4k'
     };
 }
 
@@ -2674,16 +2674,10 @@ function escapeHtml(text) {
 (function bootstrap() {
     const { url, key } = getSupabaseConfig();
 
-    if (!url || !key) {
-        // Show config screen
-        document.getElementById('config-screen').style.display = 'flex';
-        document.getElementById('loading-overlay').classList.add('hidden');
-        return;
-    }
-
-    // Config exists, init Supabase
+    // Credentials are hardcoded — always skip config screen
+    document.getElementById('config-screen').style.display = 'none';
     initSupabase(url, key);
-    document.getElementById('config-screen').classList.add('hidden');
+    {
 
     // Check for existing session
     const session = localStorage.getItem('tp_session');
