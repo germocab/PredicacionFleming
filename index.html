@@ -804,7 +804,155 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         @media (max-width: 700px) { .week-grid { grid-template-columns: repeat(3, 1fr); } .nav-tab { padding: 8px 12px; font-size: 0.8rem; } }
         @media (max-width: 440px) { .week-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
-    </style>
+    
+        /* ══ ADD TERRITORY MODAL ══ */
+        #add-territory-overlay {
+            position: fixed; inset: 0; z-index: 600;
+            background: rgba(0,0,0,0.45);
+            backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+            padding: 24px;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        #add-territory-overlay.open {
+            opacity: 1; pointer-events: all;
+        }
+        #add-territory-modal {
+            background: var(--surface);
+            border-radius: 28px;
+            border: 1px solid var(--border);
+            box-shadow: 0 32px 80px rgba(0,0,0,0.28);
+            width: min(92vw, 860px);
+            max-height: 82vh;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            transform: scale(0.95) translateY(16px);
+            transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+        }
+        #add-territory-overlay.open #add-territory-modal {
+            transform: scale(1) translateY(0);
+        }
+        .atm-header {
+            padding: 22px 24px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 14px;
+            flex-shrink: 0;
+        }
+        .atm-title-block { flex: 1; }
+        .atm-title { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+        .atm-subtitle { font-size: 0.75rem; color: var(--text2); margin-top: 2px; }
+        .atm-close {
+            width: 34px; height: 34px; border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text2); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; transition: background 0.15s, color 0.15s;
+            flex-shrink: 0;
+        }
+        .atm-close:hover { background: var(--border); color: var(--text); }
+        .atm-toolbar {
+            padding: 12px 24px;
+            display: flex; gap: 10px; align-items: center;
+            flex-shrink: 0; border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .atm-search {
+            flex: 1; min-width: 160px;
+            height: 36px; border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            padding: 0 12px;
+            font-size: 0.82rem;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .atm-search:focus { border-color: var(--accent); }
+        .atm-filter-btn {
+            height: 36px; padding: 0 14px;
+            border-radius: 10px; border: 1px solid var(--border);
+            background: var(--surface2); color: var(--text2);
+            font-size: 0.75rem; font-weight: 600;
+            cursor: pointer; transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .atm-filter-btn.active {
+            background: var(--accent); color: white;
+            border-color: var(--accent);
+        }
+        .atm-grid-wrap {
+            flex: 1; overflow-y: auto;
+            padding: 20px 24px;
+        }
+        .atm-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 14px;
+        }
+        .atm-card {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: box-shadow 0.2s ease, transform 0.2s cubic-bezier(0.34,1.56,0.64,1), border-color 0.15s;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+        .atm-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-3px);
+            border-color: var(--accent);
+        }
+        .atm-card.already-assigned {
+            opacity: 0.4; pointer-events: none;
+        }
+        .atm-card-img {
+            width: 100%; aspect-ratio: 4/3;
+            background: var(--surface2);
+            position: relative; overflow: hidden;
+        }
+        .atm-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .atm-card-img-placeholder {
+            display: none; align-items: center; justify-content: center;
+            width: 100%; height: 100%; color: var(--text2); opacity: 0.35;
+            position: absolute; inset: 0;
+        }
+        .atm-card-img.no-img img { display: none; }
+        .atm-card-img.no-img .atm-card-img-placeholder { display: flex; }
+        .atm-card-body { padding: 10px 12px 12px; }
+        .atm-card-num {
+            font-family: 'DM Mono', monospace;
+            font-size: 1.15rem; font-weight: 700;
+            color: var(--text); line-height: 1;
+        }
+        .atm-card-date { font-size: 0.67rem; color: var(--text2); margin-top: 3px; }
+        .atm-card-days {
+            display: inline-block; margin-top: 6px;
+            font-size: 0.65rem; font-weight: 700;
+            padding: 2px 8px; border-radius: 6px;
+            text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .atm-card-days.never  { background: rgba(107,114,128,0.12); color: var(--text2); }
+        .atm-card-days.recent { background: rgba(239,68,68,0.12);  color: #ef4444; }
+        .atm-card-days.medium { background: rgba(245,158,11,0.12); color: #f59e0b; }
+        .atm-card-days.old    { background: rgba(16,185,129,0.12); color: #10b981; }
+        .atm-empty {
+            grid-column: 1/-1; text-align: center;
+            padding: 40px 0; color: var(--text2); font-size: 0.85rem;
+        }
+        .atm-num-badge {
+            position: absolute; top: 7px; left: 8px;
+            background: rgba(0,0,0,0.55); color: white;
+            font-family: 'DM Mono', monospace;
+            font-size: 0.8rem; font-weight: 700;
+            padding: 2px 8px; border-radius: 7px;
+            backdrop-filter: blur(4px);
+        }
+
+        </style>
 </head>
 <body>
 
@@ -2484,6 +2632,135 @@ function escapeHtml(text) {
     return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
 }
 
+
+// ══════════════════════════════════════════════════════
+//  ADD TERRITORY MODAL
+// ══════════════════════════════════════════════════════
+
+let atmSlotId    = null;
+let atmFilter    = 'all';
+
+function showAddTerritory(slotId) {
+    atmSlotId = slotId;
+    const overlay = document.getElementById('add-territory-overlay');
+
+    // Build subtitle with day info
+    const dayNames = { 'slot-0-0':'Lunes M', 'slot-1-0':'Martes M', 'slot-2-0':'Miércoles M',
+                       'slot-2-1':'Miércoles T', 'slot-3-0':'Jueves M', 'slot-4-0':'Viernes M',
+                       'slot-4-1':'Viernes T', 'slot-5-0':'Domingo M' };
+    document.getElementById('atm-subtitle').textContent =
+        'Agregando para: ' + (dayNames[slotId] || slotId);
+
+    // Reset search & filter
+    document.getElementById('atm-search').value = '';
+    setATMFilter('all', document.getElementById('atm-f-all'));
+
+    overlay.classList.add('open');
+    document.getElementById('atm-search').focus();
+}
+
+function closeAddTerritoryModal(e) {
+    if (e && e.target !== document.getElementById('add-territory-overlay')) return;
+    document.getElementById('add-territory-overlay').classList.remove('open');
+}
+
+function setATMFilter(filter, btn) {
+    atmFilter = filter;
+    document.querySelectorAll('.atm-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderATMGrid();
+}
+
+function renderATMGrid() {
+    const grid     = document.getElementById('atm-grid');
+    const query    = (document.getElementById('atm-search').value || '').toLowerCase().trim();
+    const assigned = scheduleData[atmSlotId] || [];
+
+    // All 36 territories
+    let list = Array.from({length: 36}, (_, i) => i + 1);
+
+    // Filter by search
+    if (query) list = list.filter(n => String(n).includes(query));
+
+    // Filter by availability
+    if (atmFilter !== 'all') {
+        list = list.filter(n => {
+            const rec  = records.find(r => parseInt(r.territorio) === n);
+            const days = rec ? daysBetween(rec.fecha) : null;
+            if (atmFilter === 'old')    return days === null || days > 90;
+            if (atmFilter === 'medium') return days !== null && days > 30 && days <= 90;
+            return true;
+        });
+    }
+
+    if (list.length === 0) {
+        grid.innerHTML = '<div class="atm-empty">No hay territorios con ese criterio</div>';
+        return;
+    }
+
+    // Sort: unassigned this week first, then by days since last visit (oldest first)
+    list.sort((a, b) => {
+        const aAssigned = Object.values(scheduleData).some(arr => arr.includes(a));
+        const bAssigned = Object.values(scheduleData).some(arr => arr.includes(b));
+        if (aAssigned !== bAssigned) return aAssigned ? 1 : -1;
+        const ra = records.find(r => parseInt(r.territorio) === a);
+        const rb = records.find(r => parseInt(r.territorio) === b);
+        const da = ra ? daysBetween(ra.fecha) : 9999;
+        const db = rb ? daysBetween(rb.fecha) : 9999;
+        return db - da;
+    });
+
+    grid.innerHTML = list.map(num => {
+        const rec   = records.find(r => parseInt(r.territorio) === num);
+        const days  = rec ? daysBetween(rec.fecha) : null;
+        let daysLabel, daysClass;
+        if (days === null)      { daysLabel = 'Sin registro'; daysClass = 'never'; }
+        else if (days <= 30)    { daysLabel = `Hace ${days}d`; daysClass = 'recent'; }
+        else if (days <= 90)    { daysLabel = `Hace ${days}d`; daysClass = 'medium'; }
+        else                    { daysLabel = `Hace ${days}d`; daysClass = 'old'; }
+
+        let dateStr = '–';
+        if (rec) { const [y,m,d] = rec.fecha.split('-'); dateStr = `${d}/${m}/${y}`; }
+
+        const alreadyInSlot = assigned.includes(num);
+        const inWeek = Object.values(scheduleData).some(arr => arr.includes(num));
+
+        return `<div class="atm-card${alreadyInSlot ? ' already-assigned' : ''}"
+                     onclick="addTerritoryFromModal(${num})">
+            <div class="atm-card-img" id="atm-img-${num}">
+                <img src="territorios/${num}.png" alt="Territorio ${num}"
+                     onerror="document.getElementById('atm-img-${num}').classList.add('no-img')">
+                <div class="atm-card-img-placeholder">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                </div>
+                <div class="atm-num-badge">${num}</div>
+                ${inWeek && !alreadyInSlot ? '<div style="position:absolute;top:7px;right:8px;background:rgba(245,158,11,0.9);color:white;font-size:0.6rem;font-weight:700;padding:2px 6px;border-radius:6px;backdrop-filter:blur(4px);">En semana</div>' : ''}
+            </div>
+            <div class="atm-card-body">
+                <div class="atm-card-num">T-${num}</div>
+                <div class="atm-card-date">${dateStr}</div>
+                <span class="atm-card-days ${daysClass}">${daysLabel}</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function addTerritoryFromModal(num) {
+    if (!atmSlotId) return;
+    if (!scheduleData[atmSlotId]) scheduleData[atmSlotId] = [];
+    if (scheduleData[atmSlotId].includes(num)) return;
+    scheduleData[atmSlotId].push(num);
+    saveScheduleToCloud();
+    renderSchedule();
+    renderATMGrid(); // refresh to show newly assigned
+    // Don't close — let user add multiple territories
+    showToast(`✅ Territorio ${num} agregado`);
+}
+
 // ══════════════════════════════════════════════════════
 //  BOOTSTRAP
 // ══════════════════════════════════════════════════════
@@ -2513,5 +2790,28 @@ function escapeHtml(text) {
     showLoginScreen();
 })();
 </script>
+
+<!-- ADD TERRITORY MODAL -->
+<div id="add-territory-overlay" onclick="closeAddTerritoryModal(event)">
+    <div id="add-territory-modal">
+        <div class="atm-header">
+            <div class="atm-title-block">
+                <div class="atm-title" id="atm-title">Asignar territorio</div>
+                <div class="atm-subtitle" id="atm-subtitle">Selecciona un territorio para agregar</div>
+            </div>
+            <button class="atm-close" onclick="document.getElementById('add-territory-overlay').classList.remove('open')">✕</button>
+        </div>
+        <div class="atm-toolbar">
+            <input type="text" class="atm-search" id="atm-search" placeholder="Buscar territorio..." oninput="renderATMGrid()">
+            <button class="atm-filter-btn active" id="atm-f-all"    onclick="setATMFilter('all',    this)">Todos</button>
+            <button class="atm-filter-btn"         id="atm-f-old"    onclick="setATMFilter('old',    this)">Disponibles</button>
+            <button class="atm-filter-btn"         id="atm-f-medium" onclick="setATMFilter('medium', this)">Recientes</button>
+        </div>
+        <div class="atm-grid-wrap">
+            <div class="atm-grid" id="atm-grid"></div>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
