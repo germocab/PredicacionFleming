@@ -1321,11 +1321,11 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 //  SUPABASE CONFIG
 // ══════════════════════════════════════════════════════
 
-let supabase = null;
+let sbClient = null;
 
 function getSupabaseConfig() {
     return {
-        url: 'https://sqhgwbchjeeizsnzyccd.supabase.co',
+        url: 'https://sqhgwbchjeeizsnzyccd.sbClient.co',
         key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxaGd3YmNoamVlaXpzbnp5Y2NkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTUwOTMsImV4cCI6MjA4ODczMTA5M30.okAy9iEs5ZgomMU7mKFOsQtGvdHCvvhcXoX8q5zsO4k'
     };
 }
@@ -1337,7 +1337,7 @@ function initSupabase(url, key) {
         alert('Error: La librería de Supabase no se cargó correctamente. Revisa tu conexión a internet y recarga la página.');
         return;
     }
-    supabase = lib.createClient(url, key);
+    sbClient = lib.createClient(url, key);
 }
 
 function saveSupabaseConfig() {
@@ -1386,7 +1386,7 @@ async function doLogin() {
     btn.disabled = true; btn.textContent = 'Verificando...';
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await sbClient
             .from('tp_users')
             .select('*')
             .eq('username', username)
@@ -1426,7 +1426,7 @@ function resetSupabaseConfig() {
     doLogout();
     localStorage.removeItem('tp_sb_url');
     localStorage.removeItem('tp_sb_key');
-    supabase = null;
+    sbClient = null;
     // Pre-fill existing values so user can just correct them
     const url = localStorage.getItem('tp_sb_url') || '';
     const key = localStorage.getItem('tp_sb_key') || '';
@@ -1498,7 +1498,7 @@ function closeManageUsers() {
 }
 
 async function loadUsersList() {
-    const { data } = await supabase.from('tp_users').select('*').order('created_at');
+    const { data } = await sbClient.from('tp_users').select('*').order('created_at');
     const list = document.getElementById('users-list');
     list.innerHTML = '';
     (data || []).forEach(u => {
@@ -1530,7 +1530,7 @@ async function createUser() {
 
     if (!username || !password) { errEl.textContent = 'Completa todos los campos.'; return; }
 
-    const { error } = await supabase.from('tp_users').insert({ username, password, role });
+    const { error } = await sbClient.from('tp_users').insert({ username, password, role });
     if (error) { errEl.textContent = error.message.includes('unique') ? 'Ese usuario ya existe.' : 'Error al crear usuario.'; return; }
 
     document.getElementById('new-username').value = '';
@@ -1541,7 +1541,7 @@ async function createUser() {
 
 async function deleteUser(id, name) {
     showConfirm(`¿Eliminar al usuario "${name}"?`, 'Esta acción no se puede deshacer.', async () => {
-        await supabase.from('tp_users').delete().eq('id', id);
+        await sbClient.from('tp_users').delete().eq('id', id);
         showToast('🗑 Usuario eliminado.');
         await loadUsersList();
     });
@@ -1619,9 +1619,9 @@ async function initApp() {
 // ══════════════════════════════════════════════════════
 
 function setupRealtimeSync() {
-    if (syncChannel) supabase.removeChannel(syncChannel);
+    if (syncChannel) sbClient.removeChannel(syncChannel);
 
-    syncChannel = supabase
+    syncChannel = sbClient
         .channel('tp_sync')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'tp_records' }, async () => {
             await loadRecords();
@@ -1656,10 +1656,10 @@ function setupRealtimeSync() {
 // ══════════════════════════════════════════════════════
 
 async function loadRecords() {
-    const { data } = await supabase.from('tp_records').select('*');
+    const { data } = await sbClient.from('tp_records').select('*');
     records = data || [];
     // Build historyLog from history table
-    const { data: hist } = await supabase.from('tp_history_log').select('*').order('fecha', { ascending: false });
+    const { data: hist } = await sbClient.from('tp_history_log').select('*').order('fecha', { ascending: false });
     historyLog = {};
     (hist || []).forEach(h => {
         if (!historyLog[h.territorio]) historyLog[h.territorio] = [];
@@ -1670,13 +1670,13 @@ async function loadRecords() {
 }
 
 async function loadSchedule() {
-    const { data } = await supabase.from('tp_schedule').select('*').eq('monday', selectedMonday || '');
+    const { data } = await sbClient.from('tp_schedule').select('*').eq('monday', selectedMonday || '');
     scheduleData = {};
     (data || []).forEach(row => { scheduleData[row.id] = row.territories; });
 }
 
 async function loadSelectedMonday() {
-    const { data } = await supabase.from('tp_settings').select('value').eq('key', 'selected_monday').single();
+    const { data } = await sbClient.from('tp_settings').select('value').eq('key', 'selected_monday').single();
     if (data) selectedMonday = data.value;
     if (document.getElementById('monday-picker')) document.getElementById('monday-picker').value = selectedMonday || '';
 }
@@ -1684,13 +1684,13 @@ async function loadSelectedMonday() {
 async function saveScheduleToCloud() {
     setSyncStatus('syncing', 'Guardando...');
     for (const [id, territories] of Object.entries(scheduleData)) {
-        await supabase.from('tp_schedule').upsert({ id, monday: selectedMonday, territories, updated_at: new Date().toISOString() });
+        await sbClient.from('tp_schedule').upsert({ id, monday: selectedMonday, territories, updated_at: new Date().toISOString() });
     }
     setSyncStatus('', 'Sincronizado');
 }
 
 async function saveMondayToCloud(monday) {
-    await supabase.from('tp_settings').upsert({ key: 'selected_monday', value: monday, updated_at: new Date().toISOString() });
+    await sbClient.from('tp_settings').upsert({ key: 'selected_monday', value: monday, updated_at: new Date().toISOString() });
 }
 
 // ══════════════════════════════════════════════════════
@@ -2072,7 +2072,7 @@ function saveSchedule() {
 function clearSchedule() {
     showConfirm('¿Reiniciar todos los territorios de esta semana?', 'Las fechas se mantienen.', async () => {
         // Delete from Supabase
-        await supabase.from('tp_schedule').delete().eq('monday', selectedMonday);
+        await sbClient.from('tp_schedule').delete().eq('monday', selectedMonday);
         scheduleData = {};
         renderSchedule();
         renderRecommendations();
@@ -2103,7 +2103,7 @@ async function confirmWeekToDatabase() {
 
             for (const entry of toRegister) {
                 // Upsert in tp_records (latest per territory)
-                await supabase.from('tp_records').upsert({
+                await sbClient.from('tp_records').upsert({
                     id: entry.territorio,
                     territorio: entry.territorio,
                     fecha: entry.fecha,
@@ -2112,7 +2112,7 @@ async function confirmWeekToDatabase() {
                 });
 
                 // Append to tp_history_log
-                await supabase.from('tp_history_log').upsert({
+                await sbClient.from('tp_history_log').upsert({
                     territorio: entry.territorio,
                     fecha: entry.fecha,
                     turno: entry.turno
@@ -2244,11 +2244,11 @@ async function saveRecord() {
 
     setSyncStatus('syncing', 'Guardando...');
 
-    await supabase.from('tp_records').upsert({
+    await sbClient.from('tp_records').upsert({
         id: n, territorio: n, fecha: f, turno: t, updated_at: new Date().toISOString()
     });
 
-    await supabase.from('tp_history_log').upsert(
+    await sbClient.from('tp_history_log').upsert(
         { territorio: n, fecha: f, turno: t },
         { onConflict: 'territorio,fecha,turno', ignoreDuplicates: true }
     );
@@ -2261,7 +2261,7 @@ async function saveRecord() {
 }
 
 async function deleteRecordFromHistory(id) {
-    await supabase.from('tp_records').delete().eq('id', id);
+    await sbClient.from('tp_records').delete().eq('id', id);
     await loadRecords();
     renderRecords();
     renderRecommendations();
@@ -2468,8 +2468,8 @@ async function importFile(input) {
 
             setSyncStatus('syncing', 'Importando...');
             for (const entry of incoming) {
-                await supabase.from('tp_records').upsert({ id: entry.territorio, ...entry, updated_at: new Date().toISOString() });
-                await supabase.from('tp_history_log').upsert({ territorio: entry.territorio, fecha: entry.fecha, turno: entry.turno }, { onConflict: 'territorio,fecha,turno', ignoreDuplicates: true });
+                await sbClient.from('tp_records').upsert({ id: entry.territorio, ...entry, updated_at: new Date().toISOString() });
+                await sbClient.from('tp_history_log').upsert({ territorio: entry.territorio, fecha: entry.fecha, turno: entry.turno }, { onConflict: 'territorio,fecha,turno', ignoreDuplicates: true });
             }
 
             await loadRecords();
@@ -2549,7 +2549,7 @@ let activeCommentDayName = null;
 
 async function loadCommentCounts() {
     if (!selectedMonday) return;
-    const { data } = await supabase
+    const { data } = await sbClient
         .from('tp_comments')
         .select('slot_id')
         .eq('monday', selectedMonday);
@@ -2575,7 +2575,7 @@ async function openCommentsPanel(slotId, monday, dayLabel) {
 
 async function loadCommentsForSlot(slotId, monday) {
     if (!slotId || !monday) return;
-    const { data } = await supabase
+    const { data } = await sbClient
         .from('tp_comments')
         .select('*')
         .eq('slot_id', slotId)
@@ -2630,7 +2630,7 @@ async function sendComment() {
     const btn = document.getElementById('btn-send-comment');
     btn.disabled = true;
 
-    const { error } = await supabase.from('tp_comments').insert({
+    const { error } = await sbClient.from('tp_comments').insert({
         slot_id: activeCommentSlotId,
         monday: activeCommentMonday,
         username: currentUser.username,
@@ -2651,7 +2651,7 @@ async function sendComment() {
 }
 
 async function deleteComment(id) {
-    await supabase.from('tp_comments').delete().eq('id', id);
+    await sbClient.from('tp_comments').delete().eq('id', id);
     await loadCommentsForSlot(activeCommentSlotId, activeCommentMonday);
     await loadCommentCounts();
     renderSchedule();
@@ -2674,10 +2674,8 @@ function escapeHtml(text) {
 (function bootstrap() {
     const { url, key } = getSupabaseConfig();
 
-    // Credentials are hardcoded — always skip config screen
     document.getElementById('config-screen').style.display = 'none';
     initSupabase(url, key);
-    {
 
     // Check for existing session
     const session = localStorage.getItem('tp_session');
