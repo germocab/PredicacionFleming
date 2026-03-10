@@ -1108,7 +1108,13 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
                 </div>
             </div>
             <div class="rec-section" id="rec-section-ui">
-                <div class="rec-section-title">Territorios sugeridos · arrastra al día que prefieras</div>
+                <div class="rec-section-header">
+                    <div class="rec-section-title">Territorios sugeridos · arrastra al día que prefieras</div>
+                    <button class="btn-revert-rec" id="btn-revert-rec" onclick="revertMovedTerritories()">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 2.55-6.36L3 9"/></svg>
+                        Revertir
+                    </button>
+                </div>
                 <div class="rec-row" id="rec-week-grid"></div>
             </div>
             <div class="week-grid" id="main-grid"></div>
@@ -1879,6 +1885,11 @@ function daysBetween(dateStr) {
 
 let dragTerritory = null;
 
+// Tracks which rec-tray territories have been dragged to the calendar this session
+let recMovedTerritories = new Set(); // set of territory numbers moved out of tray
+// Original rec list snapshot (populated on first render each week)
+let recOriginalList = null;
+
 function getRecommendations() {
     const states = [];
     for (let i = 1; i <= 36; i++) {
@@ -1889,11 +1900,43 @@ function getRecommendations() {
     return states.slice(0, 8);
 }
 
+function updateRevertButton() {
+    const btn = document.getElementById('btn-revert-rec');
+    if (!btn) return;
+    if (recMovedTerritories.size > 0) btn.classList.add('visible');
+    else btn.classList.remove('visible');
+}
+
+function revertMovedTerritories() {
+    if (recMovedTerritories.size === 0) return;
+    // Remove those territories from scheduleData
+    let changed = false;
+    for (const [slotId, arr] of Object.entries(scheduleData)) {
+        const before = arr.length;
+        scheduleData[slotId] = arr.filter(n => !recMovedTerritories.has(n));
+        if (scheduleData[slotId].length !== before) changed = true;
+    }
+    recMovedTerritories.clear();
+    updateRevertButton();
+    if (changed) {
+        saveScheduleToCloud();
+        renderSchedule(); // also calls renderRecommendations inside
+        showToast('↩️ Territorios devueltos a la bandeja.');
+    } else {
+        renderRecommendations();
+    }
+}
+
 function renderRecommendations() {
     const row = document.getElementById('rec-week-grid');
     row.innerHTML = '';
     const isAdmin = currentUser && currentUser.role === 'admin';
-    getRecommendations().forEach(rec => {
+
+    // Snapshot the original list on first render (or after revert)
+    const recList = getRecommendations();
+    if (!recOriginalList) recOriginalList = recList.map(r => r.num);
+
+    recList.forEach(rec => {
         const chip = document.createElement('div');
         chip.className = 'rec-chip';
         chip.draggable = isAdmin;
@@ -1905,6 +1948,11 @@ function renderRecommendations() {
             <span class="rdate">${subtitle}</span>
             ${isAdmin ? `<button class="add-to-slot-btn" onclick="openAddModal(${rec.num}, event)">+ Añadir</button>` : ''}
         `;
+
+        // Hide chips already moved to calendar this session
+        if (recMovedTerritories.has(rec.num)) {
+            chip.classList.add('moved-out');
+        }
 
         if (isAdmin) {
             chip.addEventListener('dragstart', e => {
@@ -1945,12 +1993,19 @@ function renderRecommendations() {
 
         row.appendChild(chip);
     });
+
+    updateRevertButton();
 }
 
-function dropOnSlot(slotId, num) {
+function dropOnSlot(slotId, num, fromRecTray = false) {
     if (!scheduleData[slotId]) scheduleData[slotId] = [];
     if (!scheduleData[slotId].includes(num)) {
         scheduleData[slotId].push(num);
+        // If dragged from rec tray (either by dragstart from chip or touch), mark it
+        const recNums = recOriginalList || getRecommendations().map(r => r.num);
+        if (recNums.includes(num)) {
+            recMovedTerritories.add(num);
+        }
         saveSchedule();
         showToast(`✅ Territorio ${num} añadido.`);
     } else {
@@ -2000,6 +2055,9 @@ function initSchedule() {
 async function updateWeek() {
     if (currentUser.role !== 'admin') return;
     selectedMonday = document.getElementById('monday-picker').value;
+    // Reset moved tracking for the new week
+    recMovedTerritories.clear();
+    recOriginalList = null;
     await saveMondayToCloud(selectedMonday);
     await loadSchedule();
     renderSchedule();
@@ -2081,6 +2139,8 @@ function clearSchedule() {
         // Delete from Supabase
         await sbClient.from('tp_schedule').delete().eq('monday', selectedMonday);
         scheduleData = {};
+        recMovedTerritories.clear();
+        recOriginalList = null;
         renderSchedule();
         renderRecommendations();
     });
