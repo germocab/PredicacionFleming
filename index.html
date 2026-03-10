@@ -858,21 +858,44 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
             flex-shrink: 0; border-bottom: 1px solid var(--border);
             flex-wrap: wrap;
         }
-        .atm-search {
-            flex: 1; min-width: 160px;
-            height: 36px; border-radius: 10px;
+        .atm-search-wrap {
+            display: flex; align-items: center; gap: 0;
             border: 1px solid var(--border);
+            border-radius: 999px;
             background: var(--surface2);
+            overflow: hidden;
+            transition: border-color 0.2s, width 0.3s;
+            width: 38px;
+        }
+        .atm-search-wrap.expanded {
+            border-color: var(--accent);
+            width: 200px;
+        }
+        .atm-search-icon-btn {
+            width: 36px; height: 36px; flex-shrink: 0;
+            border: none; background: transparent;
+            color: var(--text2); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: color 0.15s;
+        }
+        .atm-search-icon-btn:hover { color: var(--accent); }
+        .atm-search {
+            flex: 1; min-width: 0;
+            height: 36px; border: none;
+            background: transparent;
             color: var(--text);
-            padding: 0 12px;
+            padding: 0 12px 0 0;
             font-size: 0.82rem;
             outline: none;
-            transition: border-color 0.15s;
+            width: 0; opacity: 0;
+            transition: opacity 0.2s;
         }
-        .atm-search:focus { border-color: var(--accent); }
+        .atm-search-wrap.expanded .atm-search {
+            width: auto; opacity: 1;
+        }
         .atm-filter-btn {
-            height: 36px; padding: 0 14px;
-            border-radius: 10px; border: 1px solid var(--border);
+            height: 36px; padding: 0 16px;
+            border-radius: 999px; border: 1px solid var(--border);
             background: var(--surface2); color: var(--text2);
             font-size: 0.75rem; font-weight: 600;
             cursor: pointer; transition: all 0.15s;
@@ -881,6 +904,9 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         .atm-filter-btn.active {
             background: var(--accent); color: white;
             border-color: var(--accent);
+        }
+        .atm-filter-btn:hover:not(.active) {
+            border-color: var(--accent); color: var(--accent);
         }
         .atm-grid-wrap {
             flex: 1; overflow-y: auto;
@@ -1095,7 +1121,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
                     </button>
                     <button class="btn-export" onclick="exportImage()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        Compartir
+                        Compartir imagen
                     </button>
                 </div>
             </div>
@@ -2653,6 +2679,7 @@ function showAddTerritory(slotId) {
 
     // Reset search & filter
     document.getElementById('atm-search').value = '';
+    document.getElementById('atm-search-wrap').classList.remove('expanded');
     setATMFilter('all', document.getElementById('atm-f-all'));
 
     overlay.classList.add('open');
@@ -2662,6 +2689,18 @@ function showAddTerritory(slotId) {
 function closeAddTerritoryModal(e) {
     if (e && e.target !== document.getElementById('add-territory-overlay')) return;
     document.getElementById('add-territory-overlay').classList.remove('open');
+}
+
+function toggleATMSearch() {
+    const wrap  = document.getElementById('atm-search-wrap');
+    const input = document.getElementById('atm-search');
+    const isOpen = wrap.classList.toggle('expanded');
+    if (isOpen) {
+        setTimeout(() => input.focus(), 200);
+    } else {
+        input.value = '';
+        renderATMGrid();
+    }
 }
 
 function setATMFilter(filter, btn) {
@@ -2741,7 +2780,7 @@ function renderATMGrid() {
                 ${inWeek && !alreadyInSlot ? '<div style="position:absolute;top:7px;right:8px;background:rgba(245,158,11,0.9);color:white;font-size:0.6rem;font-weight:700;padding:2px 6px;border-radius:6px;backdrop-filter:blur(4px);">En semana</div>' : ''}
             </div>
             <div class="atm-card-body">
-                <div class="atm-card-num">T-${num}</div>
+                <div class="atm-card-num">${num}</div>
                 <div class="atm-card-date">${dateStr}</div>
                 <span class="atm-card-days ${daysClass}">${daysLabel}</span>
             </div>
@@ -2802,7 +2841,12 @@ function addTerritoryFromModal(num) {
             <button class="atm-close" onclick="document.getElementById('add-territory-overlay').classList.remove('open')">✕</button>
         </div>
         <div class="atm-toolbar">
-            <input type="text" class="atm-search" id="atm-search" placeholder="Buscar territorio..." oninput="renderATMGrid()">
+            <div class="atm-search-wrap" id="atm-search-wrap">
+                <button class="atm-search-icon-btn" id="atm-search-toggle" onclick="toggleATMSearch()" title="Buscar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg>
+                </button>
+                <input type="text" class="atm-search" id="atm-search" placeholder="Buscar..." oninput="renderATMGrid()">
+            </div>
             <button class="atm-filter-btn active" id="atm-f-all"    onclick="setATMFilter('all',    this)">Todos</button>
             <button class="atm-filter-btn"         id="atm-f-old"    onclick="setATMFilter('old',    this)">Disponibles</button>
             <button class="atm-filter-btn"         id="atm-f-medium" onclick="setATMFilter('medium', this)">Recientes</button>
