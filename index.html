@@ -1331,13 +1331,7 @@ function getSupabaseConfig() {
 }
 
 function initSupabase(url, key) {
-    // unpkg UMD build exposes window.supabase = { createClient }
-    const lib = window.supabase || window.Supabase;
-    if (!lib || !lib.createClient) {
-        alert('Error: La librería de Supabase no se cargó correctamente. Revisa tu conexión a internet y recarga la página.');
-        return;
-    }
-    sbClient = lib.createClient(url, key);
+    sbClient = supabase.createClient(url, key);
 }
 
 function saveSupabaseConfig() {
@@ -1348,12 +1342,6 @@ function saveSupabaseConfig() {
 
     if (!url || !key) { errEl.textContent = 'Completa ambos campos.'; return; }
     if (!url.startsWith('https://')) { errEl.textContent = 'La URL debe comenzar con https://'; return; }
-
-    const lib = window.supabase || window.Supabase;
-    if (!lib || !lib.createClient) {
-        errEl.textContent = 'La librería de Supabase no se cargó. Verifica tu conexión a internet y recarga la página.';
-        return;
-    }
 
     const cleanUrl = url.replace(/\/$/, '');
     localStorage.setItem('tp_sb_url', cleanUrl);
