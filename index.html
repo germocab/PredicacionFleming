@@ -6,7 +6,7 @@
     <title>Territorios Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
     <style>
@@ -1307,7 +1307,13 @@ function getSupabaseConfig() {
 }
 
 function initSupabase(url, key) {
-    supabase = window.supabase.createClient(url, key);
+    // unpkg UMD build exposes window.supabase = { createClient }
+    const lib = window.supabase || window.Supabase;
+    if (!lib || !lib.createClient) {
+        alert('Error: La librería de Supabase no se cargó correctamente. Revisa tu conexión a internet y recarga la página.');
+        return;
+    }
+    supabase = lib.createClient(url, key);
 }
 
 function saveSupabaseConfig() {
@@ -1319,7 +1325,13 @@ function saveSupabaseConfig() {
     if (!url || !key) { errEl.textContent = 'Completa ambos campos.'; return; }
     if (!url.startsWith('https://')) { errEl.textContent = 'La URL debe comenzar con https://'; return; }
 
-    const cleanUrl = url.replace(/\/\$/, '');
+    const lib = window.supabase || window.Supabase;
+    if (!lib || !lib.createClient) {
+        errEl.textContent = 'La librería de Supabase no se cargó. Verifica tu conexión a internet y recarga la página.';
+        return;
+    }
+
+    const cleanUrl = url.replace(/\/$/, '');
     localStorage.setItem('tp_sb_url', cleanUrl);
     localStorage.setItem('tp_sb_key', key);
     initSupabase(cleanUrl, key);
