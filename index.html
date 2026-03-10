@@ -322,15 +322,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 
         .user-pill:hover { background: var(--border); }
 
-        .user-avatar {
-            width: 26px; height: 26px;
-            border-radius: 999px;
-            background: var(--accent);
-            color: white;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.72rem;
-            font-weight: 700;
-        }
+        /* .user-avatar moved to AVATAR block */
 
         .user-name {
             font-size: 0.8rem;
@@ -582,7 +574,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         .date-box input[type="date"] { border: none; background: transparent; font-family: inherit; font-size: 0.9rem; font-weight: 600; color: var(--text); outline: none; cursor: pointer; }
 
         .rec-section { background: var(--surface); border-radius: 28px; border: 1px solid var(--border); padding: 20px 24px; margin-bottom: 36px; box-shadow: var(--shadow); }
-        .rec-section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); display: flex; align-items: center; gap: 8px; flex: 1; }
+        .rec-section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
         .rec-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
         .rec-row { display: flex; gap: 12px; flex-wrap: wrap; }
 
@@ -979,35 +971,104 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         }
 
         
-        /* ══ REC SECTION REVERT ══ */
-        .rec-section-header {
-            display: flex; align-items: center; justify-content: space-between;
-            gap: 12px; margin-bottom: 16px;
+        /* ══ AVATAR ══ */
+        .user-avatar-REPLACED {
+            width: 26px; height: 26px; border-radius: 999px;
+            background: var(--accent); color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.72rem; font-weight: 700;
+            overflow: hidden; flex-shrink: 0;
         }
-        .btn-revert-rec {
-            display: none;
-            align-items: center; gap: 6px;
-            padding: 6px 14px;
-            border-radius: 999px;
-            border: 1.5px solid var(--border);
+        .user-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+
+        /* ══ PROFILE MODAL ══ */
+        #profile-modal-overlay {
+            position: fixed; inset: 0; z-index: 700;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center; padding: 24px;
+            opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+        }
+        #profile-modal-overlay.open { opacity: 1; pointer-events: all; }
+        #profile-modal {
+            background: var(--surface); border-radius: 28px;
+            border: 1px solid var(--border);
+            box-shadow: 0 40px 100px rgba(0,0,0,0.3);
+            width: min(92vw, 390px); overflow: hidden;
+            transform: scale(0.93) translateY(20px);
+            transition: transform 0.32s cubic-bezier(0.34,1.2,0.64,1);
+        }
+        #profile-modal-overlay.open #profile-modal { transform: scale(1) translateY(0); }
+
+        .pm-hero {
+            height: 100px; position: relative;
+            background: linear-gradient(135deg, var(--accent) 0%, #6366f1 100%);
+            overflow: hidden;
+        }
+        .pm-hero-dots {
+            position: absolute; inset: 0; opacity: 0.18;
+            background-image: radial-gradient(circle, white 1px, transparent 1px);
+            background-size: 22px 22px;
+        }
+        .pm-close {
+            position: absolute; top: 10px; right: 10px;
+            width: 28px; height: 28px; border-radius: 999px;
+            border: none; background: rgba(255,255,255,0.22);
+            color: white; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            backdrop-filter: blur(4px); transition: background 0.15s;
+        }
+        .pm-close:hover { background: rgba(255,255,255,0.38); }
+
+        .pm-avatar-anchor {
+            position: absolute; bottom: -38px; left: 24px;
+        }
+        .pm-big-avatar {
+            width: 76px; height: 76px; border-radius: 999px;
+            border: 3.5px solid var(--surface);
+            background: var(--accent); color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.7rem; font-weight: 800; overflow: hidden;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.22);
+            cursor: pointer; position: relative;
+        }
+        .pm-big-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+        .pm-avatar-hover {
+            position: absolute; inset: 0; border-radius: 999px;
+            background: rgba(0,0,0,0.46);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.18s;
+        }
+        .pm-big-avatar:hover .pm-avatar-hover { opacity: 1; }
+
+        .pm-body { padding: 50px 24px 24px; }
+        .pm-name { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+        .pm-role-row { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+        .pm-divider { height: 1px; background: var(--border); margin: 18px 0; }
+        .pm-label {
+            font-size: 0.63rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.9px; color: var(--text2); margin-bottom: 10px;
+        }
+        .pm-dropzone {
+            border: 2px dashed var(--border); border-radius: 14px;
+            padding: 20px 16px; text-align: center; cursor: pointer;
             background: var(--surface2);
-            color: var(--text2);
-            font-family: inherit; font-size: 0.72rem; font-weight: 700;
-            cursor: pointer;
-            transition: border-color 0.18s, color 0.18s, background 0.18s;
-            white-space: nowrap; flex-shrink: 0;
+            transition: border-color 0.18s, background 0.18s;
         }
-        .btn-revert-rec:hover {
-            border-color: var(--accent); color: var(--accent);
-            background: rgba(26,86,219,0.06);
+        .pm-dropzone:hover, .pm-dropzone.drag { border-color: var(--accent); background: rgba(26,86,219,0.05); }
+        .pm-dz-icon { color: var(--text2); margin-bottom: 6px; }
+        .pm-dz-text { font-size: 0.82rem; font-weight: 600; color: var(--text2); }
+        .pm-dz-hint { font-size: 0.7rem; color: var(--text2); opacity: 0.65; margin-top: 2px; }
+        .pm-progress { height: 3px; border-radius: 999px; background: var(--border); margin-top: 12px; overflow: hidden; display: none; }
+        .pm-progress-bar { height: 100%; border-radius: 999px; background: var(--accent); width: 0; transition: width 0.3s; }
+        .pm-remove {
+            width: 100%; margin-top: 10px; padding: 10px;
+            border-radius: 12px; border: 1px solid var(--border);
+            background: transparent; color: #ef4444;
+            font-family: inherit; font-size: 0.82rem; font-weight: 600;
+            cursor: pointer; transition: background 0.15s, border-color 0.15s; display: none;
         }
-        .btn-revert-rec.visible { display: flex; }
-        .rec-chip.moved-out {
-            opacity: 0 !important;
-            pointer-events: none !important;
-            transform: scale(0.7) !important;
-            transition: opacity 0.25s ease, transform 0.25s ease !important;
-        }
+        .pm-remove:hover { background: rgba(239,68,68,0.07); border-color: #ef4444; }
+        .pm-remove.show { display: block; }
 
         </style>
 </head>
@@ -1082,6 +1143,10 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         Sincronizado
     </div>
     <div class="dropdown-sep"></div>
+    <button class="dropdown-item" onclick="openProfileModal()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        Mi perfil
+    </button>
     <button class="dropdown-item" id="dd-manage-users" onclick="openManageUsers()" style="display:none;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Gestionar usuarios
@@ -1116,7 +1181,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         </div>
         <div class="nav-right">
                 <div class="user-pill" onclick="toggleUserDropdown()">
-                <div class="user-avatar" id="nav-avatar">?</div>
+                <div class="user-avatar" id="nav-avatar"><span id="nav-avatar-initial">?</span></div>
                 <span class="user-name" id="nav-username">—</span>
                 <span class="role-badge" id="nav-role">—</span>
             </div>
@@ -1139,13 +1204,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
                 </div>
             </div>
             <div class="rec-section" id="rec-section-ui">
-                <div class="rec-section-header">
-                    <div class="rec-section-title">Territorios sugeridos · arrastra al día que prefieras</div>
-                    <button class="btn-revert-rec" id="btn-revert-rec" onclick="revertMovedTerritories()">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 2.55-6.36L3 9"/></svg>
-                        Revertir
-                    </button>
-                </div>
+                <div class="rec-section-title">Territorios sugeridos · arrastra al día que prefieras</div>
                 <div class="rec-row" id="rec-week-grid"></div>
             </div>
             <div class="week-grid" id="main-grid"></div>
@@ -1449,7 +1508,7 @@ async function doLogin() {
             return;
         }
 
-        currentUser = { id: data.id, username: data.username, role: data.role };
+        currentUser = { id: data.id, username: data.username, role: data.role, avatar_url: data.avatar_url || null };
         localStorage.setItem('tp_session', JSON.stringify(currentUser));
         document.getElementById('login-screen').classList.add('hidden');
         await initApp();
@@ -1507,7 +1566,7 @@ function applyUserPermissions() {
 
     // Nav display
     document.getElementById('nav-username').textContent = currentUser.username;
-    document.getElementById('nav-avatar').textContent = currentUser.username.charAt(0).toUpperCase();
+    setAvatarEl(document.getElementById('nav-avatar'), currentUser.username, currentUser.avatar_url);
     const roleBadge = document.getElementById('nav-role');
     roleBadge.textContent = isAdmin ? 'Admin' : 'Viewer';
     roleBadge.className = `role-badge ${currentUser.role}`;
@@ -1557,7 +1616,7 @@ async function loadUsersList() {
         const isSelf = u.id === currentUser.id;
         row.innerHTML = `
             <div class="user-row-info">
-                <div class="user-avatar" style="width:32px;height:32px;font-size:0.8rem;">${u.username.charAt(0).toUpperCase()}</div>
+                <div class="user-avatar" style="width:32px;height:32px;font-size:0.8rem;" data-uid="${u.id}"></div>
                 <div>
                     <div class="user-row-name">${u.username}${isSelf ? ' (tú)' : ''}</div>
                     <div class="user-row-role">${u.role === 'admin' ? 'Admin' : 'Viewer'}</div>
@@ -1568,6 +1627,8 @@ async function loadUsersList() {
             </div>
         `;
         list.appendChild(row);
+        // Populate avatar after setting innerHTML
+        setAvatarEl(row.querySelector('.user-avatar[data-uid]'), u.username, u.avatar_url || null);
     });
 }
 
@@ -1625,6 +1686,150 @@ function setSyncStatus(status, msg) {
     if (!dot) return;
     dot.className = `sync-dot ${status}`;
     txt.innerHTML = `<span class="sync-dot ${status}"></span> ${msg}`;
+}
+
+
+// ══ AVATAR HELPERS ══
+function setAvatarEl(el, username, avatarUrl) {
+    if (!el) return;
+    if (avatarUrl) {
+        el.innerHTML = `<img src="${avatarUrl}" alt="${username}">`;
+    } else {
+        el.innerHTML = `<span>${username.charAt(0).toUpperCase()}</span>`;
+    }
+}
+
+function refreshNavAvatar() {
+    setAvatarEl(document.getElementById('nav-avatar'), currentUser.username, currentUser.avatar_url);
+    // Also refresh in manage-users list if open
+    const row = document.querySelector(`.user-avatar[data-uid="${currentUser.id}"]`);
+    if (row) setAvatarEl(row, currentUser.username, currentUser.avatar_url);
+}
+
+// ══ PROFILE MODAL ══
+function openProfileModal() {
+    closeUserDropdown();
+    const overlay = document.getElementById('profile-modal-overlay');
+    // Fill data
+    document.getElementById('pm-username').textContent = currentUser.username;
+    const badge = document.getElementById('pm-role-badge');
+    badge.textContent = currentUser.role === 'admin' ? 'Admin' : 'Viewer';
+    badge.className = `role-badge ${currentUser.role}`;
+    // Big avatar
+    setAvatarEl(document.getElementById('pm-big-avatar'), currentUser.username, currentUser.avatar_url);
+    // Always re-add the hover overlay after setAvatarEl (it gets wiped by innerHTML)
+    const bigAv = document.getElementById('pm-big-avatar');
+    if (!bigAv.querySelector('.pm-avatar-hover')) {
+        const hov = document.createElement('div');
+        hov.className = 'pm-avatar-hover';
+        hov.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+        bigAv.appendChild(hov);
+    }
+    // Remove btn
+    document.getElementById('pm-remove-btn').classList.toggle('show', !!currentUser.avatar_url);
+    overlay.classList.add('open');
+}
+
+function closeProfileModal(e) {
+    if (e && e.target !== document.getElementById('profile-modal-overlay')) return;
+    document.getElementById('profile-modal-overlay').classList.remove('open');
+}
+function closeProfileModalDirect() {
+    document.getElementById('profile-modal-overlay').classList.remove('open');
+}
+
+function handleProfileDrop(e) {
+    e.preventDefault();
+    document.getElementById('pm-dropzone').classList.remove('drag');
+    const file = e.dataTransfer.files[0];
+    if (file) uploadProfilePhoto(file);
+}
+function handleProfileFileSelect(input) {
+    const file = input.files[0];
+    if (file) uploadProfilePhoto(file);
+    input.value = '';
+}
+
+async function uploadProfilePhoto(file) {
+    if (!file.type.startsWith('image/')) { showToast('⚠️ Solo se permiten imágenes.'); return; }
+    if (file.size > 2 * 1024 * 1024) { showToast('⚠️ La imagen no puede superar 2 MB.'); return; }
+
+    const progressWrap = document.getElementById('pm-progress');
+    const progressBar  = document.getElementById('pm-progress-bar');
+    progressWrap.style.display = 'block';
+    progressBar.style.width = '20%';
+
+    try {
+        const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
+        const path = `avatars/${currentUser.id}.${ext}`;
+
+        progressBar.style.width = '50%';
+
+        // Upload to Supabase Storage (bucket: avatars, public)
+        const { error: upErr } = await sbClient.storage
+            .from('avatars')
+            .upload(path, file, { upsert: true, contentType: file.type });
+
+        if (upErr) throw upErr;
+        progressBar.style.width = '75%';
+
+        // Get public URL
+        const { data: urlData } = sbClient.storage.from('avatars').getPublicUrl(path);
+        // Bust cache
+        const avatarUrl = urlData.publicUrl + '?t=' + Date.now();
+
+        // Save to tp_users
+        const { error: dbErr } = await sbClient.from('tp_users')
+            .update({ avatar_url: avatarUrl })
+            .eq('id', currentUser.id);
+        if (dbErr) throw dbErr;
+
+        progressBar.style.width = '100%';
+
+        // Update in-memory state
+        currentUser.avatar_url = avatarUrl;
+        localStorage.setItem('tp_session', JSON.stringify(currentUser));
+
+        setTimeout(() => {
+            progressWrap.style.display = 'none';
+            progressBar.style.width = '0';
+        }, 600);
+
+        refreshNavAvatar();
+        openProfileModal(); // refresh modal avatar
+        document.getElementById('pm-remove-btn').classList.add('show');
+        showToast('✅ Foto de perfil actualizada.');
+
+    } catch (err) {
+        progressWrap.style.display = 'none';
+        progressBar.style.width = '0';
+        console.error('Avatar upload error:', err);
+        showToast('❌ Error al subir la foto: ' + (err.message || err));
+    }
+}
+
+async function removeProfilePhoto() {
+    try {
+        // Try to remove file from storage (best effort)
+        for (const ext of ['jpg','jpeg','png','webp']) {
+            await sbClient.storage.from('avatars').remove([`avatars/${currentUser.id}.${ext}`]);
+        }
+        // Clear in DB
+        const { error } = await sbClient.from('tp_users')
+            .update({ avatar_url: null })
+            .eq('id', currentUser.id);
+        if (error) throw error;
+
+        currentUser.avatar_url = null;
+        localStorage.setItem('tp_session', JSON.stringify(currentUser));
+        refreshNavAvatar();
+        document.getElementById('pm-remove-btn').classList.remove('show');
+        openProfileModal(); // refresh modal
+        showToast('✅ Foto eliminada.');
+    } catch (err) {
+        showToast('❌ Error al eliminar la foto.');
+        console.error(err);
+    }
 }
 
 async function initApp() {
@@ -1916,11 +2121,6 @@ function daysBetween(dateStr) {
 
 let dragTerritory = null;
 
-// Tracks which rec-tray territories have been dragged to the calendar this session
-let recMovedTerritories = new Set(); // set of territory numbers moved out of tray
-// Original rec list snapshot (populated on first render each week)
-let recOriginalList = null;
-
 function getRecommendations() {
     const states = [];
     for (let i = 1; i <= 36; i++) {
@@ -1931,43 +2131,11 @@ function getRecommendations() {
     return states.slice(0, 8);
 }
 
-function updateRevertButton() {
-    const btn = document.getElementById('btn-revert-rec');
-    if (!btn) return;
-    if (recMovedTerritories.size > 0) btn.classList.add('visible');
-    else btn.classList.remove('visible');
-}
-
-function revertMovedTerritories() {
-    if (recMovedTerritories.size === 0) return;
-    // Remove those territories from scheduleData
-    let changed = false;
-    for (const [slotId, arr] of Object.entries(scheduleData)) {
-        const before = arr.length;
-        scheduleData[slotId] = arr.filter(n => !recMovedTerritories.has(n));
-        if (scheduleData[slotId].length !== before) changed = true;
-    }
-    recMovedTerritories.clear();
-    updateRevertButton();
-    if (changed) {
-        saveScheduleToCloud();
-        renderSchedule(); // also calls renderRecommendations inside
-        showToast('↩️ Territorios devueltos a la bandeja.');
-    } else {
-        renderRecommendations();
-    }
-}
-
 function renderRecommendations() {
     const row = document.getElementById('rec-week-grid');
     row.innerHTML = '';
     const isAdmin = currentUser && currentUser.role === 'admin';
-
-    // Snapshot the original list on first render (or after revert)
-    const recList = getRecommendations();
-    if (!recOriginalList) recOriginalList = recList.map(r => r.num);
-
-    recList.forEach(rec => {
+    getRecommendations().forEach(rec => {
         const chip = document.createElement('div');
         chip.className = 'rec-chip';
         chip.draggable = isAdmin;
@@ -1979,11 +2147,6 @@ function renderRecommendations() {
             <span class="rdate">${subtitle}</span>
             ${isAdmin ? `<button class="add-to-slot-btn" onclick="openAddModal(${rec.num}, event)">+ Añadir</button>` : ''}
         `;
-
-        // Hide chips already moved to calendar this session
-        if (recMovedTerritories.has(rec.num)) {
-            chip.classList.add('moved-out');
-        }
 
         if (isAdmin) {
             chip.addEventListener('dragstart', e => {
@@ -2024,21 +2187,13 @@ function renderRecommendations() {
 
         row.appendChild(chip);
     });
-
-    updateRevertButton();
 }
 
 function dropOnSlot(slotId, num) {
     if (!scheduleData[slotId]) scheduleData[slotId] = [];
     if (!scheduleData[slotId].includes(num)) {
         scheduleData[slotId].push(num);
-        // Track if this territory was in the rec tray
-        if (!recOriginalList) recOriginalList = getRecommendations().map(r => r.num);
-        if (recOriginalList.includes(num)) {
-            recMovedTerritories.add(num);
-        }
-        saveScheduleToCloud();
-        renderSchedule(); // re-renders calendar + calls renderRecommendations → applies moved-out
+        saveSchedule();
         showToast(`✅ Territorio ${num} añadido.`);
     } else {
         showToast(`⚠️ El territorio ${num} ya está en ese día.`);
@@ -2087,9 +2242,6 @@ function initSchedule() {
 async function updateWeek() {
     if (currentUser.role !== 'admin') return;
     selectedMonday = document.getElementById('monday-picker').value;
-    // Reset moved tracking for the new week
-    recMovedTerritories.clear();
-    recOriginalList = null;
     await saveMondayToCloud(selectedMonday);
     await loadSchedule();
     renderSchedule();
@@ -2171,8 +2323,6 @@ function clearSchedule() {
         // Delete from Supabase
         await sbClient.from('tp_schedule').delete().eq('monday', selectedMonday);
         scheduleData = {};
-        recMovedTerritories.clear();
-        recOriginalList = null;
         renderSchedule();
         renderRecommendations();
     });
@@ -2896,7 +3046,7 @@ function addTerritoryFromModal(num) {
 //  BOOTSTRAP
 // ══════════════════════════════════════════════════════
 
-(function bootstrap() {
+(async function bootstrap() {
     const { url, key } = getSupabaseConfig();
 
     document.getElementById('config-screen').style.display = 'none';
@@ -2907,6 +3057,9 @@ function addTerritoryFromModal(num) {
     if (session) {
         try {
             currentUser = JSON.parse(session);
+            // Refresh avatar_url from DB (may have changed on another device)
+            const { data: freshUser } = await sbClient.from('tp_users').select('avatar_url').eq('id', currentUser.id).maybeSingle();
+            if (freshUser) currentUser.avatar_url = freshUser.avatar_url || null;
             document.getElementById('loading-overlay').classList.remove('hidden');
             document.getElementById('login-screen').classList.add('hidden');
             initApp();
@@ -2945,6 +3098,51 @@ function addTerritoryFromModal(num) {
         </div>
         <div class="atm-grid-wrap">
             <div class="atm-grid" id="atm-grid"></div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     PROFILE MODAL
+══════════════════════════════════════ -->
+<div id="profile-modal-overlay" onclick="closeProfileModal(event)">
+    <div id="profile-modal">
+        <div class="pm-hero">
+            <div class="pm-hero-dots"></div>
+            <button class="pm-close" onclick="closeProfileModalDirect()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <div class="pm-avatar-anchor">
+                <div class="pm-big-avatar" id="pm-big-avatar" onclick="document.getElementById('pm-file-input').click()">
+                    <span id="pm-avatar-initial">?</span>
+                    <div class="pm-avatar-hover">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="pm-body">
+            <div class="pm-name" id="pm-username">—</div>
+            <div class="pm-role-row">
+                <span class="role-badge" id="pm-role-badge">—</span>
+            </div>
+            <div class="pm-divider"></div>
+            <div class="pm-label">Foto de perfil</div>
+            <div class="pm-dropzone" id="pm-dropzone"
+                ondragover="event.preventDefault(); this.classList.add('drag')"
+                ondragleave="this.classList.remove('drag')"
+                ondrop="handleProfileDrop(event)"
+                onclick="document.getElementById('pm-file-input').click()">
+                <div class="pm-dz-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <div class="pm-dz-text">Subir foto</div>
+                <div class="pm-dz-hint">JPG, PNG o WEBP · máx 2 MB</div>
+                <div class="pm-progress" id="pm-progress"><div class="pm-progress-bar" id="pm-progress-bar"></div></div>
+            </div>
+            <input type="file" id="pm-file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleProfileFileSelect(this)">
+            <button class="pm-remove" id="pm-remove-btn" onclick="removeProfilePhoto()">Eliminar foto de perfil</button>
         </div>
     </div>
 </div>
