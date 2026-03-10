@@ -1870,12 +1870,13 @@ function renderSchedule() {
             ).join('');
 
             card.innerHTML = `
-                <div class="card-header">
-                    <span class="card-day">${day.name} <span class="card-date">${dateStr}</span></span>
-                    <span class="shift-badge ${shiftClass}">${shiftText}</span>
+                <div class="day-header">
+                    <div class="day-name">${day.name}</div>
+                    <div class="day-date">${dateStr}</div>
+                    <span class="shift-label ${shiftClass}">${shiftText}</span>
                 </div>
-                <div class="card-badges" id="badges-${id}">${badges}</div>
-                ${isAdmin ? `<button class="btn-add-territory admin-only" onclick="showAddTerritory('${id}')">+ Agregar</button>` : ''}
+                <div class="t-list" id="badges-${id}">${badges}</div>
+                ${isAdmin ? `<button class="btn-add admin-only" onclick="showAddTerritory('${id}')">+</button>` : ''}
             `;
 
             territories.forEach((n, i) => {
