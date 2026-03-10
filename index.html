@@ -1325,7 +1325,7 @@ let sbClient = null;
 
 function getSupabaseConfig() {
     return {
-        url: 'https://sqhgwbchjeeizsnzyccd.sbClient.co',
+        url: 'https://sqhgwbchjeeizsnzyccd.supabase.co',
         key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxaGd3YmNoamVlaXpzbnp5Y2NkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTUwOTMsImV4cCI6MjA4ODczMTA5M30.okAy9iEs5ZgomMU7mKFOsQtGvdHCvvhcXoX8q5zsO4k'
     };
 }
@@ -1380,16 +1380,18 @@ async function doLogin() {
             return;
         }
 
+        // Use select with maybeSingle instead of single to avoid error on no match
         const { data, error } = await sbClient
             .from('tp_users')
             .select('*')
             .eq('username', username)
             .eq('password', password)
-            .single();
+            .maybeSingle();
+
+        console.log('Login result → data:', data, '| error:', error);
 
         if (error) {
-            // Show exact error so we can debug
-            errEl.textContent = 'Error: ' + (error.message || error.code || JSON.stringify(error));
+            errEl.textContent = 'Error de conexión: ' + (error.message || error.code || JSON.stringify(error));
             btn.disabled = false; btn.textContent = 'Entrar';
             return;
         }
