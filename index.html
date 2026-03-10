@@ -6,6 +6,7 @@
     <title>Territorios Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
     <style>
@@ -54,7 +55,447 @@
             transition: background 0.3s, color 0.3s;
         }
 
-        /* ── NAV ── */
+        /* ══════════════════════════════════════
+           LOGIN SCREEN
+        ══════════════════════════════════════ */
+        #login-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        #login-screen.hidden { display: none; }
+
+        .login-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 32px;
+            padding: 40px 36px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: var(--shadow-lg);
+            animation: popIn 0.35s cubic-bezier(0.34,1.2,0.64,1) both;
+        }
+
+        .login-logo {
+            width: 48px; height: 48px;
+            background: var(--accent);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .login-logo svg { stroke: white; }
+
+        .login-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+
+        .login-sub {
+            color: var(--text2);
+            font-size: 0.85rem;
+            margin-bottom: 28px;
+        }
+
+        .login-field {
+            margin-bottom: 14px;
+        }
+
+        .login-field label {
+            display: block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text2);
+            margin-bottom: 7px;
+        }
+
+        .login-field input {
+            width: 100%;
+            padding: 13px 16px;
+            border-radius: 12px;
+            border: 1.5px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .login-field input:focus { border-color: var(--accent); }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            border-radius: 999px;
+            border: none;
+            background: var(--accent);
+            color: white;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: opacity 0.15s, transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        .btn-login:hover { opacity: 0.88; transform: translateY(-1px); }
+        .btn-login:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .login-error {
+            color: var(--danger);
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 10px;
+            text-align: center;
+            min-height: 20px;
+        }
+
+        /* ══════════════════════════════════════
+           CONFIG SCREEN (Supabase setup)
+        ══════════════════════════════════════ */
+        #config-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+            padding: 20px;
+        }
+
+        #config-screen.hidden { display: none; }
+
+        .config-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 32px;
+            padding: 36px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .config-step {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(26,86,219,0.1);
+            color: var(--accent);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            margin-bottom: 16px;
+        }
+
+        .config-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .config-desc {
+            color: var(--text2);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .config-field {
+            margin-bottom: 14px;
+        }
+
+        .config-field label {
+            display: block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text2);
+            margin-bottom: 7px;
+        }
+
+        .config-field input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 11px;
+            border: 1.5px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            font-family: 'DM Mono', monospace;
+            font-size: 0.82rem;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .config-field input:focus { border-color: var(--accent); }
+
+        .config-hint {
+            font-size: 0.72rem;
+            color: var(--text2);
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+
+        .config-hint a { color: var(--accent); }
+
+        .btn-config {
+            width: 100%;
+            padding: 14px;
+            border-radius: 999px;
+            border: none;
+            background: var(--accent);
+            color: white;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: opacity 0.15s;
+        }
+
+        .btn-config:hover { opacity: 0.88; }
+        .config-error { color: var(--danger); font-size: 0.8rem; font-weight: 600; margin-top: 10px; text-align: center; min-height: 20px; }
+
+        /* ══════════════════════════════════════
+           SYNC INDICATOR
+        ══════════════════════════════════════ */
+        .sync-dot {
+            width: 8px; height: 8px;
+            border-radius: 999px;
+            background: #16a34a;
+            display: inline-block;
+            transition: background 0.3s;
+        }
+
+        .sync-dot.syncing { background: var(--afternoon); animation: pulse-dot 1s infinite; }
+        .sync-dot.error   { background: var(--danger); }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ══════════════════════════════════════
+           USER PILL in NAV
+        ══════════════════════════════════════ */
+        .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 14px 5px 8px;
+            border-radius: 999px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .user-pill:hover { background: var(--border); }
+
+        .user-avatar {
+            width: 26px; height: 26px;
+            border-radius: 999px;
+            background: var(--accent);
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .user-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .role-badge {
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 2px 7px;
+            border-radius: 999px;
+        }
+
+        .role-badge.admin   { background: rgba(26,86,219,0.12); color: var(--accent); }
+        .role-badge.viewer  { background: rgba(107,114,128,0.12); color: var(--text2); }
+
+        /* User dropdown */
+        .user-dropdown {
+            position: fixed;
+            top: 72px;
+            right: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 8px;
+            box-shadow: var(--shadow-lg);
+            z-index: 300;
+            display: none;
+            min-width: 180px;
+            animation: popIn 0.2s cubic-bezier(0.34,1.2,0.64,1) both;
+        }
+
+        .user-dropdown.open { display: block; }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 11px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text);
+            transition: background 0.15s;
+            border: none;
+            background: none;
+            width: 100%;
+            font-family: inherit;
+        }
+
+        .dropdown-item:hover { background: var(--surface2); }
+        .dropdown-item.danger { color: var(--danger); }
+        .dropdown-item.danger:hover { background: rgba(239,68,68,0.08); }
+
+        .dropdown-sep {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0;
+        }
+
+        /* ══════════════════════════════════════
+           MANAGE USERS MODAL (admin only)
+        ══════════════════════════════════════ */
+        .users-modal-box {
+            width: 460px;
+            max-width: 95vw;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .users-list { flex: 1; overflow-y: auto; margin-bottom: 20px; }
+
+        .user-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-radius: 14px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+            transition: background 0.15s;
+        }
+
+        .user-row:hover { background: var(--border); }
+
+        .user-row-info { display: flex; align-items: center; gap: 10px; }
+
+        .user-row-name { font-size: 0.9rem; font-weight: 600; }
+        .user-row-role { font-size: 0.72rem; color: var(--text2); }
+
+        .user-row-actions { display: flex; gap: 6px; }
+
+        .btn-user-del {
+            width: 28px; height: 28px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--danger);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .btn-user-del:hover { background: var(--danger); color: white; border-color: var(--danger); }
+
+        .new-user-form { border-top: 1px solid var(--border); padding-top: 16px; }
+
+        .new-user-form .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .new-user-form input,
+        .new-user-form select {
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.88rem;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .new-user-form input:focus,
+        .new-user-form select:focus { border-color: var(--accent); }
+
+        /* ══════════════════════════════════════
+           VIEWER LOCK OVERLAY
+        ══════════════════════════════════════ */
+        .viewer-locked { opacity: 0.4; pointer-events: none; cursor: not-allowed; }
+        .viewer-hidden { display: none !important; }
+
+        /* ══════════════════════════════════════
+           LOADING OVERLAY
+        ══════════════════════════════════════ */
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            gap: 16px;
+            transition: opacity 0.4s ease;
+        }
+
+        #loading-overlay.hidden { opacity: 0; pointer-events: none; }
+
+        .loading-spinner {
+            width: 36px; height: 36px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 999px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-text {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text2);
+        }
+
+        /* ══════════════════════════════════════
+           NAV
+        ══════════════════════════════════════ */
         .nav {
             position: sticky;
             top: 0;
@@ -77,12 +518,10 @@
             padding: 5px 5px 5px 5px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.10);
             pointer-events: all;
+            animation: fadeDown 0.5s cubic-bezier(0.22,1,0.36,1) both;
         }
 
-        .nav-tabs {
-            display: flex;
-            gap: 4px;
-        }
+        .nav-tabs { display: flex; gap: 4px; }
 
         .nav-tab {
             padding: 9px 22px;
@@ -98,16 +537,8 @@
             white-space: nowrap;
         }
 
-        .nav-tab.active {
-            background: var(--accent);
-            color: white;
-            box-shadow: 0 2px 10px rgba(26,86,219,0.25);
-        }
-
-        .nav-tab:hover:not(.active) {
-            background: var(--surface2);
-            color: var(--text);
-        }
+        .nav-tab.active { background: var(--accent); color: white; box-shadow: 0 2px 10px rgba(26,86,219,0.25); }
+        .nav-tab:hover:not(.active) { background: var(--surface2); color: var(--text); }
 
         .theme-btn {
             width: 38px; height: 38px;
@@ -122,1355 +553,236 @@
         }
 
         .theme-btn:hover { background: var(--border); }
+        .theme-btn svg { width: 16px; height: 16px; stroke: var(--text); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.3s; }
 
-        .theme-btn svg {
-            width: 16px; height: 16px;
-            stroke: var(--text);
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            transition: stroke 0.3s;
-        }
-
-        /* ── VIEWS ── */
-        .view { display: none; }
-        .view.active { display: block; }
+        .nav-right { display: flex; align-items: center; gap: 6px; }
 
         /* ══════════════════════════════════════
-           VISTA 1: PROGRAMACIÓN SEMANAL
+           VIEWS
         ══════════════════════════════════════ */
+        .view { display: none; }
+        .view.active { display: block; animation: fadeUp 0.32s cubic-bezier(0.22,1,0.36,1); }
 
-        #view-schedule {
-            padding: 8px 20px 24px;
-            max-width: 1140px;
-            margin: 0 auto;
-        }
+        #view-database { display: none; flex-direction: column; }
+        #view-database.active { display: flex; }
+        #view-territories { display: none; }
+        #view-territories.active { display: block; }
 
-        .schedule-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
+        /* ══════════════════════════════════════
+           SCHEDULE VIEW
+        ══════════════════════════════════════ */
+        #view-schedule { padding: 8px 20px 24px; max-width: 1140px; margin: 0 auto; }
 
-        .schedule-title h2 {
-            font-size: 1.6rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
+        .schedule-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
 
-        .schedule-title p {
-            color: var(--text2);
-            font-size: 0.9rem;
-            margin-top: 4px;
-        }
+        .schedule-title h2 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; }
+        .schedule-title p { color: var(--text2); font-size: 0.9rem; margin-top: 4px; }
 
-        .date-box {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            padding: 10px 20px;
-        }
+        .date-box { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 10px 20px; }
+        .date-box label { display: block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); margin-bottom: 4px; }
+        .date-box input[type="date"] { border: none; background: transparent; font-family: inherit; font-size: 0.9rem; font-weight: 600; color: var(--text); outline: none; cursor: pointer; }
 
-        .date-box label {
-            display: block;
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--accent);
-            margin-bottom: 4px;
-        }
+        .rec-section { background: var(--surface); border-radius: 28px; border: 1px solid var(--border); padding: 20px 24px; margin-bottom: 36px; box-shadow: var(--shadow); }
+        .rec-section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .rec-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+        .rec-row { display: flex; gap: 12px; flex-wrap: wrap; }
 
-        .date-box input[type="date"] {
-            border: none;
-            background: transparent;
-            font-family: inherit;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--text);
-            outline: none;
-            cursor: pointer;
-        }
-
-        /* Contenedor sugerencias */
-        .rec-section {
-            background: var(--surface);
-            border-radius: 28px;
-            border: 1px solid var(--border);
-            padding: 20px 24px;
-            margin-bottom: 36px;
-            box-shadow: var(--shadow);
-        }
-
-        .rec-section-title {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text2);
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .rec-section-title::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        .rec-row {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .rec-chip {
-            background: var(--rec-grad);
-            border-radius: 24px;
-            width: 110px;
-            height: 110px;
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            color: white;
-            cursor: grab;
-            user-select: none;
-            box-shadow: var(--rec-chip-shadow);
-            transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease, opacity 0.18s ease;
-            touch-action: none;
-            flex-shrink: 0;
-        }
-
+        .rec-chip { background: var(--rec-grad); border-radius: 24px; width: 110px; height: 110px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; color: white; cursor: grab; user-select: none; box-shadow: var(--rec-chip-shadow); transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease, opacity 0.18s ease; touch-action: none; flex-shrink: 0; }
         .rec-chip:active { cursor: grabbing; }
-
-        .rec-chip.dragging {
-            opacity: 0.4;
-            transform: scale(0.93);
-        }
-
-        .rec-chip .rnum {
-            font-family: 'DM Mono', monospace;
-            font-size: 1.6rem;
-            font-weight: 500;
-            line-height: 1;
-        }
-
-        .rec-chip .rdate {
-            font-size: 0.68rem;
-            opacity: 0.88;
-        }
-
-        .rec-chip .add-to-slot-btn {
-            font-size: 0.62rem;
-            font-weight: 700;
-            background: rgba(255,255,255,0.25);
-            border: none;
-            border-radius: 999px;
-            color: white;
-            padding: 3px 8px;
-            cursor: pointer;
-            align-self: flex-start;
-            transition: background 0.15s;
-        }
-
+        .rec-chip.dragging { opacity: 0.4; transform: scale(0.93); }
+        .rec-chip .rnum { font-family: 'DM Mono', monospace; font-size: 1.6rem; font-weight: 500; line-height: 1; }
+        .rec-chip .rdate { font-size: 0.68rem; opacity: 0.88; }
+        .rec-chip .add-to-slot-btn { font-size: 0.62rem; font-weight: 700; background: rgba(255,255,255,0.25); border: none; border-radius: 999px; color: white; padding: 3px 8px; cursor: pointer; align-self: flex-start; transition: background 0.15s; }
         .rec-chip .add-to-slot-btn:hover { background: rgba(255,255,255,0.4); }
 
-        /* Drop zone highlight */
-        .day-card.drag-over {
-            border-color: #16a34a;
-            box-shadow: 0 0 0 3px rgba(22,163,74,0.25);
-            background: rgba(22,163,74,0.04);
-        }
+        .day-card.drag-over { border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.25); background: rgba(22,163,74,0.04); }
 
-        /* Grilla semanal */
-        .week-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 14px;
-        }
-
+        .week-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
         .day-col { display: flex; flex-direction: column; gap: 14px; }
 
-        .day-card {
-            background: var(--surface);
-            border-radius: 24px;
-            border: 1px solid var(--border);
-            padding: 14px;
-            aspect-ratio: 1 / 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            box-shadow: var(--shadow);
-            transition: box-shadow 0.25s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
-        }
-
+        .day-card { background: var(--surface); border-radius: 24px; border: 1px solid var(--border); padding: 14px; aspect-ratio: 1/1; display: flex; flex-direction: column; position: relative; box-shadow: var(--shadow); transition: box-shadow 0.25s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1); }
         .day-card:hover { box-shadow: var(--shadow-lg); }
 
         .day-header { margin-bottom: 8px; }
         .day-name { font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3px; }
         .day-date { font-size: 0.65rem; color: var(--text2); font-weight: 500; }
 
-        .shift-label {
-            font-size: 0.58rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 2px 7px;
-            border-radius: 5px;
-            display: inline-block;
-            margin-bottom: 6px;
-        }
-
+        .shift-label { font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 7px; border-radius: 5px; display: inline-block; margin-bottom: 6px; }
         .shift-label.m { background: rgba(26,86,219,0.12); color: var(--morning); }
         .shift-label.t { background: rgba(217,119,6,0.12); color: var(--afternoon); }
 
-        .t-list {
-            flex: 1;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            align-content: center;
-            justify-content: center;
-        }
+        .t-list { flex: 1; display: flex; flex-wrap: wrap; gap: 5px; align-content: center; justify-content: center; }
 
-        .t-badge {
-            background: var(--badge-bg);
-            color: white;
-            width: 38px; height: 38px;
-            border-radius: 999px;
-            display: flex; align-items: center; justify-content: center;
-            font-family: 'DM Mono', monospace;
-            font-size: 1.05rem;
-            font-weight: 500;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-            transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s ease, background 0.3s ease, box-shadow 0.2s ease;
-        }
+        .t-badge { background: var(--badge-bg); color: white; width: 38px; height: 38px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 1.05rem; font-weight: 500; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.18); transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s ease, background 0.3s ease, box-shadow 0.2s ease; animation: bounce-in 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+        .t-badge:hover { transform: scale(1.15) !important; box-shadow: 0 4px 16px rgba(0,0,0,0.22) !important; }
+        .t-badge.shift-m { background: var(--morning); }
+        .t-badge.shift-t { background: var(--afternoon); }
 
-        .t-badge:hover { transform: scale(1.08); opacity: 0.85; }
-
-        .btn-add {
-            position: absolute;
-            bottom: 10px; right: 10px;
-            width: 28px; height: 28px;
-            border-radius: 999px;
-            border: none;
-            background: var(--surface2);
-            color: var(--accent);
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: background 0.15s;
-        }
-
+        .btn-add { position: absolute; bottom: 10px; right: 10px; width: 28px; height: 28px; border-radius: 999px; border: none; background: var(--surface2); color: var(--accent); font-size: 1.1rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
         .btn-add:hover { background: var(--border); }
 
-        /* Acciones */
-        .schedule-actions {
-            margin-top: 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
+        .schedule-actions { margin-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
 
         .btn-danger { background: none; border: none; color: var(--danger); cursor: pointer; font-family: inherit; font-size: 0.85rem; font-weight: 600; }
 
-        .btn-confirm-week {
-            background: linear-gradient(135deg, #16a34a, #22c55e);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 999px;
-            font-family: inherit;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 14px rgba(22,163,74,0.3);
-            transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease;
-        }
-
+        .btn-confirm-week { background: linear-gradient(135deg, #16a34a, #22c55e); color: white; border: none; padding: 12px 24px; border-radius: 999px; font-family: inherit; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(22,163,74,0.3); transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease; }
         .btn-confirm-week:hover { opacity: 0.88; transform: translateY(-1px); }
-        
-        .btn-export {
-            background: var(--text);
-            color: var(--bg);
-            border: none;
-            padding: 12px 24px;
-            border-radius: 999px;
-            font-family: inherit;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: opacity 0.15s;
-        }
 
+        .btn-export { background: var(--text); color: var(--bg); border: none; padding: 12px 24px; border-radius: 999px; font-family: inherit; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: opacity 0.15s; }
         .btn-export:hover { opacity: 0.8; }
 
         /* ══════════════════════════════════════
-           VISTA 2: BASE DE DATOS
+           DATABASE VIEW
         ══════════════════════════════════════ */
-
-
-
-
-        .form-card {
-            background: var(--surface);
-            border-radius: 28px;
-            border: 1px solid var(--border);
-            padding: 22px;
-            margin-bottom: 28px;
-            box-shadow: var(--shadow);
-        }
-
         .form-group { margin-bottom: 18px; }
-
-        .form-group label {
-            display: block;
-            font-size: 0.68rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--text2);
-            margin-bottom: 7px;
-        }
-
-        .form-group select,
-        .form-group input[type="date"] {
-            width: 100%;
-            padding: 13px 14px;
-            border-radius: 11px;
-            border: 1px solid var(--border);
-            background: var(--surface2);
-            color: var(--text);
-            font-family: inherit;
-            font-size: 0.95rem;
-            outline: none;
-            transition: border-color 0.15s;
-        }
-
-        .form-group select:focus,
-        .form-group input:focus { border-color: var(--accent); }
-
-        .btn-main {
-            width: 100%;
-            padding: 14px;
-            border-radius: 999px;
-            border: none;
-            background: var(--accent);
-            color: white;
-            font-family: inherit;
-            font-size: 0.95rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: opacity 0.15s;
-        }
-
+        .form-group label { display: block; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text2); margin-bottom: 7px; }
+        .form-group select, .form-group input[type="date"] { width: 100%; padding: 13px 14px; border-radius: 11px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.15s; }
+        .form-group select:focus, .form-group input:focus { border-color: var(--accent); }
+        .btn-main { width: 100%; padding: 14px; border-radius: 999px; border: none; background: var(--accent); color: white; font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
         .btn-main:hover { opacity: 0.85; }
 
+        .hist-page-header { display: flex; justify-content: space-between; align-items: center; padding: 24px 28px 16px; flex-wrap: wrap; gap: 12px; max-width: 1140px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+        .hist-page-title { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; margin: 0; }
+        .hist-page-sub { color: var(--text2); font-size: 0.85rem; margin-top: 3px; }
+        .hist-page-grid-wrap { flex: 1; padding: 0 28px 48px; max-width: 1140px; width: 100%; margin: 0 auto; box-sizing: border-box; }
 
+        #history-grid { align-items: stretch; grid-template-columns: repeat(6, 1fr); width: 100%; gap: 14px; }
+        #history-grid .day-card { aspect-ratio: unset; min-height: 160px; height: 100%; }
+        #history-grid .day-col { align-items: stretch; }
 
+        .btn-mas { width: 42px; height: 42px; border-radius: 999px; border: none; background: var(--accent); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(26,86,219,0.3); transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease; flex-shrink: 0; }
+        .btn-mas:hover { opacity: 0.85; transform: scale(1.05); }
+        .btn-mas.open { background: var(--danger); transform: rotate(45deg); }
 
-        .tag {
-            padding: 5px 14px;
-            border-radius: 999px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
+        .db-panel-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); backdrop-filter: blur(6px); z-index: 300; align-items: center; justify-content: center; }
+        .db-panel-overlay.open { display: flex; }
+        .db-panel { position: relative; width: 420px; max-width: 95vw; max-height: 88vh; background: var(--surface); border-radius: 28px; border: 1px solid var(--border); box-shadow: 0 24px 60px rgba(0,0,0,0.18); z-index: 400; padding: 28px 28px 36px; overflow-y: auto; transform: scale(0.93) translateY(12px); opacity: 0; transition: transform 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; pointer-events: none; }
+        .db-panel.open { transform: scale(1) translateY(0); opacity: 1; pointer-events: all; }
+        .db-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .db-panel-title { font-size: 1.1rem; font-weight: 700; }
+        .db-panel-close { width: 32px; height: 32px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+        .db-panel-close:hover { background: var(--border); }
 
-        .tag.mañana { background: rgba(26,86,219,0.1); color: var(--morning); }
-        .tag.tarde { background: rgba(217,119,6,0.1); color: var(--afternoon); }
+        .io-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-io { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 11px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-family: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+        .btn-io:hover { background: var(--border); transform: translateY(-2px) !important; }
+        .btn-io.import { border-color: var(--accent); color: var(--accent); background: rgba(26,86,219,0.06); }
+        .btn-io.import:hover { background: rgba(26,86,219,0.12); }
+        .import-note { font-size: 0.72rem; color: var(--text2); margin-top: 10px; line-height: 1.5; }
+
+        .history-nav { display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 4px 6px; box-shadow: var(--shadow); }
+        .hist-nav-btn { width: 32px; height: 32px; border-radius: 999px; border: none; background: transparent; color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+        .hist-nav-btn:hover:not(:disabled) { background: var(--surface2); }
+        .hist-nav-btn:disabled { opacity: 0.3; cursor: default; }
+
+        .hist-badge-wrap { position: relative; display: inline-flex; }
+        .hist-badge-del { position: absolute; top: -5px; right: -5px; width: 16px; height: 16px; border-radius: 999px; border: none; background: var(--danger); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transform: scale(0.7); transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1); z-index: 10; padding: 0; }
+        .hist-badge-wrap:hover .hist-badge-del { opacity: 1; transform: scale(1); }
+
+        /* ══════════════════════════════════════
+           TERRITORIES VIEW
+        ══════════════════════════════════════ */
+        .tview-header { display: flex; justify-content: space-between; align-items: center; padding: 24px 32px 20px; flex-wrap: wrap; gap: 12px; max-width: 1300px; margin: 0 auto; }
+        .tview-title { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; margin: 0; }
+        .tview-sub { color: var(--text2); font-size: 0.85rem; margin-top: 3px; }
+        .tview-sort { display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 5px 6px 5px 14px; box-shadow: var(--shadow); }
+        .tview-sort-label { font-size: 0.75rem; font-weight: 600; color: var(--text2); white-space: nowrap; }
+        .sort-btn { padding: 7px 16px; border-radius: 999px; border: none; background: transparent; color: var(--text2); font-family: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .sort-btn.active { background: var(--accent); color: white; }
+        .sort-btn:hover:not(.active) { background: var(--surface2); color: var(--text); }
+
+        .tview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px; padding: 0 32px; max-width: 1300px; margin: 0 auto; }
+
+        .t-card { background: var(--surface); border-radius: 24px; border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); transition: box-shadow 0.22s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1); display: flex; flex-direction: column; cursor: pointer; }
+        .t-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+
+        .t-card-img { width: 100%; aspect-ratio: 4/3; background: var(--surface2); position: relative; overflow: hidden; }
+        .t-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .t-card-img-placeholder { display: none; align-items: center; justify-content: center; width: 100%; height: 100%; color: var(--text2); opacity: 0.4; }
+        .t-card-img.no-img img { display: none; }
+        .t-card-img.no-img .t-card-img-placeholder { display: flex; }
+
+        .t-card-body { padding: 14px 16px 16px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+        .t-card-num { font-family: 'DM Mono', monospace; font-size: 1.3rem; font-weight: 500; color: var(--text); line-height: 1; }
+        .t-card-date { font-size: 0.78rem; color: var(--text2); font-weight: 500; }
+        .t-card-days { font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; display: inline-block; margin-top: 6px; align-self: flex-start; }
+        .t-card-days.recent { background: rgba(22,163,74,0.12); color: #16a34a; }
+        .t-card-days.medium { background: rgba(234,179,8,0.12); color: #ca8a04; }
+        .t-card-days.old    { background: rgba(239,68,68,0.12); color: #ef4444; }
+        .t-card-days.never  { background: rgba(107,114,128,0.12); color: var(--text2); }
+
+        /* ══════════════════════════════════════
+           TERRITORY DETAIL POPUP
+        ══════════════════════════════════════ */
+        .tdetail-box { background: var(--surface); border-radius: 28px; width: 480px; max-width: 95vw; max-height: 88vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 24px 60px rgba(0,0,0,0.18); border: 1px solid var(--border); animation: popIn 0.22s cubic-bezier(0.4,0,0.2,1); }
+        .tdetail-img-wrap { width: 100%; height: 260px; flex-shrink: 0; background: var(--surface2); position: relative; overflow: hidden; }
+        .tdetail-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .tdetail-img-placeholder { display: none; align-items: center; justify-content: center; width: 100%; height: 100%; }
+        .tdetail-img-wrap.no-img img { display: none; }
+        .tdetail-img-wrap.no-img .tdetail-img-placeholder { display: flex; }
+        .tdetail-close { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 999px; border: none; background: rgba(0,0,0,0.35); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); transition: background 0.15s; }
+        .tdetail-close:hover { background: rgba(0,0,0,0.55); }
+        .tdetail-body { padding: 20px 24px 24px; overflow-y: auto; flex: 1; }
+        .tdetail-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+        .tdetail-num { font-size: 1.4rem; font-weight: 700; }
+        .tdetail-badge { font-size: 0.75rem; font-weight: 700; padding: 5px 14px; border-radius: 999px; }
+        .tdetail-badge.recent { background: rgba(22,163,74,0.12); color: #16a34a; }
+        .tdetail-badge.medium { background: rgba(234,179,8,0.12); color: #ca8a04; }
+        .tdetail-badge.old    { background: rgba(239,68,68,0.12); color: #ef4444; }
+        .tdetail-badge.never  { background: rgba(107,114,128,0.12); color: var(--text2); }
+        .tdetail-history-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text2); margin-bottom: 10px; }
+        .tdetail-history-list { display: flex; flex-direction: column; gap: 8px; }
+        .tdetail-entry { display: flex; align-items: center; justify-content: space-between; padding: 11px 16px; background: var(--surface2); border-radius: 14px; border: 1px solid var(--border); }
+        .tdetail-entry-date { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+        .tdetail-entry-turno { font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; color: white; }
+        .tdetail-entry-turno.m { background: var(--morning); }
+        .tdetail-entry-turno.t { background: var(--afternoon); }
+        .tdetail-empty { text-align: center; color: var(--text2); font-size: 0.85rem; padding: 24px 0; }
+
+        /* ══════════════════════════════════════
+           TERRITORY POPUP
+        ══════════════════════════════════════ */
+        .t-popup-box { width: 380px; max-width: 95vw; padding: 0; overflow: hidden; }
+        .t-popup-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 22px 22px 16px; }
+        .t-popup-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text2); margin-bottom: 2px; }
+        .t-popup-num { font-family: 'DM Mono', monospace; font-size: 2.2rem; font-weight: 500; line-height: 1; color: var(--text); }
+        .t-popup-img-wrap { width: 100%; aspect-ratio: 16/9; background: var(--surface2); position: relative; overflow: hidden; }
+        .t-popup-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .t-popup-img-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--text2); font-size: 0.78rem; font-weight: 500; }
+        .t-popup-info { padding: 16px 22px 0; }
+        .t-popup-info-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text2); margin-bottom: 4px; }
+        .t-popup-info-value { font-size: 1rem; font-weight: 600; color: var(--text); }
+        .t-popup-delete-btn { margin: 18px 22px 22px; display: flex; align-items: center; gap: 8px; padding: 11px 20px; border-radius: 999px; border: 1.5px solid var(--danger); background: transparent; color: var(--danger); font-family: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: background 0.15s, color 0.15s; }
+        .t-popup-delete-btn:hover { background: var(--danger); color: white; }
 
         /* ══════════════════════════════════════
            MODAL
         ══════════════════════════════════════ */
-
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.35);
-            backdrop-filter: blur(6px);
-            align-items: center;
-            justify-content: center;
-            z-index: 500;
-        }
-
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); backdrop-filter: blur(6px); align-items: center; justify-content: center; z-index: 500; }
         .modal.open { display: flex; }
-
-        .modal-box {
-            background: var(--surface);
-            border-radius: 32px;
-            padding: 24px;
-            width: 340px;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .modal-box h3 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .modal-box .modal-sub {
-            font-size: 0.8rem;
-            color: var(--text2);
-            margin-bottom: 16px;
-        }
-
-        .num-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 7px;
-            max-height: 240px;
-            overflow-y: auto;
-            margin-bottom: 16px;
-            padding: 2px;
-        }
-
-        .num-btn {
-            aspect-ratio: 1/1;
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            background: var(--surface2);
-            color: var(--text);
-            font-family: 'DM Mono', monospace;
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.13s;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        .num-btn:hover {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-        }
-
-        .btn-cancel {
-            width: 100%;
-            padding: 11px;
-            border-radius: 11px;
-            border: 1px solid var(--border);
-            background: var(--surface2);
-            color: var(--text);
-            font-family: inherit;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-        }
+        .modal-box { background: var(--surface); border-radius: 32px; padding: 24px; width: 340px; box-shadow: var(--shadow-lg); animation: slide-up-fade 0.3s cubic-bezier(0.34,1.2,0.64,1) both; }
+        .modal-box h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+        .modal-box .modal-sub { font-size: 0.8rem; color: var(--text2); margin-bottom: 16px; }
+        .num-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; max-height: 240px; overflow-y: auto; margin-bottom: 16px; padding: 2px; }
+        .num-btn { aspect-ratio: 1/1; border: 1px solid var(--border); border-radius: 999px; background: var(--surface2); color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.13s; display: flex; align-items: center; justify-content: center; }
+        .num-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+        .btn-cancel { width: 100%; padding: 11px; border-radius: 11px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-family: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
 
         /* ══════════════════════════════════════
-           VISTA 2: HISTORIAL (página completa)
+           TOAST & ANIMATIONS
         ══════════════════════════════════════ */
-
-        #view-database { display: none; flex-direction: column; }
-        #view-database.active { display: flex; }
-
-        #view-territories { display: none; }
-        #view-territories.active { display: block; }
-
-        .hist-page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 24px 28px 16px;
-            flex-wrap: wrap;
-            gap: 12px;
-            max-width: 1140px;
-            width: 100%;
-            margin: 0 auto;
-            box-sizing: border-box;
-        }
-
-        .hist-page-title {
-            font-size: 1.6rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            margin: 0;
-        }
-
-        .hist-page-sub {
-            color: var(--text2);
-            font-size: 0.85rem;
-            margin-top: 3px;
-        }
-
-        .hist-page-grid-wrap {
-            flex: 1;
-            padding: 0 28px 48px;
-            max-width: 1140px;
-            width: 100%;
-            margin: 0 auto;
-            box-sizing: border-box;
-        }
-
-        #history-grid {
-            align-items: stretch;
-            grid-template-columns: repeat(6, 1fr);
-            width: 100%;
-            gap: 14px;
-        }
-
-        /* Botón Más */
-        .btn-mas {
-            width: 42px; height: 42px;
-            border-radius: 999px;
-            border: none;
-            background: var(--accent);
-            color: white;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 14px rgba(26,86,219,0.3);
-            transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease;
-            flex-shrink: 0;
-        }
-
-        .btn-mas:hover { opacity: 0.85; transform: scale(1.05); }
-        .btn-mas.open { background: var(--danger); transform: rotate(45deg); }
-
-        /* Panel flotante */
-        .db-panel-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.35);
-            backdrop-filter: blur(6px);
-            z-index: 300;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .db-panel-overlay.open {
-            display: flex;
-        }
-
-        .db-panel {
-            position: relative;
-            width: 420px;
-            max-width: 95vw;
-            max-height: 88vh;
-            background: var(--surface);
-            border-radius: 28px;
-            border: 1px solid var(--border);
-            box-shadow: 0 24px 60px rgba(0,0,0,0.18);
-            z-index: 400;
-            padding: 28px 28px 36px;
-            overflow-y: auto;
-            transform: scale(0.93) translateY(12px);
-            opacity: 0;
-            transition: transform 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease;
-            pointer-events: none;
-        }
-
-        .db-panel.open {
-            transform: scale(1) translateY(0);
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .db-panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
-        .db-panel-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-        }
-
-        .db-panel-close {
-            width: 32px; height: 32px;
-            border-radius: 999px;
-            border: 1px solid var(--border);
-            background: var(--surface2);
-            color: var(--text);
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: background 0.15s;
-        }
-
-        .db-panel-close:hover { background: var(--border); }
-
-        /* Historial grilla full-page */
-
-        #history-grid .day-card {
-            aspect-ratio: unset;
-            min-height: 160px;
-            height: 100%;
-        }
-
-        #history-grid .day-col {
-            align-items: stretch;
-        }
-
-        /* ── IMPORT / EXPORT PANEL ── */
-        .io-panel {
-            background: var(--surface);
-            border-radius: 28px;
-            border: 1px solid var(--border);
-            padding: 20px 22px;
-            margin-bottom: 24px;
-            box-shadow: var(--shadow);
-        }
-
-        .io-panel-title {
-            font-size: 0.68rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--text2);
-            margin-bottom: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .io-panel-title::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        .io-btns {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .btn-io {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            padding: 11px 14px;
-            border-radius: 999px;
-            border: 1px solid var(--border);
-            background: var(--surface2);
-            color: var(--text);
-            font-family: inherit;
-            font-size: 0.82rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-
-        .btn-io:hover { background: var(--border); }
-
-        .btn-io.import { border-color: var(--accent); color: var(--accent); background: rgba(26,86,219,0.06); }
-        .btn-io.import:hover { background: rgba(26,86,219,0.12); }
-
-        .btn-io svg { flex-shrink: 0; }
-
-        .import-note {
-            font-size: 0.72rem;
-            color: var(--text2);
-            margin-top: 10px;
-            line-height: 1.5;
-        }
-
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 28px;
-            left: 50%;
-            transform: translateX(-50%) translateY(80px);
-            background: #111827;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            z-index: 999;
-            transition: transform 0.35s cubic-bezier(0.34,1.4,0.64,1), opacity 0.25s ease;
-            white-space: nowrap;
-            pointer-events: none;
-        }
-
+        .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: #111827; color: white; padding: 10px 20px; border-radius: 30px; font-size: 0.85rem; font-weight: 600; z-index: 999; transition: transform 0.35s cubic-bezier(0.34,1.4,0.64,1), opacity 0.25s ease; white-space: nowrap; pointer-events: none; }
         .toast.show { transform: translateX(-50%) translateY(0); }
 
-        /* ── HISTORY WEEK VIEW ── */
+        @keyframes fadeUp   { from { opacity: 0; transform: translateY(18px); }  to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn  { from { opacity: 0; transform: scale(0.88); }       to { opacity: 1; transform: scale(1); } }
+        @keyframes popIn    { 0% { opacity: 0; transform: scale(0.82) translateY(16px); } 65% { transform: scale(1.03) translateY(-2px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes bounce-in { 0% { transform: scale(0); opacity: 0; } 55% { transform: scale(1.18); opacity: 1; } 75% { transform: scale(0.93); } 100% { transform: scale(1); } }
+        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(26,86,219,0.35); } 70% { box-shadow: 0 0 0 10px rgba(26,86,219,0); } 100% { box-shadow: 0 0 0 0 rgba(26,86,219,0); } }
+        @keyframes slide-up-fade { from { opacity: 0; transform: translateY(30px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes stagger-fade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
-        .history-nav {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            padding: 4px 6px;
-            box-shadow: var(--shadow);
-        }
-
-        .hist-nav-btn {
-            width: 32px; height: 32px;
-            border-radius: 999px;
-            border: none;
-            background: transparent;
-            color: var(--text);
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: background 0.15s;
-        }
-
-        .hist-nav-btn:hover:not(:disabled) { background: var(--surface2); }
-        .hist-nav-btn:disabled { opacity: 0.3; cursor: default; }
-
-        /* Read-only day cards for history */
-        .day-card.readonly {
-            cursor: default;
-            pointer-events: none;
-        }
-
-        .day-card.readonly .t-badge {
-            cursor: default;
-            pointer-events: none;
-        }
-
-
-        /* ══════════════════════════════════════
-           VISTA 3: TERRITORIOS
-        ══════════════════════════════════════ */
-
-        #view-territories { padding: 0 0 48px; }
-
-        .tview-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 24px 32px 20px;
-            flex-wrap: wrap;
-            gap: 12px;
-            max-width: 1300px;
-            margin: 0 auto;
-        }
-
-        .tview-title {
-            font-size: 1.6rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            margin: 0;
-        }
-
-        .tview-sub {
-            color: var(--text2);
-            font-size: 0.85rem;
-            margin-top: 3px;
-        }
-
-        .tview-sort {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            padding: 5px 6px 5px 14px;
-            box-shadow: var(--shadow);
-        }
-
-        .tview-sort-label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text2);
-            white-space: nowrap;
-        }
-
-        .sort-btn {
-            padding: 7px 16px;
-            border-radius: 999px;
-            border: none;
-            background: transparent;
-            color: var(--text2);
-            font-family: inherit;
-            font-size: 0.82rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.18s;
-        }
-
-        .sort-btn.active {
-            background: var(--accent);
-            color: white;
-        }
-
-        .sort-btn:hover:not(.active) { background: var(--surface2); color: var(--text); }
-
-        .tview-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 18px;
-            padding: 0 32px;
-            max-width: 1300px;
-            margin: 0 auto;
-        }
-
-        .t-card {
-            background: var(--surface);
-            border-radius: 24px;
-            border: 1px solid var(--border);
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            transition: box-shadow 0.22s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .t-card:hover {
-            box-shadow: var(--shadow-lg);
-            transform: translateY(-2px);
-        }
-
-        .t-card-img {
-            width: 100%;
-            aspect-ratio: 4 / 3;
-            background: var(--surface2);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .t-card-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .t-card-img-placeholder {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            color: var(--text2);
-            opacity: 0.4;
-        }
-
-        .t-card-img.no-img img { display: none; }
-        .t-card-img.no-img .t-card-img-placeholder { display: flex; }
-
-        .t-card-body {
-            padding: 14px 16px 16px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .t-card-num {
-            font-family: 'DM Mono', monospace;
-            font-size: 1.3rem;
-            font-weight: 500;
-            color: var(--text);
-            line-height: 1;
-        }
-
-        .t-card-date {
-            font-size: 0.78rem;
-            color: var(--text2);
-            font-weight: 500;
-        }
-
-        .t-card-days {
-            font-size: 0.72rem;
-            font-weight: 700;
-            padding: 3px 10px;
-            border-radius: 999px;
-            display: inline-block;
-            margin-top: 6px;
-            align-self: flex-start;
-        }
-
-        .t-card-days.recent  { background: rgba(22,163,74,0.12);  color: #16a34a; }
-        .t-card-days.medium  { background: rgba(234,179,8,0.12);   color: #ca8a04; }
-        .t-card-days.old     { background: rgba(239,68,68,0.12);   color: #ef4444; }
-        .t-card-days.never   { background: rgba(107,114,128,0.12); color: var(--text2); }
-
-        /* ── TERRITORY DETAIL POPUP ── */
-        .tdetail-box {
-            background: var(--surface);
-            border-radius: 28px;
-            width: 480px;
-            max-width: 95vw;
-            max-height: 88vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 24px 60px rgba(0,0,0,0.18);
-            border: 1px solid var(--border);
-            animation: popIn 0.22s cubic-bezier(0.4,0,0.2,1);
-        }
-
-        @keyframes popIn {
-            from { transform: scale(0.93) translateY(10px); opacity: 0; }
-            to   { transform: scale(1) translateY(0); opacity: 1; }
-        }
-
-        .tdetail-img-wrap {
-            width: 100%;
-            height: 260px;
-            flex-shrink: 0;
-            background: var(--surface2);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .tdetail-img-wrap img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .tdetail-img-placeholder {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-        }
-
-        .tdetail-img-wrap.no-img img { display: none; }
-        .tdetail-img-wrap.no-img .tdetail-img-placeholder { display: flex; }
-
-        .tdetail-close {
-            position: absolute;
-            top: 12px; right: 12px;
-            width: 32px; height: 32px;
-            border-radius: 999px;
-            border: none;
-            background: rgba(0,0,0,0.35);
-            color: white;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            backdrop-filter: blur(4px);
-            transition: background 0.15s;
-        }
-
-        .tdetail-close:hover { background: rgba(0,0,0,0.55); }
-
-        .tdetail-body {
-            padding: 20px 24px 24px;
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        .tdetail-title-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 18px;
-        }
-
-        .tdetail-num {
-            font-size: 1.4rem;
-            font-weight: 700;
-        }
-
-        .tdetail-badge {
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 5px 14px;
-            border-radius: 999px;
-        }
-
-        .tdetail-badge.recent { background: rgba(22,163,74,0.12);  color: #16a34a; }
-        .tdetail-badge.medium { background: rgba(234,179,8,0.12);   color: #ca8a04; }
-        .tdetail-badge.old    { background: rgba(239,68,68,0.12);   color: #ef4444; }
-        .tdetail-badge.never  { background: rgba(107,114,128,0.12); color: var(--text2); }
-
-        .tdetail-history-label {
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--text2);
-            margin-bottom: 10px;
-        }
-
-        .tdetail-history-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .tdetail-entry {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 11px 16px;
-            background: var(--surface2);
-            border-radius: 14px;
-            border: 1px solid var(--border);
-        }
-
-        .tdetail-entry-date {
-            font-size: 0.88rem;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .tdetail-entry-turno {
-            font-size: 0.78rem;
-            font-weight: 700;
-            padding: 3px 10px;
-            border-radius: 999px;
-            color: white;
-        }
-
-        .tdetail-entry-turno.m { background: var(--morning); }
-        .tdetail-entry-turno.t { background: var(--afternoon); }
-
-        .tdetail-empty {
-            text-align: center;
-            color: var(--text2);
-            font-size: 0.85rem;
-            padding: 24px 0;
-        }
-
-        /* ── TERRITORY INFO POPUP ── */
-        .tpop-img-wrap {
-            width: 100%;
-            height: 200px;
-            background: var(--surface2);
-            position: relative;
-            overflow: hidden;
-            border-bottom: 1px solid var(--border);
-            border-radius: 28px 28px 0 0;
-        }
-
-        .tpop-img-wrap img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .tpop-img-placeholder {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            height: 100%;
-            color: var(--text2);
-            font-size: 0.8rem;
-        }
-
-        .tpop-img-wrap.no-img img { display: none; }
-        .tpop-img-wrap.no-img .tpop-img-placeholder { display: flex; }
-
-        .tpop-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
-        }
-
-        .tpop-num {
-            font-size: 1.3rem;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-        }
-
-        .tpop-last {
-            font-size: 0.82rem;
-            color: var(--text2);
-            margin-top: 3px;
-        }
-
-        .btn-tpop-delete {
-            width: 100%;
-            padding: 13px;
-            border-radius: 999px;
-            border: 1.5px solid var(--danger);
-            background: transparent;
-            color: var(--danger);
-            font-family: inherit;
-            font-size: 0.9rem;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.15s;
-        }
-
-        .btn-tpop-delete:hover { background: var(--danger); color: white; }
-
-        /* Historia badge con botón eliminar */
-        .hist-badge-wrap {
-            position: relative;
-            display: inline-flex;
-        }
-
-        .hist-badge-del {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            width: 16px;
-            height: 16px;
-            border-radius: 999px;
-            border: none;
-            background: var(--danger);
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transform: scale(0.7);
-            transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease;
-            z-index: 10;
-            padding: 0;
-        }
-
-        .hist-badge-wrap:hover .hist-badge-del {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        .t-badge.shift-m { background: var(--morning); }
-        .t-badge.shift-t { background: var(--afternoon); }
-
-
-        /* ── TERRITORY POPUP ── */
-        .t-popup-box {
-            width: 380px;
-            max-width: 95vw;
-            padding: 0;
-            overflow: hidden;
-        }
-
-        .t-popup-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            padding: 22px 22px 16px;
-        }
-
-        .t-popup-label {
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--text2);
-            margin-bottom: 2px;
-        }
-
-        .t-popup-num {
-            font-family: 'DM Mono', monospace;
-            font-size: 2.2rem;
-            font-weight: 500;
-            line-height: 1;
-            color: var(--text);
-        }
-
-        .t-popup-img-wrap {
-            width: 100%;
-            aspect-ratio: 16 / 9;
-            background: var(--surface2);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .t-popup-img-wrap img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .t-popup-img-placeholder {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            color: var(--text2);
-            font-size: 0.78rem;
-            font-weight: 500;
-        }
-
-        .t-popup-info {
-            padding: 16px 22px 0;
-        }
-
-        .t-popup-info-label {
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--text2);
-            margin-bottom: 4px;
-        }
-
-        .t-popup-info-value {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .t-popup-delete-btn {
-            margin: 18px 22px 22px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 11px 20px;
-            border-radius: 999px;
-            border: 1.5px solid var(--danger);
-            background: transparent;
-            color: var(--danger);
-            font-family: inherit;
-            font-size: 0.85rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.15s, color 0.15s;
-        }
-
-        .t-popup-delete-btn:hover {
-            background: var(--danger);
-            color: white;
-        }
-
-        /* ── TOAST ── */
-        #capture-frame {
-            padding: 40px;
-            background: var(--bg);
-        }
-
-        /* ── RESPONSIVE ── */
-        @media (max-width: 700px) {
-            .week-grid, .rec-week-grid { grid-template-columns: repeat(3, 1fr); }
-            .nav-tab { padding: 8px 12px; font-size: 0.8rem; }
-        }
-
-        @media (max-width: 440px) {
-            .week-grid, .rec-week-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-
-        /* Fade in */
-        /* ══════════════════════════════════════
-           SISTEMA DE ANIMACIONES
-        ══════════════════════════════════════ */
-
-        /* ── Keyframes base ── */
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(18px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeDown {
-            from { opacity: 0; transform: translateY(-12px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes scaleIn {
-            from { opacity: 0; transform: scale(0.88); }
-            to   { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes popIn {
-            0%   { opacity: 0; transform: scale(0.82) translateY(16px); }
-            65%  { transform: scale(1.03) translateY(-2px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(24px); }
-            to   { opacity: 1; transform: translateX(0); }
-        }
-
-        @keyframes shimmer {
-            0%   { background-position: -200% center; }
-            100% { background-position: 200% center; }
-        }
-
-        @keyframes pulse-ring {
-            0%   { box-shadow: 0 0 0 0 rgba(26,86,219,0.35); }
-            70%  { box-shadow: 0 0 0 10px rgba(26,86,219,0); }
-            100% { box-shadow: 0 0 0 0 rgba(26,86,219,0); }
-        }
-
-        @keyframes bounce-in {
-            0%   { transform: scale(0); opacity: 0; }
-            55%  { transform: scale(1.18); opacity: 1; }
-            75%  { transform: scale(0.93); }
-            100% { transform: scale(1); }
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50%       { transform: translateY(-5px); }
-        }
-
-        @keyframes spin-once {
-            from { transform: rotate(0deg); }
-            to   { transform: rotate(360deg); }
-        }
-
-        @keyframes slide-up-fade {
-            from { opacity: 0; transform: translateY(30px) scale(0.97); }
-            to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        @keyframes stagger-fade {
-            from { opacity: 0; transform: translateY(12px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ── Entrada de vistas ── */
-        .view.active {
-            animation: fadeUp 0.32s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-
-        /* ── Nav pill ── */
-        .nav-pill-wrap {
-            animation: fadeDown 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-
-        .nav-tab {
-            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-        }
-
-        .nav-tab.active {
-            animation: pulse-ring 0.6s ease-out;
-        }
-
-        /* ── Tarjetas del calendario ── */
-        .day-card {
-            transition: box-shadow 0.25s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease !important;
-        }
-
-        .day-card:hover {
-            transform: translateY(-3px) scale(1.01);
-            box-shadow: var(--shadow-lg) !important;
-        }
-
-        /* Stagger para tarjetas al cargar la grilla */
         .day-col:nth-child(1) .day-card { animation: fadeUp 0.4s cubic-bezier(0.22,1,0.36,1) 0.05s both; }
         .day-col:nth-child(2) .day-card { animation: fadeUp 0.4s cubic-bezier(0.22,1,0.36,1) 0.10s both; }
         .day-col:nth-child(3) .day-card { animation: fadeUp 0.4s cubic-bezier(0.22,1,0.36,1) 0.15s both; }
@@ -1478,178 +790,104 @@
         .day-col:nth-child(5) .day-card { animation: fadeUp 0.4s cubic-bezier(0.22,1,0.36,1) 0.25s both; }
         .day-col:nth-child(6) .day-card { animation: fadeUp 0.4s cubic-bezier(0.22,1,0.36,1) 0.30s both; }
 
-        /* ── Badges de territorio ── */
-        .t-badge {
-            transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease, background 0.3s ease, color 0.3s ease, box-shadow 0.2s ease !important;
-            animation: bounce-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-        }
-
-        .t-badge:hover {
-            transform: scale(1.15) !important;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.22) !important;
-        }
-
-        /* ── Chips de sugerencias ── */
-        .rec-chip {
-            transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, opacity 0.18s ease !important;
-            animation: scaleIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-
-        .rec-chip:nth-child(1) { animation-delay: 0.04s; }
-        .rec-chip:nth-child(2) { animation-delay: 0.08s; }
-        .rec-chip:nth-child(3) { animation-delay: 0.12s; }
-        .rec-chip:nth-child(4) { animation-delay: 0.16s; }
-        .rec-chip:nth-child(5) { animation-delay: 0.20s; }
-        .rec-chip:nth-child(6) { animation-delay: 0.24s; }
-        .rec-chip:nth-child(7) { animation-delay: 0.28s; }
-        .rec-chip:nth-child(8) { animation-delay: 0.32s; }
-
-        .rec-chip:hover {
-            transform: translateY(-4px) scale(1.04) !important;
-            box-shadow: 0 12px 32px rgba(22,163,74,0.35) !important;
-        }
-
-        .rec-chip.dragging {
-            transform: scale(0.94) rotate(-2deg) !important;
-            opacity: 0.5 !important;
-        }
-
-        /* ── Drop zone ── */
-        .day-card.drag-over {
-            transform: scale(1.03) !important;
-            transition: all 0.15s ease !important;
-        }
-
-        /* ── Botón confirmar semana ── */
-        .btn-confirm-week {
-            transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease !important;
-        }
-
-        .btn-confirm-week:hover {
-            transform: translateY(-2px) scale(1.03) !important;
-            box-shadow: 0 8px 24px rgba(22,163,74,0.4) !important;
-        }
-
-        .btn-confirm-week:active {
-            transform: scale(0.97) !important;
-        }
-
-        /* ── Botón Más ── */
-        .btn-mas {
-            transition: background 0.2s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, opacity 0.15s ease !important;
-        }
-
-        .btn-mas:hover {
-            transform: scale(1.1) rotate(12deg) !important;
-        }
-
-        .btn-mas.open {
-            transform: rotate(45deg) scale(1.05) !important;
-            animation: none !important;
-        }
-
-        /* ── Panel popup ── */
-        .db-panel {
-            transition: transform 0.3s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.25s ease !important;
-        }
-
-        /* ── Tarjetas de territorios ── */
-        .t-card {
-            transition: box-shadow 0.22s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease !important;
-        }
-
-        .t-card:hover {
-            transform: translateY(-5px) scale(1.02) !important;
-            box-shadow: var(--shadow-lg) !important;
-        }
-
-        /* Stagger entrada tarjetas territorios */
-        #territories-grid .t-card {
-            animation: stagger-fade 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-
+        #territories-grid .t-card { animation: stagger-fade 0.4s cubic-bezier(0.22,1,0.36,1) both; }
         #territories-grid .t-card:nth-child(1)  { animation-delay: 0.03s; }
         #territories-grid .t-card:nth-child(2)  { animation-delay: 0.06s; }
         #territories-grid .t-card:nth-child(3)  { animation-delay: 0.09s; }
         #territories-grid .t-card:nth-child(4)  { animation-delay: 0.12s; }
         #territories-grid .t-card:nth-child(5)  { animation-delay: 0.15s; }
-        #territories-grid .t-card:nth-child(6)  { animation-delay: 0.18s; }
-        #territories-grid .t-card:nth-child(7)  { animation-delay: 0.21s; }
-        #territories-grid .t-card:nth-child(8)  { animation-delay: 0.24s; }
-        #territories-grid .t-card:nth-child(9)  { animation-delay: 0.27s; }
-        #territories-grid .t-card:nth-child(10) { animation-delay: 0.30s; }
-        #territories-grid .t-card:nth-child(n+11) { animation-delay: 0.33s; }
+        #territories-grid .t-card:nth-child(n+6){ animation-delay: 0.18s; }
 
-        /* ── Modales y popups ── */
-        .modal-box {
-            animation: slide-up-fade 0.3s cubic-bezier(0.34, 1.2, 0.64, 1) both;
-        }
+        #capture-frame { padding: 40px; background: var(--bg); }
 
-        .tdetail-box {
-            animation: popIn 0.38s cubic-bezier(0.34, 1.2, 0.64, 1) both !important;
-        }
-
-        /* ── Historial entries ── */
-        .tdetail-entry {
-            transition: background 0.15s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-        }
-
-        .tdetail-entry:hover {
-            background: var(--border) !important;
-            transform: translateX(3px);
-        }
-
-        /* ── hist-badge-wrap ── */
-        .hist-badge-wrap .t-badge {
-            transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-        }
-
-        .hist-badge-wrap:hover .t-badge {
-            transform: scale(1.1);
-        }
-
-        /* ── Toast ── */
-        .toast {
-            transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.25s ease !important;
-        }
-
-        .toast.show {
-            animation: popIn 0.35s cubic-bezier(0.34, 1.4, 0.64, 1) both;
-        }
-
-        /* ── Botones IO ── */
-        .btn-io {
-            transition: all 0.2s cubic-bezier(0.34, 1.4, 0.64, 1) !important;
-        }
-
-        .btn-io:hover {
-            transform: translateY(-2px) !important;
-        }
-
-        .btn-io:active {
-            transform: scale(0.96) !important;
-        }
-
-        /* ── Sort buttons ── */
-        .sort-btn {
-            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-        }
-
-        .sort-btn.active {
-            animation: pulse-ring 0.5s ease-out;
-        }
-
-        /* ── Reduce motion para accesibilidad ── */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
+        @media (max-width: 700px) { .week-grid { grid-template-columns: repeat(3, 1fr); } .nav-tab { padding: 8px 12px; font-size: 0.8rem; } }
+        @media (max-width: 440px) { .week-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
     </style>
 </head>
 <body>
+
+<!-- ══════════════════════════════════════
+     SUPABASE CONFIG SCREEN
+══════════════════════════════════════ -->
+<div id="config-screen">
+    <div class="config-box">
+        <div class="config-step">⚡ Configuración inicial</div>
+        <h2 class="config-title">Conectar con Supabase</h2>
+        <p class="config-desc">
+            Para habilitar la sincronización entre dispositivos, ingresa las credenciales de tu proyecto Supabase.
+            Las encontrarás en <strong>Project Settings → API</strong>.
+        </p>
+        <div class="config-field">
+            <label>URL del proyecto</label>
+            <input type="text" id="cfg-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
+            <p class="config-hint">Ejemplo: https://abcdefghij.supabase.co</p>
+        </div>
+        <div class="config-field">
+            <label>Anon / Public Key</label>
+            <input type="text" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
+            <p class="config-hint">La clave pública (anon key), no la service_role key.</p>
+        </div>
+        <button class="btn-config" onclick="saveSupabaseConfig()">Conectar y continuar →</button>
+        <p class="config-error" id="cfg-error"></p>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     LOADING OVERLAY
+══════════════════════════════════════ -->
+<div id="loading-overlay" class="hidden">
+    <div class="loading-spinner"></div>
+    <span class="loading-text" id="loading-text">Cargando datos...</span>
+</div>
+
+<!-- ══════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════ -->
+<div id="login-screen" class="hidden">
+    <div class="login-box">
+        <div class="login-logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <h2 class="login-title">Territorios Pro</h2>
+        <p class="login-sub">Inicia sesión para continuar</p>
+        <div class="login-field">
+            <label>Usuario</label>
+            <input type="text" id="login-username" placeholder="tu_usuario" autocomplete="username">
+        </div>
+        <div class="login-field">
+            <label>Contraseña</label>
+            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
+                   onkeydown="if(event.key==='Enter') doLogin()">
+        </div>
+        <button class="btn-login" id="btn-do-login" onclick="doLogin()">Entrar</button>
+        <p class="login-error" id="login-error"></p>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     USER DROPDOWN
+══════════════════════════════════════ -->
+<div id="user-dropdown" class="user-dropdown">
+    <div class="dropdown-item" id="dd-sync-status">
+        <span class="sync-dot" id="dd-sync-dot"></span>
+        Sincronizado
+    </div>
+    <div class="dropdown-sep"></div>
+    <button class="dropdown-item" id="dd-manage-users" onclick="openManageUsers()" style="display:none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Gestionar usuarios
+    </button>
+    <button class="dropdown-item danger" onclick="doLogout()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Cerrar sesión
+    </button>
+</div>
+
+<!-- ══════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════ -->
+<div id="main-app" style="display:none;">
 
 <!-- NAV -->
 <nav class="nav">
@@ -1659,34 +897,24 @@
             <button class="nav-tab" onclick="switchView('database', this)">Historial</button>
             <button class="nav-tab" onclick="switchView('territories', this)">Territorios</button>
         </div>
-        <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
-            <!-- Sol (modo claro visible) -->
-            <svg id="icon-sun" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="5"/>
-                <line x1="12" y1="2" x2="12" y2="4"/>
-                <line x1="12" y1="20" x2="12" y2="22"/>
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                <line x1="2" y1="12" x2="4" y2="12"/>
-                <line x1="20" y1="12" x2="22" y2="12"/>
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-            </svg>
-            <!-- Luna (modo oscuro visible) -->
-            <svg id="icon-moon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:none">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-            </svg>
-        </button>
+        <div class="nav-right">
+            <button class="theme-btn" onclick="toggleTheme()">
+                <svg id="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <svg id="icon-moon" viewBox="0 0 24 24" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+            <div class="user-pill" onclick="toggleUserDropdown()">
+                <div class="user-avatar" id="nav-avatar">?</div>
+                <span class="user-name" id="nav-username">—</span>
+                <span class="role-badge" id="nav-role">—</span>
+            </div>
+        </div>
     </div>
 </nav>
 
-<!-- ══════════════════════════════════════
-     VISTA 1: PROGRAMACIÓN SEMANAL
-══════════════════════════════════════ -->
+<!-- SCHEDULE VIEW -->
 <div id="view-schedule" class="view active">
     <div id="capture-frame">
         <div id="view-schedule-inner" style="max-width:1100px; margin:0 auto;">
-
             <div class="schedule-header">
                 <div class="schedule-title">
                     <h2>Programación Semanal</h2>
@@ -1697,20 +925,15 @@
                     <input type="date" id="monday-picker" onchange="updateWeek()">
                 </div>
             </div>
-
-            <!-- Recomendaciones -->
             <div class="rec-section" id="rec-section-ui">
                 <div class="rec-section-title">Territorios sugeridos · arrastra al día que prefieras</div>
                 <div class="rec-row" id="rec-week-grid"></div>
             </div>
-
-            <!-- Grilla -->
             <div class="week-grid" id="main-grid"></div>
-
             <div class="schedule-actions" id="schedule-actions-ui">
-                <button class="btn-danger" onclick="clearSchedule()">Reiniciar semana</button>
+                <button class="btn-danger admin-only" onclick="clearSchedule()">Reiniciar semana</button>
                 <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                    <button class="btn-confirm-week" onclick="confirmWeekToDatabase()">
+                    <button class="btn-confirm-week admin-only" onclick="confirmWeekToDatabase()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                         Confirmar semana
                     </button>
@@ -1720,17 +943,12 @@
                     </button>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     VISTA 2: HISTORIAL
-══════════════════════════════════════ -->
+<!-- DATABASE VIEW -->
 <div id="view-database" class="view">
-
-    <!-- Cabecera de historial -->
     <div class="hist-page-header">
         <div>
             <h2 class="hist-page-title">Historial</h2>
@@ -1746,22 +964,36 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
             </div>
-            <!-- Botón Más -->
-            <button class="btn-mas" onclick="toggleDbPanel()" id="btn-mas" title="Registrar / Importar / Exportar">
+            <button class="btn-mas admin-only" onclick="toggleDbPanel()" id="btn-mas">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
         </div>
     </div>
-
-    <!-- Grilla historial -->
     <div class="hist-page-grid-wrap">
         <div class="week-grid" id="history-grid"></div>
         <div id="history-empty" style="display:none; text-align:center; color:var(--text2); font-size:0.85rem; padding:60px 0;">Sin registros aún.</div>
     </div>
-
 </div>
 
-<!-- Panel flotante de historial -->
+<!-- TERRITORIES VIEW -->
+<div id="view-territories" class="view">
+    <div class="tview-header">
+        <div>
+            <h2 class="tview-title">Territorios</h2>
+            <p class="tview-sub">Todos los territorios y su estado</p>
+        </div>
+        <div class="tview-sort">
+            <span class="tview-sort-label">Ordenar por</span>
+            <button class="sort-btn active" onclick="setTerritorySort('num', this)">Número</button>
+            <button class="sort-btn" onclick="setTerritorySort('freq', this)">Frecuencia</button>
+        </div>
+    </div>
+    <div class="tview-grid" id="territories-grid"></div>
+</div>
+
+</div><!-- /main-app -->
+
+<!-- DB PANEL -->
 <div id="db-panel-overlay" class="db-panel-overlay" onclick="closeDbPanel()">
 <div id="db-panel" class="db-panel" onclick="event.stopPropagation()">
     <div class="db-panel-header">
@@ -1770,7 +1002,6 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
     </div>
-
     <div class="form-group">
         <label>Territorio</label>
         <select id="db-territorio"></select>
@@ -1787,15 +1018,14 @@
         </select>
     </div>
     <button class="btn-main" onclick="saveRecord()" style="margin-bottom:24px;">Registrar</button>
-
-    <div class="io-panel-title" style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text2); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+    <div style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text2); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
         Importar · Exportar
         <span style="flex:1; height:1px; background:var(--border); display:block;"></span>
     </div>
     <div class="io-btns">
         <button class="btn-io import" onclick="document.getElementById('file-import').click()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Importar CSV / Excel
+            Importar CSV/Excel
         </button>
         <button class="btn-io" onclick="exportCSV()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -1806,37 +1036,16 @@
             Exportar Excel (.xlsx)
         </button>
     </div>
-    <p class="import-note" style="margin-top:10px;">
-        Columnas requeridas: <strong>Territorio</strong>, <strong>Fecha</strong> (DD/MM/YYYY) y <strong>Turno</strong>.
-    </p>
+    <p class="import-note">Columnas requeridas: <strong>Territorio</strong>, <strong>Fecha</strong> (DD/MM/YYYY) y <strong>Turno</strong>.</p>
     <input type="file" id="file-import" accept=".csv,.xlsx,.xls" style="display:none" onchange="importFile(this)">
 </div>
-</div>
-
-<!-- ══════════════════════════════════════
-     VISTA 3: TERRITORIOS
-══════════════════════════════════════ -->
-<div id="view-territories" class="view">
-    <div class="tview-header">
-        <div>
-            <h2 class="tview-title">Territorios</h2>
-            <p class="tview-sub">Todos los territorios y su estado</p>
-        </div>
-        <div class="tview-sort">
-            <span class="tview-sort-label">Ordenar por</span>
-            <button class="sort-btn active" id="sort-num" onclick="setTerritorySort('num', this)">Número</button>
-            <button class="sort-btn" id="sort-freq" onclick="setTerritorySort('freq', this)">Frecuencia</button>
-        </div>
-    </div>
-    <div class="tview-grid" id="territories-grid"></div>
 </div>
 
 <!-- TERRITORY DETAIL POPUP -->
 <div id="tdetail-overlay" class="modal" onclick="closeTdetail()">
 <div class="tdetail-box" onclick="event.stopPropagation()">
     <div class="tdetail-img-wrap" id="tdetail-img-wrap">
-        <img id="tdetail-img" src="" alt=""
-             onerror="document.getElementById('tdetail-img-wrap').classList.add('no-img')">
+        <img id="tdetail-img" src="" alt="" onerror="document.getElementById('tdetail-img-wrap').classList.add('no-img')">
         <div class="tdetail-img-placeholder">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         </div>
@@ -1877,11 +1086,9 @@
     </div>
 </div>
 
-<!-- TERRITORY INFO POPUP -->
 <!-- TERRITORY POPUP -->
 <div id="t-popup-overlay" class="modal" onclick="closeTerritoryPopup()">
     <div class="modal-box t-popup-box" onclick="event.stopPropagation()">
-        <!-- Header -->
         <div class="t-popup-header">
             <div>
                 <div class="t-popup-label">Territorio</div>
@@ -1891,8 +1098,6 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
-
-        <!-- Imagen del territorio -->
         <div class="t-popup-img-wrap">
             <img id="t-popup-img" src="" alt="" onerror="this.style.display='none'; document.getElementById('t-popup-img-placeholder').style.display='flex';">
             <div id="t-popup-img-placeholder" class="t-popup-img-placeholder">
@@ -1900,18 +1105,39 @@
                 <span>Imagen no disponible</span>
             </div>
         </div>
-
-        <!-- Info último contacto -->
         <div class="t-popup-info">
             <div class="t-popup-info-label">Último contacto</div>
             <div class="t-popup-info-value" id="t-popup-last">—</div>
         </div>
-
-        <!-- Acción -->
-        <button class="t-popup-delete-btn" id="t-popup-delete">
+        <button class="t-popup-delete-btn admin-only" id="t-popup-delete">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
             Eliminar asignación
         </button>
+    </div>
+</div>
+
+<!-- MANAGE USERS MODAL (admin only) -->
+<div id="users-modal" class="modal">
+    <div class="modal-box users-modal-box" onclick="event.stopPropagation()">
+        <h3 style="margin-bottom:4px;">Gestionar usuarios</h3>
+        <p style="font-size:0.8rem; color:var(--text2); margin-bottom:16px;">Añadir o eliminar usuarios del sistema.</p>
+        <div class="users-list" id="users-list"></div>
+        <div class="new-user-form">
+            <p style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text2); margin-bottom:10px;">Nuevo usuario</p>
+            <div class="form-row">
+                <input type="text" id="new-username" placeholder="Nombre de usuario">
+                <input type="password" id="new-password" placeholder="Contraseña">
+            </div>
+            <div class="form-row">
+                <select id="new-role">
+                    <option value="viewer">Viewer (solo lectura)</option>
+                    <option value="admin">Admin (acceso completo)</option>
+                </select>
+                <button class="btn-main" style="border-radius:11px;" onclick="createUser()">Crear</button>
+            </div>
+            <p id="users-error" style="color:var(--danger); font-size:0.78rem; font-weight:600; margin-top:8px; min-height:18px;"></p>
+        </div>
+        <button class="btn-cancel" style="margin-top:8px;" onclick="closeManageUsers()">Cerrar</button>
     </div>
 </div>
 
@@ -1919,9 +1145,217 @@
 <div id="toast" class="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════
-//  ESTADO GLOBAL
-// ═══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+//  SUPABASE CONFIG
+// ══════════════════════════════════════════════════════
+
+let supabase = null;
+
+function getSupabaseConfig() {
+    return {
+        url: localStorage.getItem('tp_sb_url') || '',
+        key: localStorage.getItem('tp_sb_key') || ''
+    };
+}
+
+function initSupabase(url, key) {
+    supabase = window.supabase.createClient(url, key);
+}
+
+async function saveSupabaseConfig() {
+    const url = document.getElementById('cfg-url').value.trim();
+    const key = document.getElementById('cfg-key').value.trim();
+    const errEl = document.getElementById('cfg-error');
+    errEl.textContent = '';
+
+    if (!url || !key) { errEl.textContent = 'Completa ambos campos.'; return; }
+    if (!url.startsWith('https://')) { errEl.textContent = 'La URL debe comenzar con https://'; return; }
+
+    // Test connection
+    try {
+        initSupabase(url, key);
+        const { error } = await supabase.from('tp_users').select('id').limit(1);
+        if (error) throw error;
+        localStorage.setItem('tp_sb_url', url);
+        localStorage.setItem('tp_sb_key', key);
+        document.getElementById('config-screen').classList.add('hidden');
+        showLoginScreen();
+    } catch(e) {
+        errEl.textContent = 'No se pudo conectar. Verifica las credenciales y que ejecutaste el SQL de setup.';
+        console.error(e);
+    }
+}
+
+// ══════════════════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════════════════
+
+let currentUser = null; // { id, username, role }
+
+function showLoginScreen() {
+    document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('loading-overlay').classList.add('hidden');
+}
+
+async function doLogin() {
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errEl = document.getElementById('login-error');
+    const btn = document.getElementById('btn-do-login');
+    errEl.textContent = '';
+
+    if (!username || !password) { errEl.textContent = 'Completa usuario y contraseña.'; return; }
+
+    btn.disabled = true; btn.textContent = 'Verificando...';
+
+    try {
+        const { data, error } = await supabase
+            .from('tp_users')
+            .select('*')
+            .eq('username', username)
+            .eq('password', password)
+            .single();
+
+        if (error || !data) {
+            errEl.textContent = 'Usuario o contraseña incorrectos.';
+            btn.disabled = false; btn.textContent = 'Entrar';
+            return;
+        }
+
+        currentUser = { id: data.id, username: data.username, role: data.role };
+        localStorage.setItem('tp_session', JSON.stringify(currentUser));
+        document.getElementById('login-screen').classList.add('hidden');
+        await initApp();
+    } catch(e) {
+        errEl.textContent = 'Error de conexión.';
+        btn.disabled = false; btn.textContent = 'Entrar';
+    }
+}
+
+function doLogout() {
+    currentUser = null;
+    localStorage.removeItem('tp_session');
+    closeUserDropdown();
+    document.getElementById('main-app').style.display = 'none';
+    showLoginScreen();
+    // Reset form
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
+    document.getElementById('login-error').textContent = '';
+}
+
+function toggleUserDropdown() {
+    document.getElementById('user-dropdown').classList.toggle('open');
+}
+
+function closeUserDropdown() {
+    document.getElementById('user-dropdown').classList.remove('open');
+}
+
+document.addEventListener('click', e => {
+    const pill = document.querySelector('.user-pill');
+    const dd = document.getElementById('user-dropdown');
+    if (pill && !pill.contains(e.target) && !dd.contains(e.target)) closeUserDropdown();
+});
+
+function applyUserPermissions() {
+    const isAdmin = currentUser.role === 'admin';
+
+    // Nav display
+    document.getElementById('nav-username').textContent = currentUser.username;
+    document.getElementById('nav-avatar').textContent = currentUser.username.charAt(0).toUpperCase();
+    const roleBadge = document.getElementById('nav-role');
+    roleBadge.textContent = isAdmin ? 'Admin' : 'Viewer';
+    roleBadge.className = `role-badge ${currentUser.role}`;
+
+    // Show manage users button for admins
+    document.getElementById('dd-manage-users').style.display = isAdmin ? 'flex' : 'none';
+
+    // Admin-only elements
+    document.querySelectorAll('.admin-only').forEach(el => {
+        if (!isAdmin) el.classList.add('viewer-hidden');
+        else el.classList.remove('viewer-hidden');
+    });
+
+    // Disable drag if viewer
+    if (!isAdmin) {
+        document.querySelectorAll('.rec-chip').forEach(c => {
+            c.draggable = false;
+            c.style.cursor = 'default';
+        });
+        // Hide date picker
+        document.getElementById('date-box-ui').style.pointerEvents = 'none';
+        document.getElementById('date-box-ui').style.opacity = '0.5';
+    }
+}
+
+// ══════════════════════════════════════════════════════
+//  MANAGE USERS (admin)
+// ══════════════════════════════════════════════════════
+
+async function openManageUsers() {
+    closeUserDropdown();
+    await loadUsersList();
+    document.getElementById('users-modal').classList.add('open');
+}
+
+function closeManageUsers() {
+    document.getElementById('users-modal').classList.remove('open');
+}
+
+async function loadUsersList() {
+    const { data } = await supabase.from('tp_users').select('*').order('created_at');
+    const list = document.getElementById('users-list');
+    list.innerHTML = '';
+    (data || []).forEach(u => {
+        const row = document.createElement('div');
+        row.className = 'user-row';
+        const isSelf = u.id === currentUser.id;
+        row.innerHTML = `
+            <div class="user-row-info">
+                <div class="user-avatar" style="width:32px;height:32px;font-size:0.8rem;">${u.username.charAt(0).toUpperCase()}</div>
+                <div>
+                    <div class="user-row-name">${u.username}${isSelf ? ' (tú)' : ''}</div>
+                    <div class="user-row-role">${u.role === 'admin' ? 'Admin' : 'Viewer'}</div>
+                </div>
+            </div>
+            <div class="user-row-actions">
+                ${!isSelf ? `<button class="btn-user-del" onclick="deleteUser('${u.id}', '${u.username}')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>` : ''}
+            </div>
+        `;
+        list.appendChild(row);
+    });
+}
+
+async function createUser() {
+    const username = document.getElementById('new-username').value.trim();
+    const password = document.getElementById('new-password').value.trim();
+    const role = document.getElementById('new-role').value;
+    const errEl = document.getElementById('users-error');
+    errEl.textContent = '';
+
+    if (!username || !password) { errEl.textContent = 'Completa todos los campos.'; return; }
+
+    const { error } = await supabase.from('tp_users').insert({ username, password, role });
+    if (error) { errEl.textContent = error.message.includes('unique') ? 'Ese usuario ya existe.' : 'Error al crear usuario.'; return; }
+
+    document.getElementById('new-username').value = '';
+    document.getElementById('new-password').value = '';
+    showToast('✅ Usuario creado correctamente.');
+    await loadUsersList();
+}
+
+async function deleteUser(id, name) {
+    showConfirm(`¿Eliminar al usuario "${name}"?`, 'Esta acción no se puede deshacer.', async () => {
+        await supabase.from('tp_users').delete().eq('id', id);
+        showToast('🗑 Usuario eliminado.');
+        await loadUsersList();
+    });
+}
+
+// ══════════════════════════════════════════════════════
+//  APP INIT
+// ══════════════════════════════════════════════════════
 
 const DAYS = [
     { name: 'Lunes',     offset: 0, slots: ['M'] },
@@ -1934,15 +1368,129 @@ const DAYS = [
 
 const SHIFT_LABEL = { M: 'Mañana', T: 'Tarde' };
 
-let scheduleData   = JSON.parse(localStorage.getItem('tp_schedule'))   || {};
-let selectedMonday = localStorage.getItem('tp_monday') || '';
-let records        = JSON.parse(localStorage.getItem('tp_records'))    || [];
-let historyLog     = JSON.parse(localStorage.getItem('tp_history_log')) || {}; // { "1": [{fecha, turno}, ...], ... }
+let scheduleData   = {};
+let selectedMonday = '';
+let records        = [];
+let historyLog     = {};
 let activeSlotId   = null;
+let syncChannel    = null;
 
-// ═══════════════════════════════════════════════
-//  TEMA
-// ═══════════════════════════════════════════════
+function setSyncStatus(status, msg) {
+    const dot = document.getElementById('dd-sync-dot');
+    const txt = document.getElementById('dd-sync-status');
+    if (!dot) return;
+    dot.className = `sync-dot ${status}`;
+    txt.innerHTML = `<span class="sync-dot ${status}"></span> ${msg}`;
+}
+
+async function initApp() {
+    document.getElementById('loading-overlay').classList.remove('hidden');
+    document.getElementById('loading-overlay').querySelector('.loading-text').textContent = 'Cargando datos...';
+
+    document.getElementById('main-app').style.display = '';
+    applyUserPermissions();
+
+    // Load all data from Supabase
+    await Promise.all([loadRecords(), loadSchedule(), loadSelectedMonday()]);
+
+    // Init DB form
+    const sel = document.getElementById('db-territorio');
+    sel.innerHTML = '';
+    for (let i = 1; i <= 36; i++) {
+        const opt = document.createElement('option');
+        opt.value = i; opt.textContent = `Territorio ${i}`;
+        sel.appendChild(opt);
+    }
+    const today = new Date();
+    document.getElementById('db-fecha').value = new Date(today.getTime() - today.getTimezoneOffset()*60000).toISOString().split('T')[0];
+
+    // Setup realtime sync
+    setupRealtimeSync();
+
+    // Render
+    initSchedule();
+    renderRecords();
+
+    // Theme
+    const t = localStorage.getItem('tp_theme') || 'light';
+    if (t === 'dark') { document.body.setAttribute('data-theme','dark'); updateThemeIcon(true); }
+
+    document.getElementById('loading-overlay').classList.add('hidden');
+    setSyncStatus('', 'Sincronizado');
+}
+
+// ══════════════════════════════════════════════════════
+//  REALTIME SYNC
+// ══════════════════════════════════════════════════════
+
+function setupRealtimeSync() {
+    if (syncChannel) supabase.removeChannel(syncChannel);
+
+    syncChannel = supabase
+        .channel('tp_sync')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tp_records' }, async () => {
+            await loadRecords();
+            renderRecords();
+            renderRecommendations();
+            setSyncStatus('', 'Sincronizado');
+            showToast('🔄 Historial actualizado');
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tp_schedule' }, async () => {
+            await loadSchedule();
+            renderSchedule();
+            setSyncStatus('', 'Sincronizado');
+            showToast('🔄 Programación actualizada');
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tp_settings' }, async () => {
+            await loadSelectedMonday();
+            renderSchedule();
+        })
+        .subscribe();
+}
+
+// ══════════════════════════════════════════════════════
+//  DATA LOADERS
+// ══════════════════════════════════════════════════════
+
+async function loadRecords() {
+    const { data } = await supabase.from('tp_records').select('*');
+    records = data || [];
+    // Build historyLog from history table
+    const { data: hist } = await supabase.from('tp_history_log').select('*').order('fecha', { ascending: false });
+    historyLog = {};
+    (hist || []).forEach(h => {
+        if (!historyLog[h.territorio]) historyLog[h.territorio] = [];
+        historyLog[h.territorio].push({ fecha: h.fecha, turno: h.turno });
+    });
+}
+
+async function loadSchedule() {
+    const { data } = await supabase.from('tp_schedule').select('*').eq('monday', selectedMonday || '');
+    scheduleData = {};
+    (data || []).forEach(row => { scheduleData[row.id] = row.territories; });
+}
+
+async function loadSelectedMonday() {
+    const { data } = await supabase.from('tp_settings').select('value').eq('key', 'selected_monday').single();
+    if (data) selectedMonday = data.value;
+    if (document.getElementById('monday-picker')) document.getElementById('monday-picker').value = selectedMonday || '';
+}
+
+async function saveScheduleToCloud() {
+    setSyncStatus('syncing', 'Guardando...');
+    for (const [id, territories] of Object.entries(scheduleData)) {
+        await supabase.from('tp_schedule').upsert({ id, monday: selectedMonday, territories, updated_at: new Date().toISOString() });
+    }
+    setSyncStatus('', 'Sincronizado');
+}
+
+async function saveMondayToCloud(monday) {
+    await supabase.from('tp_settings').upsert({ key: 'selected_monday', value: monday, updated_at: new Date().toISOString() });
+}
+
+// ══════════════════════════════════════════════════════
+//  THEME
+// ══════════════════════════════════════════════════════
 
 function toggleTheme() {
     const isDark = document.body.getAttribute('data-theme') === 'dark';
@@ -1952,98 +1500,13 @@ function toggleTheme() {
 }
 
 function updateThemeIcon(isDark) {
-    document.getElementById('icon-sun').style.display  = isDark ? 'none'  : '';
-    document.getElementById('icon-moon').style.display = isDark ? ''      : 'none';
+    document.getElementById('icon-sun').style.display  = isDark ? 'none' : '';
+    document.getElementById('icon-moon').style.display = isDark ? '' : 'none';
 }
 
-(function initTheme() {
-    const t = localStorage.getItem('tp_theme') || 'light';
-    if (t === 'dark') {
-        document.body.setAttribute('data-theme', 'dark');
-        updateThemeIcon(true);
-    }
-})();
-
-function openTdetail(num) {
-    // Imagen
-    const imgWrap = document.getElementById('tdetail-img-wrap');
-    const img     = document.getElementById('tdetail-img');
-    imgWrap.classList.remove('no-img');
-    img.src = `territorios/${num}.png`;
-    img.alt = `Territorio ${num}`;
-
-    // Título y badge
-    document.getElementById('tdetail-num').textContent = `Territorio ${num}`;
-    const rec  = records.find(r => parseInt(r.territorio) === num);
-    const days = rec ? daysBetween(rec.fecha) : null;
-    const badge = document.getElementById('tdetail-badge');
-    if (days === null) {
-        badge.textContent = 'Sin registro'; badge.className = 'tdetail-badge never';
-    } else if (days <= 30) {
-        badge.textContent = `Hace ${days} día${days !== 1 ? 's' : ''}`; badge.className = 'tdetail-badge recent';
-    } else if (days <= 90) {
-        badge.textContent = `Hace ${days} días`; badge.className = 'tdetail-badge medium';
-    } else {
-        badge.textContent = `Hace ${days} días`; badge.className = 'tdetail-badge old';
-    }
-
-    // Historial completo
-    const list    = document.getElementById('tdetail-history-list');
-    const entries = (historyLog[String(num)] || []).slice(); // copia ordenada desc por fecha
-    // También incluir el registro actual de records si no está en historyLog (datos previos)
-    if (rec && !entries.some(e => e.fecha === rec.fecha && e.turno === rec.turno)) {
-        entries.unshift({ fecha: rec.fecha, turno: rec.turno });
-        entries.sort((a, b) => b.fecha.localeCompare(a.fecha));
-    }
-
-    if (entries.length === 0) {
-        list.innerHTML = '<div class="tdetail-empty">No hay registros de contacto aún.</div>';
-    } else {
-        list.innerHTML = entries.map(e => {
-            const [y, m, d] = e.fecha.split('-');
-            const cls = e.turno === 'Mañana' ? 'm' : 't';
-            return `
-                <div class="tdetail-entry">
-                    <span class="tdetail-entry-date">${d}/${m}/${y}</span>
-                    <span class="tdetail-entry-turno ${cls}">${e.turno}</span>
-                </div>`;
-        }).join('');
-    }
-
-    document.getElementById('tdetail-overlay').classList.add('open');
-}
-
-function closeTdetail() {
-    document.getElementById('tdetail-overlay').classList.remove('open');
-}
-
-// ═══════════════════════════════════════════════
-//  PANEL FLOTANTE HISTORIAL
-// ═══════════════════════════════════════════════
-
-function toggleDbPanel() {
-    const overlay = document.getElementById('db-panel-overlay');
-    const panel   = document.getElementById('db-panel');
-    const btn     = document.getElementById('btn-mas');
-    const isOpen  = panel.classList.contains('open');
-    if (isOpen) {
-        closeDbPanel();
-    } else {
-        overlay.classList.add('open');
-        panel.classList.add('open');
-        btn.classList.add('open');
-    }
-}
-
-function closeDbPanel() {
-    document.getElementById('db-panel').classList.remove('open');
-    document.getElementById('db-panel-overlay').classList.remove('open');
-    document.getElementById('btn-mas').classList.remove('open');
-}
-
-// ═══════════════════════════════════════════════
-//  NAVEGACIÓN
-// ═══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════════
 
 function switchView(view, btn) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -2053,11 +1516,11 @@ function switchView(view, btn) {
     if (view === 'territories') renderTerritories();
 }
 
-// ═══════════════════════════════════════════════
-//  VISTA TERRITORIOS
-// ═══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+//  TERRITORIES VIEW
+// ══════════════════════════════════════════════════════
 
-let territoriesSort = 'num'; // 'num' | 'freq'
+let territoriesSort = 'num';
 
 function setTerritorySort(mode, btn) {
     territoriesSort = mode;
@@ -2069,75 +1532,105 @@ function setTerritorySort(mode, btn) {
 function renderTerritories() {
     const grid = document.getElementById('territories-grid');
     if (!grid) return;
-
-    // Generar lista de 1-36
     let list = Array.from({length: 36}, (_, i) => i + 1);
-
     if (territoriesSort === 'freq') {
-        // Hecho más recientemente primero (días ascendente), sin registro al final
         list.sort((a, b) => {
             const ra = records.find(r => parseInt(r.territorio) === a);
             const rb = records.find(r => parseInt(r.territorio) === b);
             if (!ra && !rb) return a - b;
-            if (!ra) return 1;
-            if (!rb) return -1;
+            if (!ra) return 1; if (!rb) return -1;
             return daysBetween(ra.fecha) - daysBetween(rb.fecha);
         });
     }
-    // 'num' → ya está ordenado 1-36
-
     grid.innerHTML = '';
-
     list.forEach(num => {
         const rec  = records.find(r => parseInt(r.territorio) === num);
         const days = rec ? daysBetween(rec.fecha) : null;
-
-        // Etiqueta de antigüedad
         let daysLabel, daysClass;
-        if (days === null) {
-            daysLabel = 'Sin registro'; daysClass = 'never';
-        } else if (days <= 30) {
-            daysLabel = `Hace ${days} día${days !== 1 ? 's' : ''}`; daysClass = 'recent';
-        } else if (days <= 90) {
-            daysLabel = `Hace ${days} días`; daysClass = 'medium';
-        } else {
-            daysLabel = `Hace ${days} días`; daysClass = 'old';
-        }
+        if (days === null) { daysLabel = 'Sin registro'; daysClass = 'never'; }
+        else if (days <= 30) { daysLabel = `Hace ${days} día${days!==1?'s':''}`; daysClass = 'recent'; }
+        else if (days <= 90) { daysLabel = `Hace ${days} días`; daysClass = 'medium'; }
+        else { daysLabel = `Hace ${days} días`; daysClass = 'old'; }
 
-        // Fecha legible
         let dateStr = '–';
-        if (rec) {
-            const [y, m, d] = rec.fecha.split('-');
-            dateStr = `${d}/${m}/${y} · ${rec.turno}`;
-        }
+        if (rec) { const [y,m,d] = rec.fecha.split('-'); dateStr = `${d}/${m}/${y} · ${rec.turno}`; }
 
         const card = document.createElement('div');
         card.className = 't-card';
         card.innerHTML = `
             <div class="t-card-img" id="tc-img-${num}">
-                <img src="territorios/${num}.png" alt="Territorio ${num}"
-                     onerror="document.getElementById('tc-img-${num}').classList.add('no-img')">
-                <div class="t-card-img-placeholder">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                </div>
+                <img src="territorios/${num}.png" alt="Territorio ${num}" onerror="document.getElementById('tc-img-${num}').classList.add('no-img')">
+                <div class="t-card-img-placeholder"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
             </div>
             <div class="t-card-body">
-                <div class="t-card-num" id="tcard-num-${num}">${num}</div>
+                <div class="t-card-num">${num}</div>
                 <div class="t-card-date">${dateStr}</div>
                 <span class="t-card-days ${daysClass}">${daysLabel}</span>
-            </div>
-        `;
-        // Apply dominant color to the card number pill
-        const numEl = card.querySelector(`#tcard-num-${num}`);
-        card.style.cursor = 'pointer';
+            </div>`;
         card.addEventListener('click', () => openTdetail(num));
         grid.appendChild(card);
     });
 }
 
-// ═══════════════════════════════════════════════
-//  UTILIDADES DE FECHA
-// ═══════════════════════════════════════════════
+function openTdetail(num) {
+    const imgWrap = document.getElementById('tdetail-img-wrap');
+    const img = document.getElementById('tdetail-img');
+    imgWrap.classList.remove('no-img');
+    img.src = `territorios/${num}.png`;
+
+    document.getElementById('tdetail-num').textContent = `Territorio ${num}`;
+    const rec  = records.find(r => parseInt(r.territorio) === num);
+    const days = rec ? daysBetween(rec.fecha) : null;
+    const badge = document.getElementById('tdetail-badge');
+    if (days === null) { badge.textContent = 'Sin registro'; badge.className = 'tdetail-badge never'; }
+    else if (days <= 30) { badge.textContent = `Hace ${days} día${days!==1?'s':''}`; badge.className = 'tdetail-badge recent'; }
+    else if (days <= 90) { badge.textContent = `Hace ${days} días`; badge.className = 'tdetail-badge medium'; }
+    else { badge.textContent = `Hace ${days} días`; badge.className = 'tdetail-badge old'; }
+
+    const list = document.getElementById('tdetail-history-list');
+    const entries = (historyLog[String(num)] || []).slice();
+    if (rec && !entries.some(e => e.fecha === rec.fecha && e.turno === rec.turno)) {
+        entries.unshift({ fecha: rec.fecha, turno: rec.turno });
+        entries.sort((a,b) => b.fecha.localeCompare(a.fecha));
+    }
+
+    if (entries.length === 0) {
+        list.innerHTML = '<div class="tdetail-empty">No hay registros de contacto aún.</div>';
+    } else {
+        list.innerHTML = entries.map(e => {
+            const [y,m,d] = e.fecha.split('-');
+            const cls = e.turno === 'Mañana' ? 'm' : 't';
+            return `<div class="tdetail-entry"><span class="tdetail-entry-date">${d}/${m}/${y}</span><span class="tdetail-entry-turno ${cls}">${e.turno}</span></div>`;
+        }).join('');
+    }
+
+    document.getElementById('tdetail-overlay').classList.add('open');
+}
+
+function closeTdetail() { document.getElementById('tdetail-overlay').classList.remove('open'); }
+
+// ══════════════════════════════════════════════════════
+//  DB PANEL
+// ══════════════════════════════════════════════════════
+
+function toggleDbPanel() {
+    const overlay = document.getElementById('db-panel-overlay');
+    const panel = document.getElementById('db-panel');
+    const btn = document.getElementById('btn-mas');
+    if (panel.classList.contains('open')) { closeDbPanel(); }
+    else { overlay.classList.add('open'); panel.classList.add('open'); btn.classList.add('open'); }
+}
+
+function closeDbPanel() {
+    document.getElementById('db-panel').classList.remove('open');
+    document.getElementById('db-panel-overlay').classList.remove('open');
+    const btn = document.getElementById('btn-mas');
+    if (btn) btn.classList.remove('open');
+}
+
+// ══════════════════════════════════════════════════════
+//  DATES
+// ══════════════════════════════════════════════════════
 
 function dateFromMonday(monday, offsetDays) {
     const d = new Date(monday + 'T00:00:00');
@@ -2147,69 +1640,317 @@ function dateFromMonday(monday, offsetDays) {
 
 function formatShort(dateObj) {
     const day = dateObj.getDate();
-    const month = dateObj.toLocaleString('es-ES', { month: 'short' }).replace('.', '');
+    const month = dateObj.toLocaleString('es-ES', { month: 'short' }).replace('.','');
     return `${day} ${month}`;
 }
 
 function daysBetween(dateStr) {
     if (!dateStr || dateStr === '0000-00-00') return null;
     const d = new Date(dateStr + 'T00:00:00');
-    const today = new Date();
-    today.setHours(0,0,0,0);
+    const today = new Date(); today.setHours(0,0,0,0);
     return Math.floor((today - d) / 86400000);
 }
 
-// ═══════════════════════════════════════════════
-//  COLOR DOMINANTE POR TERRITORIO
-// ═══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+//  RECOMMENDATIONS
+// ══════════════════════════════════════════════════════
 
-const territoryColors = {}; // { num: { bg, text } }
+let dragTerritory = null;
+
+function getRecommendations() {
+    const states = [];
+    for (let i = 1; i <= 36; i++) {
+        const rec = records.find(r => parseInt(r.territorio) === i);
+        states.push({ num: i, fecha: rec ? rec.fecha : '0000-00-00', days: rec ? daysBetween(rec.fecha) : 9999 });
+    }
+    states.sort((a,b) => b.days - a.days);
+    return states.slice(0, 8);
+}
+
+function renderRecommendations() {
+    const row = document.getElementById('rec-week-grid');
+    row.innerHTML = '';
+    const isAdmin = currentUser && currentUser.role === 'admin';
+    getRecommendations().forEach(rec => {
+        const chip = document.createElement('div');
+        chip.className = 'rec-chip';
+        chip.draggable = isAdmin;
+        chip.dataset.territory = rec.num;
+
+        const subtitle = rec.days === 9999 ? 'Sin asignar' : `hace ${rec.days}d`;
+        chip.innerHTML = `
+            <span class="rnum">${rec.num}</span>
+            <span class="rdate">${subtitle}</span>
+            ${isAdmin ? `<button class="add-to-slot-btn" onclick="openAddModal(${rec.num}, event)">+ Añadir</button>` : ''}
+        `;
+
+        if (isAdmin) {
+            chip.addEventListener('dragstart', e => {
+                dragTerritory = rec.num; chip.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData('text/plain', String(rec.num));
+            });
+            chip.addEventListener('dragend', () => { dragTerritory = null; chip.classList.remove('dragging'); });
+
+            let touchClone = null;
+            chip.addEventListener('touchstart', e => {
+                dragTerritory = rec.num;
+                const touch = e.touches[0];
+                touchClone = chip.cloneNode(true);
+                touchClone.style.cssText = `position:fixed;pointer-events:none;z-index:9999;opacity:0.85;transform:scale(1.05);left:${touch.clientX - chip.offsetWidth/2}px;top:${touch.clientY - 30}px;`;
+                document.body.appendChild(touchClone);
+            }, { passive: true });
+
+            chip.addEventListener('touchmove', e => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                if (touchClone) { touchClone.style.left = `${touch.clientX - chip.offsetWidth/2}px`; touchClone.style.top = `${touch.clientY - 30}px`; }
+                document.querySelectorAll('.day-card').forEach(c => c.classList.remove('drag-over'));
+                const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                const card = el ? el.closest('.day-card') : null;
+                if (card && card.dataset.slotId) card.classList.add('drag-over');
+            }, { passive: false });
+
+            chip.addEventListener('touchend', e => {
+                if (touchClone) { touchClone.remove(); touchClone = null; }
+                document.querySelectorAll('.day-card').forEach(c => c.classList.remove('drag-over'));
+                const touch = e.changedTouches[0];
+                const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                const card = el ? el.closest('.day-card') : null;
+                if (card && card.dataset.slotId && dragTerritory !== null) dropOnSlot(card.dataset.slotId, dragTerritory);
+                dragTerritory = null;
+            });
+        }
+
+        row.appendChild(chip);
+    });
+}
+
+function dropOnSlot(slotId, num) {
+    if (!scheduleData[slotId]) scheduleData[slotId] = [];
+    if (!scheduleData[slotId].includes(num)) {
+        scheduleData[slotId].push(num);
+        saveSchedule();
+        showToast(`✅ Territorio ${num} añadido.`);
+    } else {
+        showToast(`⚠️ El territorio ${num} ya está en ese día.`);
+    }
+}
+
+function openAddModal(num, e) {
+    e.stopPropagation();
+    const slots = [];
+    DAYS.forEach((day, dIdx) => {
+        day.slots.forEach((shift, sIdx) => {
+            slots.push({ id: `slot-${dIdx}-${sIdx}`, label: `${day.name} · ${SHIFT_LABEL[shift]}` });
+        });
+    });
+    document.getElementById('modal-sub').textContent = `¿A qué día añadir el Territorio ${num}?`;
+    document.getElementById('modal').classList.add('open');
+    const grid = document.getElementById('num-grid');
+    grid.style.gridTemplateColumns = '1fr';
+    grid.innerHTML = '';
+    slots.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'num-btn';
+        btn.style.cssText = 'aspect-ratio:unset;padding:12px 16px;border-radius:999px;font-family:inherit;font-size:0.85rem;justify-content:flex-start;';
+        btn.textContent = s.label;
+        btn.onclick = () => { dropOnSlot(s.id, num); closeModal(); grid.style.gridTemplateColumns = ''; };
+        grid.appendChild(btn);
+    });
+}
+
+// ══════════════════════════════════════════════════════
+//  SCHEDULE
+// ══════════════════════════════════════════════════════
+
+function initSchedule() {
+    if (!selectedMonday) {
+        const today = new Date();
+        const day = today.getDay();
+        const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(today.setDate(diff));
+        selectedMonday = monday.toISOString().split('T')[0];
+    }
+    document.getElementById('monday-picker').value = selectedMonday;
+    renderSchedule();
+}
+
+async function updateWeek() {
+    if (currentUser.role !== 'admin') return;
+    selectedMonday = document.getElementById('monday-picker').value;
+    await saveMondayToCloud(selectedMonday);
+    await loadSchedule();
+    renderSchedule();
+}
+
+function renderSchedule() {
+    const grid = document.getElementById('main-grid');
+    const label = document.getElementById('week-label');
+    grid.innerHTML = '';
+
+    if (!selectedMonday) {
+        label.textContent = 'Selecciona el lunes para comenzar';
+        renderRecommendations();
+        return;
+    }
+
+    const startDate = dateFromMonday(selectedMonday, 0);
+    const endDate   = dateFromMonday(selectedMonday, 6);
+    label.textContent = `Semana del ${formatShort(startDate)} al ${formatShort(endDate)} de ${startDate.getFullYear()}`;
+
+    renderRecommendations();
+
+    const isAdmin = currentUser && currentUser.role === 'admin';
+
+    DAYS.forEach((day, dIdx) => {
+        const col = document.createElement('div');
+        col.className = 'day-col';
+        const dateStr = formatShort(dateFromMonday(selectedMonday, day.offset));
+
+        day.slots.forEach((shift, sIdx) => {
+            const id = `slot-${dIdx}-${sIdx}`;
+            const territories = scheduleData[id] || [];
+            const card = document.createElement('div');
+            card.className = 'day-card';
+            card.dataset.slotId = id;
+
+            const shiftClass = shift === 'M' ? 'm' : 't';
+            const shiftText  = SHIFT_LABEL[shift];
+
+            let badges = territories.map((n, i) =>
+                `<div class="t-badge" id="tbadge-${id}-${i}" onclick="openTerritoryPopup('${id}', ${i}, ${n}, event)">${n}</div>`
+            ).join('');
+
+            card.innerHTML = `
+                <div class="day-header">
+                    <div class="day-name">${day.name}</div>
+                    <div class="day-date">${dateStr}</div>
+                </div>
+                <span class="shift-label ${shiftClass}">${shiftText}</span>
+                <div class="t-list">${badges}</div>
+                ${isAdmin ? `<button class="btn-add" onclick="openModal('${id}', '${day.name} ${shiftText}')">+</button>` : ''}
+            `;
+
+            territories.forEach((n, i) => {
+                const badge = document.getElementById(`tbadge-${id}-${i}`);
+                if (badge) applyTerritoryColor(badge, n);
+            });
+
+            if (isAdmin) {
+                card.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; card.classList.add('drag-over'); });
+                card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+                card.addEventListener('drop', e => { e.preventDefault(); card.classList.remove('drag-over'); const num = parseInt(e.dataTransfer.getData('text/plain')); if (!isNaN(num)) dropOnSlot(id, num); });
+            }
+
+            col.appendChild(card);
+        });
+
+        grid.appendChild(col);
+    });
+}
+
+function saveSchedule() {
+    saveScheduleToCloud();
+    renderSchedule();
+}
+
+function clearSchedule() {
+    showConfirm('¿Reiniciar todos los territorios de esta semana?', 'Las fechas se mantienen.', async () => {
+        // Delete from Supabase
+        await supabase.from('tp_schedule').delete().eq('monday', selectedMonday);
+        scheduleData = {};
+        renderSchedule();
+        renderRecommendations();
+    });
+}
+
+async function confirmWeekToDatabase() {
+    if (!selectedMonday) { showToast('⚠️ Selecciona primero la semana a confirmar.'); return; }
+
+    const toRegister = [];
+    DAYS.forEach((day, dIdx) => {
+        day.slots.forEach((shift, sIdx) => {
+            const id = `slot-${dIdx}-${sIdx}`;
+            const territories = scheduleData[id] || [];
+            const fecha = dateFromMonday(selectedMonday, day.offset).toISOString().split('T')[0];
+            const turno = SHIFT_LABEL[shift];
+            territories.forEach(num => toRegister.push({ territorio: String(num), fecha, turno }));
+        });
+    });
+
+    if (toRegister.length === 0) { showToast('⚠️ No hay territorios asignados esta semana.'); return; }
+
+    showConfirm(
+        `¿Confirmar ${toRegister.length} territorio${toRegister.length > 1 ? 's' : ''} en la base de datos?`,
+        'Se registrarán con la fecha de cada día planificado.',
+        async () => {
+            setSyncStatus('syncing', 'Guardando...');
+
+            for (const entry of toRegister) {
+                // Upsert in tp_records (latest per territory)
+                await supabase.from('tp_records').upsert({
+                    id: entry.territorio,
+                    territorio: entry.territorio,
+                    fecha: entry.fecha,
+                    turno: entry.turno,
+                    updated_at: new Date().toISOString()
+                });
+
+                // Append to tp_history_log
+                await supabase.from('tp_history_log').upsert({
+                    territorio: entry.territorio,
+                    fecha: entry.fecha,
+                    turno: entry.turno
+                }, { onConflict: 'territorio,fecha,turno', ignoreDuplicates: true });
+            }
+
+            await loadRecords();
+            renderRecords();
+            renderRecommendations();
+            setSyncStatus('', 'Sincronizado');
+            showToast(`✅ ${toRegister.length} territorios registrados.`);
+        }
+    );
+}
+
+// ══════════════════════════════════════════════════════
+//  TERRITORY COLOR
+// ══════════════════════════════════════════════════════
+
+const territoryColors = {};
 
 function getDominantColor(num) {
     return new Promise(resolve => {
         if (territoryColors[num]) return resolve(territoryColors[num]);
-
-        // Fetch the image as a blob to avoid canvas CORS taint on local files
         fetch(`territorios/${num}.png`)
             .then(r => r.blob())
             .then(blob => {
                 const url = URL.createObjectURL(blob);
                 const img = new Image();
                 img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const SIZE = 60;
+                    const canvas = document.createElement('canvas'); const SIZE = 60;
                     canvas.width = canvas.height = SIZE;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, SIZE, SIZE);
                     URL.revokeObjectURL(url);
-
                     let r = 0, g = 0, b = 0, count = 0;
                     const data = ctx.getImageData(0, 0, SIZE, SIZE).data;
-
                     for (let i = 0; i < data.length; i += 4) {
                         if (data[i+3] < 128) continue;
                         const ri = data[i], gi = data[i+1], bi = data[i+2];
-                        const brightness = (ri + gi + bi) / 3;
+                        const brightness = (ri+gi+bi)/3;
                         if (brightness > 230 || brightness < 25) continue;
                         r += ri; g += gi; b += bi; count++;
                     }
-
                     if (count === 0) return resolve(null);
-
-                    r = Math.round(r / count);
-                    g = Math.round(g / count);
-                    b = Math.round(b / count);
-
-                    // Boost saturation
+                    r = Math.round(r/count); g = Math.round(g/count); b = Math.round(b/count);
                     const factor = 1.5;
-                    r = Math.min(255, Math.max(0, Math.round(128 + (r - 128) * factor)));
-                    g = Math.min(255, Math.max(0, Math.round(128 + (g - 128) * factor)));
-                    b = Math.min(255, Math.max(0, Math.round(128 + (b - 128) * factor)));
-
-                    const bg  = `rgb(${r},${g},${b})`;
-                    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                    r = Math.min(255, Math.max(0, Math.round(128+(r-128)*factor)));
+                    g = Math.min(255, Math.max(0, Math.round(128+(g-128)*factor)));
+                    b = Math.min(255, Math.max(0, Math.round(128+(b-128)*factor)));
+                    const bg = `rgb(${r},${g},${b})`;
+                    const lum = 0.299*r + 0.587*g + 0.114*b;
                     const text = lum > 155 ? '#1a1a2e' : '#ffffff';
-
                     territoryColors[num] = { bg, text };
                     resolve(territoryColors[num]);
                 };
@@ -2228,353 +1969,35 @@ function applyTerritoryColor(el, num) {
     });
 }
 
-// ═══════════════════════════════════════════════
-//  RECOMENDACIONES — 5 chips arrastrables
-// ═══════════════════════════════════════════════
-
-let dragTerritory = null; // número arrastrado actualmente
-
-function getRecommendations() {
-    const states = [];
-    for (let i = 1; i <= 36; i++) {
-        const rec = records.find(r => parseInt(r.territorio) === i);
-        states.push({
-            num: i,
-            fecha: rec ? rec.fecha : '0000-00-00',
-            days: rec ? daysBetween(rec.fecha) : 9999
-        });
-    }
-    states.sort((a, b) => b.days - a.days);
-    return states.slice(0, 8);
-}
-
-function renderRecommendations() {
-    const row = document.getElementById('rec-week-grid');
-    row.innerHTML = '';
-    const recs = getRecommendations();
-
-    recs.forEach(rec => {
-        const chip = document.createElement('div');
-        chip.className = 'rec-chip';
-        chip.draggable = true;
-        chip.dataset.territory = rec.num;
-
-        const subtitle = rec.days === 9999 ? 'Sin asignar' : `hace ${rec.days}d`;
-
-        chip.innerHTML = `
-            <span class="rnum">${rec.num}</span>
-            <span class="rdate">${subtitle}</span>
-            <button class="add-to-slot-btn" onclick="openAddModal(${rec.num}, event)">+ Añadir</button>
-        `;
-
-        // ── Drag (desktop) ──
-        chip.addEventListener('dragstart', e => {
-            dragTerritory = rec.num;
-            chip.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'copy';
-            e.dataTransfer.setData('text/plain', String(rec.num));
-        });
-        chip.addEventListener('dragend', () => {
-            dragTerritory = null;
-            chip.classList.remove('dragging');
-        });
-
-        // ── Touch (mobile) ──
-        let touchClone = null;
-        chip.addEventListener('touchstart', e => {
-            dragTerritory = rec.num;
-            const touch = e.touches[0];
-            touchClone = chip.cloneNode(true);
-            touchClone.style.cssText = `
-                position:fixed; pointer-events:none; z-index:9999;
-                opacity:0.85; transform:scale(1.05);
-                left:${touch.clientX - chip.offsetWidth/2}px;
-                top:${touch.clientY - 30}px;
-            `;
-            document.body.appendChild(touchClone);
-        }, { passive: true });
-
-        chip.addEventListener('touchmove', e => {
-            e.preventDefault();
-            const touch = e.touches[0];
-            if (touchClone) {
-                touchClone.style.left = `${touch.clientX - chip.offsetWidth/2}px`;
-                touchClone.style.top  = `${touch.clientY - 30}px`;
-            }
-            // Highlight card under finger
-            document.querySelectorAll('.day-card').forEach(c => c.classList.remove('drag-over'));
-            const el = document.elementFromPoint(touch.clientX, touch.clientY);
-            const card = el ? el.closest('.day-card') : null;
-            if (card && card.dataset.slotId) card.classList.add('drag-over');
-        }, { passive: false });
-
-        chip.addEventListener('touchend', e => {
-            if (touchClone) { touchClone.remove(); touchClone = null; }
-            document.querySelectorAll('.day-card').forEach(c => c.classList.remove('drag-over'));
-            const touch = e.changedTouches[0];
-            const el = document.elementFromPoint(touch.clientX, touch.clientY);
-            const card = el ? el.closest('.day-card') : null;
-            if (card && card.dataset.slotId && dragTerritory !== null) {
-                dropOnSlot(card.dataset.slotId, dragTerritory);
-            }
-            dragTerritory = null;
-        });
-
-        row.appendChild(chip);
-    });
-}
-
-function dropOnSlot(slotId, num) {
-    if (!scheduleData[slotId]) scheduleData[slotId] = [];
-    if (!scheduleData[slotId].includes(num)) {
-        scheduleData[slotId].push(num);
-        saveSchedule();
-        showToast(`✅ Territorio ${num} añadido.`);
-    } else {
-        showToast(`⚠️ El territorio ${num} ya está en ese día.`);
-    }
-}
-
-// Abre el modal de selección de slot cuando se pulsa "+ Añadir"
-function openAddModal(num, e) {
-    e.stopPropagation();
-    // Construir lista de slots disponibles
-    const slots = [];
-    DAYS.forEach((day, dIdx) => {
-        day.slots.forEach((shift, sIdx) => {
-            slots.push({ id: `slot-${dIdx}-${sIdx}`, label: `${day.name} · ${SHIFT_LABEL[shift]}` });
-        });
-    });
-    // Reutilizar el modal existente mostrando los días como opciones
-    activeSlotId = null;
-    document.getElementById('modal-sub').textContent = `¿A qué día añadir el Territorio ${num}?`;
-    document.getElementById('modal').classList.add('open');
-
-    const grid = document.getElementById('num-grid');
-    grid.style.gridTemplateColumns = '1fr';
-    grid.innerHTML = '';
-    slots.forEach(s => {
-        const btn = document.createElement('button');
-        btn.className = 'num-btn';
-        btn.style.cssText = 'aspect-ratio:unset; padding:12px 16px; border-radius:999px; font-family:inherit; font-size:0.85rem; justify-content:flex-start;';
-        btn.textContent = s.label;
-        btn.onclick = () => {
-            dropOnSlot(s.id, num);
-            closeModal();
-            grid.style.gridTemplateColumns = '';
-        };
-        grid.appendChild(btn);
-    });
-}
-
-function applyRec(slotId, num, e) {
-    e.stopPropagation();
-    dropOnSlot(slotId, num);
-}
-
-// ═══════════════════════════════════════════════
-//  VISTA PROGRAMACIÓN
-// ═══════════════════════════════════════════════
-
-function initSchedule() {
-    if (selectedMonday) {
-        document.getElementById('monday-picker').value = selectedMonday;
-    } else {
-        const today = new Date();
-        const day = today.getDay();
-        const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-        const monday = new Date(today.setDate(diff));
-        selectedMonday = monday.toISOString().split('T')[0];
-        document.getElementById('monday-picker').value = selectedMonday;
-        localStorage.setItem('tp_monday', selectedMonday);
-    }
-    renderSchedule();
-}
-
-function updateWeek() {
-    selectedMonday = document.getElementById('monday-picker').value;
-    localStorage.setItem('tp_monday', selectedMonday);
-    renderSchedule();
-}
-
-function renderSchedule() {
-    const grid = document.getElementById('main-grid');
-    const label = document.getElementById('week-label');
-    grid.innerHTML = '';
-
-    if (!selectedMonday) {
-        label.textContent = 'Selecciona el lunes para comenzar';
-        renderRecommendations();
-        return;
-    }
-
-    const startDate = dateFromMonday(selectedMonday, 0);
-    const endDate   = dateFromMonday(selectedMonday, 6);
-    const year      = startDate.getFullYear();
-    label.textContent = `Semana del ${formatShort(startDate)} al ${formatShort(endDate)} de ${year}`;
-
-    renderRecommendations();
-
-    DAYS.forEach((day, dIdx) => {
-        const col = document.createElement('div');
-        col.className = 'day-col';
-        const dateStr = formatShort(dateFromMonday(selectedMonday, day.offset));
-
-        day.slots.forEach((shift, sIdx) => {
-            const id = `slot-${dIdx}-${sIdx}`;
-            const territories = scheduleData[id] || [];
-
-            const card = document.createElement('div');
-            card.className = 'day-card';
-            card.dataset.slotId = id;
-
-            const shiftClass = shift === 'M' ? 'm' : 't';
-            const shiftText  = SHIFT_LABEL[shift];
-
-            let badges = territories.map((n, i) =>
-                `<div class="t-badge" id="tbadge-${id}-${i}" onclick="openTerritoryPopup('${id}', ${i}, ${n}, event)">${n}</div>`
-            ).join('');
-
-            card.innerHTML = `
-                <div class="day-header">
-                    <div class="day-name">${day.name}</div>
-                    <div class="day-date">${dateStr}</div>
-                </div>
-                ${`<span class="shift-label ${shiftClass}">${shiftText}</span>`}
-                <div class="t-list">${badges}</div>
-                <button class="btn-add" onclick="openModal('${id}', '${day.name} ${shiftText}')">+</button>
-            `;
-
-            // Apply territory colors to badges
-            territories.forEach((n, i) => {
-                const badge = document.getElementById(`tbadge-${id}-${i}`);
-                if (badge) applyTerritoryColor(badge, n);
-            });
-
-            // ── Drop events (desktop) ──
-            card.addEventListener('dragover', e => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'copy';
-                card.classList.add('drag-over');
-            });
-            card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
-            card.addEventListener('drop', e => {
-                e.preventDefault();
-                card.classList.remove('drag-over');
-                const num = parseInt(e.dataTransfer.getData('text/plain'));
-                if (!isNaN(num)) dropOnSlot(id, num);
-            });
-
-            col.appendChild(card);
-        });
-
-        grid.appendChild(col);
-    });
-}
-
-function removeTerritory(id, idx, e) {
-    e.stopPropagation();
-    scheduleData[id].splice(idx, 1);
-    saveSchedule();
-}
-
-function saveSchedule() {
-    localStorage.setItem('tp_schedule', JSON.stringify(scheduleData));
-    renderSchedule();
-}
-
-function clearSchedule() {
-    showConfirm('¿Reiniciar todos los territorios de esta semana?', 'Las fechas se mantienen.', () => {
-        scheduleData = {};
-        saveSchedule();
-    });
-}
-
-function confirmWeekToDatabase() {
-    if (!selectedMonday) {
-        showToast('⚠️ Selecciona primero la semana a confirmar.');
-        return;
-    }
-
-    // Recopilar todos los territorios asignados con su fecha y turno
-    const toRegister = [];
-
-    DAYS.forEach((day, dIdx) => {
-        day.slots.forEach((shift, sIdx) => {
-            const id = `slot-${dIdx}-${sIdx}`;
-            const territories = scheduleData[id] || [];
-            const fecha = dateFromMonday(selectedMonday, day.offset).toISOString().split('T')[0];
-            const turno = SHIFT_LABEL[shift];
-
-            territories.forEach(num => {
-                toRegister.push({ territorio: String(num), fecha, turno });
-            });
-        });
-    });
-
-    if (toRegister.length === 0) {
-        showToast('⚠️ No hay territorios asignados esta semana.');
-        return;
-    }
-
-    showConfirm(
-        `¿Confirmar ${toRegister.length} territorio${toRegister.length > 1 ? 's' : ''} en la base de datos?`,
-        'Se registrarán con la fecha de cada día planificado, reemplazando registros anteriores.',
-        () => {
-            // Reemplazar siempre: quitar los que ya existen y añadir los nuevos
-            toRegister.forEach(entry => {
-                records = records.filter(r => String(r.territorio) !== entry.territorio);
-                records.unshift({ id: Date.now() + Math.random(), ...entry });
-                appendHistoryLog(entry.territorio, entry.fecha, entry.turno);
-            });
-
-            // Reordenar por fecha descendente
-            records.sort((a, b) => b.fecha.localeCompare(a.fecha));
-            localStorage.setItem('tp_records', JSON.stringify(records));
-
-            renderRecords();
-            renderRecommendations();
-            showToast(`✅ ${toRegister.length} territorios registrados en la base de datos.`);
-        }
-    );
-}
-
-// ═══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  MODAL
-// ═══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 
 function openModal(slotId, label) {
     activeSlotId = slotId;
     document.getElementById('modal-sub').textContent = label || 'Elige un número';
     document.getElementById('modal').classList.add('open');
-
     const grid = document.getElementById('num-grid');
+    grid.style.gridTemplateColumns = '';
     grid.innerHTML = '';
     for (let i = 1; i <= 36; i++) {
         const btn = document.createElement('button');
-        btn.className = 'num-btn';
-        btn.textContent = i;
+        btn.className = 'num-btn'; btn.textContent = i;
         btn.onclick = () => {
             if (!scheduleData[activeSlotId]) scheduleData[activeSlotId] = [];
             scheduleData[activeSlotId].push(i);
-            saveSchedule();
-            closeModal();
+            saveSchedule(); closeModal();
         };
         grid.appendChild(btn);
     }
 }
 
-function closeModal() {
-    document.getElementById('modal').classList.remove('open');
-}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
 
-document.getElementById('modal').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('modal')) closeModal();
-});
-
-// ═══════════════════════════════════════════════
-//  EXPORTAR IMAGEN
-// ═══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+//  EXPORT IMAGE
+// ══════════════════════════════════════════════════════
 
 function exportImage() {
     const actionsUI = document.getElementById('schedule-actions-ui');
@@ -2582,102 +2005,64 @@ function exportImage() {
     const recSec    = document.getElementById('rec-section-ui');
     const addBtns   = document.querySelectorAll('.btn-add');
     const badges    = document.querySelectorAll('.t-badge');
-
-    actionsUI.style.display = 'none';
-    dateBoxUI.style.display = 'none';
-    recSec.style.display    = 'none';
+    actionsUI.style.display = 'none'; dateBoxUI.style.display = 'none'; recSec.style.display = 'none';
     addBtns.forEach(b => b.style.display = 'none');
-    // Deshabilita hover cursors para captura limpia
     badges.forEach(b => b.style.cursor = 'default');
-
-    html2canvas(document.getElementById('capture-frame'), {
-        scale: 3,
-        backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg').trim() || '#f0f1f5',
-        useCORS: true,
-        logging: false
-    }).then(canvas => {
+    html2canvas(document.getElementById('capture-frame'), { scale: 3, useCORS: true, logging: false }).then(canvas => {
         const link = document.createElement('a');
         link.download = `Programacion_${selectedMonday || 'semana'}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-
-        actionsUI.style.display = '';
-        dateBoxUI.style.display = '';
-        recSec.style.display    = '';
-        addBtns.forEach(b => b.style.display = '');
-        badges.forEach(b => b.style.cursor = '');
+        link.href = canvas.toDataURL('image/png'); link.click();
+        actionsUI.style.display = ''; dateBoxUI.style.display = ''; recSec.style.display = '';
+        addBtns.forEach(b => b.style.display = ''); badges.forEach(b => b.style.cursor = '');
     });
 }
 
-// ═══════════════════════════════════════════════
-//  BASE DE DATOS
-// ═══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+//  DATABASE / RECORDS
+// ══════════════════════════════════════════════════════
 
-(function initDB() {
-    const sel = document.getElementById('db-territorio');
-    for (let i = 1; i <= 36; i++) {
-        const opt = document.createElement('option');
-        opt.value = i;
-        opt.textContent = `Territorio ${i}`;
-        sel.appendChild(opt);
-    }
-
-    const today = new Date();
-    const offset = today.getTimezoneOffset();
-    document.getElementById('db-fecha').value =
-        new Date(today.getTime() - offset * 60000).toISOString().split('T')[0];
-})();
-
-function saveRecord() {
+async function saveRecord() {
     const n = document.getElementById('db-territorio').value;
     const f = document.getElementById('db-fecha').value;
     const t = document.getElementById('db-turno').value;
     if (!f) return;
 
-    // Reemplaza registro más reciente del mismo territorio
-    records = records.filter(r => r.territorio !== n);
-    records.unshift({ id: Date.now(), territorio: n, fecha: f, turno: t });
-    records.sort((a, b) => b.fecha.localeCompare(a.fecha));
-    localStorage.setItem('tp_records', JSON.stringify(records));
+    setSyncStatus('syncing', 'Guardando...');
 
-    // Acumula en historial completo
-    appendHistoryLog(n, f, t);
+    await supabase.from('tp_records').upsert({
+        id: n, territorio: n, fecha: f, turno: t, updated_at: new Date().toISOString()
+    });
 
+    await supabase.from('tp_history_log').upsert(
+        { territorio: n, fecha: f, turno: t },
+        { onConflict: 'territorio,fecha,turno', ignoreDuplicates: true }
+    );
+
+    await loadRecords();
     renderRecords();
     renderRecommendations();
+    setSyncStatus('', 'Sincronizado');
+    showToast('✅ Registro guardado.');
 }
 
-function appendHistoryLog(territorio, fecha, turno) {
-    if (!historyLog[territorio]) historyLog[territorio] = [];
-    // Evita duplicados exactos
-    const exists = historyLog[territorio].some(e => e.fecha === fecha && e.turno === turno);
-    if (!exists) {
-        historyLog[territorio].push({ fecha, turno });
-        historyLog[territorio].sort((a, b) => b.fecha.localeCompare(a.fecha));
-    }
-    localStorage.setItem('tp_history_log', JSON.stringify(historyLog));
+async function deleteRecordFromHistory(id) {
+    await supabase.from('tp_records').delete().eq('id', id);
+    await loadRecords();
+    renderRecords();
+    renderRecommendations();
+    showToast('🗑 Registro eliminado.');
 }
 
-function deleteRecord(id) {
-    showConfirm('¿Eliminar este registro?', 'Esta acción no se puede deshacer.', () => {
-        records = records.filter(r => r.id !== id);
-        localStorage.setItem('tp_records', JSON.stringify(records));
-        renderRecords();
-        renderRecommendations();
-    });
-}
+// ══════════════════════════════════════════════════════
+//  HISTORY WEEKS
+// ══════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════════════
-//  HISTORIAL SEMANAL
-// ═══════════════════════════════════════════════
+let historyWeekIndex = 0;
+let historyWeeks = [];
 
-let historyWeekIndex = 0; // 0 = más reciente
-let historyWeeks = [];    // array de lunes (YYYY-MM-DD), ordenados más reciente primero
-
-// Dado una fecha YYYY-MM-DD, retorna el lunes de esa semana
 function getMondayOf(dateStr) {
     const d = new Date(dateStr + 'T00:00:00');
-    const day = d.getDay(); // 0=Dom
+    const day = d.getDay();
     const diff = day === 0 ? -6 : 1 - day;
     d.setDate(d.getDate() + diff);
     return d.toISOString().split('T')[0];
@@ -2685,18 +2070,12 @@ function getMondayOf(dateStr) {
 
 function buildHistoryWeeks() {
     const mondaySet = new Set();
-    records.forEach(r => {
-        if (r.fecha && r.fecha !== '0000-00-00') {
-            mondaySet.add(getMondayOf(r.fecha));
-        }
-    });
-    // Ordenar más reciente primero
-    historyWeeks = Array.from(mondaySet).sort((a, b) => b.localeCompare(a));
+    records.forEach(r => { if (r.fecha && r.fecha !== '0000-00-00') mondaySet.add(getMondayOf(r.fecha)); });
+    historyWeeks = Array.from(mondaySet).sort((a,b) => b.localeCompare(a));
 }
 
 function renderRecords() {
     buildHistoryWeeks();
-    // Asegurar índice válido
     if (historyWeeks.length === 0) {
         document.getElementById('history-grid').innerHTML = '';
         document.getElementById('history-empty').style.display = 'block';
@@ -2719,19 +2098,15 @@ function renderHistoryWeek() {
     const grid = document.getElementById('history-grid');
     const weekLabel = document.getElementById('history-week-label');
     const pageLabel = document.getElementById('hist-page-label');
-    const prevBtn = document.getElementById('hist-prev');
-    const nextBtn = document.getElementById('hist-next');
 
-    // Navegación
-    prevBtn.disabled = historyWeekIndex <= 0;
-    nextBtn.disabled = historyWeekIndex >= historyWeeks.length - 1;
+    document.getElementById('hist-prev').disabled = historyWeekIndex <= 0;
+    document.getElementById('hist-next').disabled = historyWeekIndex >= historyWeeks.length - 1;
     pageLabel.textContent = `${historyWeekIndex + 1} / ${historyWeeks.length}`;
 
-    // Etiqueta de semana
     const startDate = dateFromMonday(monday, 0);
-    const endDate   = dateFromMonday(monday, 6);
-    weekLabel.textContent = `Semana del ${formatShort(startDate)} al ${formatShort(endDate)} de ${startDate.getFullYear()}`;
+    weekLabel.textContent = `Semana del ${formatShort(startDate)} al ${formatShort(dateFromMonday(monday, 6))} de ${startDate.getFullYear()}`;
 
+    const isAdmin = currentUser && currentUser.role === 'admin';
     grid.innerHTML = '';
 
     DAYS.forEach((day, dIdx) => {
@@ -2741,37 +2116,31 @@ function renderHistoryWeek() {
         const dateStr  = dateObj.toISOString().split('T')[0];
         const dateDisp = formatShort(dateObj);
 
-        day.slots.forEach((shift, sIdx) => {
-            // Buscar registros que caigan exactamente en esta fecha
+        day.slots.forEach((shift) => {
             const shiftLabel = SHIFT_LABEL[shift];
-            const matching = records.filter(r =>
-                r.fecha === dateStr && r.turno === shiftLabel
-            );
-
+            const matching = records.filter(r => r.fecha === dateStr && r.turno === shiftLabel);
             const card = document.createElement('div');
             card.className = 'day-card';
-
             const shiftClass = shift === 'M' ? 'm' : 't';
-
             const tList = document.createElement('div');
             tList.className = 't-list';
 
             matching.forEach(r => {
                 const wrap = document.createElement('div');
                 wrap.className = 'hist-badge-wrap';
-
                 const badge = document.createElement('div');
                 badge.className = `t-badge shift-${shiftClass}`;
                 badge.textContent = r.territorio;
-
-                const del = document.createElement('button');
-                del.className = 'hist-badge-del';
-                del.innerHTML = `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-                del.title = `Eliminar Territorio ${r.territorio}`;
-                del.onclick = () => deleteRecordFromHistory(r.id);
-
                 wrap.appendChild(badge);
-                wrap.appendChild(del);
+
+                if (isAdmin) {
+                    const del = document.createElement('button');
+                    del.className = 'hist-badge-del';
+                    del.innerHTML = `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+                    del.onclick = () => showConfirm(`¿Eliminar Territorio ${r.territorio}?`, 'Esta acción no se puede deshacer.', () => deleteRecordFromHistory(r.id || r.territorio));
+                    wrap.appendChild(del);
+                }
+
                 tList.appendChild(wrap);
             });
 
@@ -2790,68 +2159,151 @@ function renderHistoryWeek() {
     });
 }
 
-function deleteRecordFromHistory(id) {
-    records = records.filter(r => r.id !== id);
-    localStorage.setItem('tp_records', JSON.stringify(records));
-    renderRecords();
-    renderRecommendations();
-    showToast('🗑 Registro eliminado.');
-}
-
-// ═══════════════════════════════════════════════
-//  POPUP INFORMACIÓN DE TERRITORIO
-// ═══════════════════════════════════════════════
-
-// Mapa de imágenes: clave = número, valor = URL/ruta
-// Cuando el usuario suba sus imágenes, se cargarán aquí automáticamente
-// o se puede completar manualmente: territoryImages[1] = 'img/t1.jpg'
-const territoryImages = {};
+// ══════════════════════════════════════════════════════
+//  TERRITORY POPUP
+// ══════════════════════════════════════════════════════
 
 function openTerritoryPopup(slotId, idx, num, e) {
     e.stopPropagation();
-
-    // Datos del territorio
     const rec = records.find(r => parseInt(r.territorio) === num);
     let lastContact = 'Sin registros';
     if (rec) {
-        const [y, m, d] = rec.fecha.split('-');
+        const [y,m,d] = rec.fecha.split('-');
         const days = daysBetween(rec.fecha);
-        lastContact = `${d}/${m}/${y} · hace ${days} día${days !== 1 ? 's' : ''} (${rec.turno})`;
+        lastContact = `${d}/${m}/${y} · hace ${days} día${days!==1?'s':''} (${rec.turno})`;
     }
-
-    // Rellenar popup
     document.getElementById('t-popup-num').textContent = num;
     document.getElementById('t-popup-last').textContent = lastContact;
-
-    // Imagen — carpeta "territorios/", nombre "{num}.png"
     const img = document.getElementById('t-popup-img');
-    const placeholder = document.getElementById('t-popup-img-placeholder');
-    img.src = `territorios/${num}.png`;
-    img.style.display = 'block';
-    placeholder.style.display = 'none';
-    img.onerror = () => {
-        img.style.display = 'none';
-        placeholder.style.display = 'flex';
-    };
-
-    // Botón eliminar
+    const ph = document.getElementById('t-popup-img-placeholder');
+    img.src = `territorios/${num}.png`; img.style.display = 'block'; ph.style.display = 'none';
+    img.onerror = () => { img.style.display = 'none'; ph.style.display = 'flex'; };
     document.getElementById('t-popup-delete').onclick = () => {
         scheduleData[slotId].splice(idx, 1);
-        saveSchedule();
-        closeTerritoryPopup();
+        saveSchedule(); closeTerritoryPopup();
     };
-
     document.getElementById('t-popup-overlay').classList.add('open');
 }
 
-function closeTerritoryPopup() {
-    document.getElementById('t-popup-overlay').classList.remove('open');
+function closeTerritoryPopup() { document.getElementById('t-popup-overlay').classList.remove('open'); }
+
+// ══════════════════════════════════════════════════════
+//  IMPORT / EXPORT
+// ══════════════════════════════════════════════════════
+
+function parseDateDDMMYYYY(str) {
+    if (!str) return null;
+    str = String(str).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    const m = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+    if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    return null;
 }
+
+function excelSerialToDate(serial) {
+    const utc = (serial - 25569) * 86400 * 1000;
+    return new Date(utc).toISOString().split('T')[0];
+}
+
+function parseRowsToRecords(rows) {
+    const parsed = [];
+    rows.forEach(row => {
+        const num = String(row['Territorio'] || '').trim();
+        let fecha = row['Fecha'];
+        const turno = String(row['Turno'] || 'Mañana').trim();
+        if (!num || isNaN(parseInt(num))) return;
+        if (typeof fecha === 'number') fecha = excelSerialToDate(fecha);
+        else fecha = parseDateDDMMYYYY(String(fecha));
+        if (!fecha) return;
+        if (parseInt(num) < 1 || parseInt(num) > 36) return;
+        parsed.push({ territorio: num, fecha, turno });
+    });
+    return parsed;
+}
+
+async function importFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+        try {
+            let rows = [];
+            if (ext === 'csv') {
+                const text = e.target.result;
+                const lines = text.trim().split('\n');
+                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue;
+                    const vals = lines[i].split(',').map(v => v.trim().replace(/"/g,''));
+                    const obj = {};
+                    headers.forEach((h, idx) => obj[h] = vals[idx] || '');
+                    rows.push(obj);
+                }
+            } else {
+                const data = new Uint8Array(e.target.result);
+                const wb = XLSX.read(data, { type: 'array', cellDates: false });
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+            }
+
+            const incoming = parseRowsToRecords(rows);
+            if (incoming.length === 0) { showToast('⚠️ No se encontraron datos válidos.'); input.value = ''; return; }
+
+            setSyncStatus('syncing', 'Importando...');
+            for (const entry of incoming) {
+                await supabase.from('tp_records').upsert({ id: entry.territorio, ...entry, updated_at: new Date().toISOString() });
+                await supabase.from('tp_history_log').upsert({ territorio: entry.territorio, fecha: entry.fecha, turno: entry.turno }, { onConflict: 'territorio,fecha,turno', ignoreDuplicates: true });
+            }
+
+            await loadRecords();
+            renderRecords();
+            renderRecommendations();
+            setSyncStatus('', 'Sincronizado');
+            showToast(`✅ ${incoming.length} registros importados.`);
+        } catch(err) {
+            showToast('❌ Error al leer el archivo.');
+            setSyncStatus('error', 'Error de sync');
+            console.error(err);
+        }
+        input.value = '';
+    };
+
+    if (ext === 'csv') reader.readAsText(file, 'UTF-8');
+    else reader.readAsArrayBuffer(file);
+}
+
+function exportCSV() {
+    if (records.length === 0) { showToast('No hay registros para exportar.'); return; }
+    let csv = 'Territorio,Fecha,Turno\n';
+    records.forEach(r => { const [y,m,d] = r.fecha.split('-'); csv += `${r.territorio},${d}/${m}/${y},${r.turno}\n`; });
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = `Territorios_${new Date().toISOString().split('T')[0]}.csv`; link.click();
+    URL.revokeObjectURL(url);
+    showToast('✅ CSV exportado.');
+}
+
+function exportExcel() {
+    if (records.length === 0) { showToast('No hay registros para exportar.'); return; }
+    const data = records.map(r => { const [y,m,d] = r.fecha.split('-'); return { Territorio: parseInt(r.territorio), Fecha: `${d}/${m}/${y}`, Turno: r.turno }; });
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 10 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Territorios');
+    XLSX.writeFile(wb, `Territorios_${new Date().toISOString().split('T')[0]}.xlsx`);
+    showToast('✅ Excel exportado.');
+}
+
+// ══════════════════════════════════════════════════════
+//  TOAST & CONFIRM
+// ══════════════════════════════════════════════════════
 
 function showToast(msg, duration = 3000) {
     const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
+    t.textContent = msg; t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), duration);
 }
 
@@ -2869,168 +2321,44 @@ function closeConfirm() {
     _confirmCallback = null;
 }
 
-document.getElementById('confirm-ok').onclick = () => {
-    if (_confirmCallback) _confirmCallback();
-    closeConfirm();
-};
+document.getElementById('confirm-ok').onclick = () => { if (_confirmCallback) _confirmCallback(); closeConfirm(); };
 
-// ═══════════════════════════════════════════════
-//  IMPORT / EXPORT
-// ═══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+//  BOOTSTRAP
+// ══════════════════════════════════════════════════════
 
-// Convierte DD/MM/YYYY → YYYY-MM-DD (formato interno)
-function parseDateDDMMYYYY(str) {
-    if (!str) return null;
-    str = String(str).trim();
-    // Si ya viene como YYYY-MM-DD (por si acaso)
-    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
-    // DD/MM/YYYY
-    const m = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
-    if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
-    return null;
-}
+(function bootstrap() {
+    const { url, key } = getSupabaseConfig();
 
-// Convierte número de serie Excel a fecha YYYY-MM-DD
-function excelSerialToDate(serial) {
-    // Excel epoch: 1 Jan 1900 = 1 (con bug de año bisiesto 1900)
-    const utc = (serial - 25569) * 86400 * 1000;
-    const d = new Date(utc);
-    return d.toISOString().split('T')[0];
-}
-
-function parseRowsToRecords(rows) {
-    // rows: array de objetos con keys Territorio, Fecha, Turno
-    const parsed = [];
-    rows.forEach(row => {
-        const num = String(row['Territorio'] || '').trim();
-        let fecha = row['Fecha'];
-        const turno = String(row['Turno'] || 'Mañana').trim();
-
-        if (!num || isNaN(parseInt(num))) return;
-
-        // Si la fecha es un número (serial Excel)
-        if (typeof fecha === 'number') {
-            fecha = excelSerialToDate(fecha);
-        } else {
-            fecha = parseDateDDMMYYYY(String(fecha));
-        }
-
-        if (!fecha) return;
-        if (parseInt(num) < 1 || parseInt(num) > 36) return;
-
-        parsed.push({ id: Date.now() + Math.random(), territorio: num, fecha, turno });
-    });
-    return parsed;
-}
-
-function mergeRecords(incoming) {
-    // Fusiona: por cada territorio conserva el registro con fecha más reciente
-    const map = {};
-    [...records, ...incoming].forEach(r => {
-        const key = String(r.territorio);
-        if (!map[key] || r.fecha > map[key].fecha) {
-            map[key] = r;
-        }
-    });
-    return Object.values(map).sort((a, b) => b.fecha.localeCompare(a.fecha));
-}
-
-function importFile(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const ext = file.name.split('.').pop().toLowerCase();
-
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-        try {
-            let rows = [];
-
-            if (ext === 'csv') {
-                // Parsear CSV manualmente
-                const text = e.target.result;
-                const lines = text.trim().split('\n');
-                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
-                for (let i = 1; i < lines.length; i++) {
-                    if (!lines[i].trim()) continue;
-                    const vals = lines[i].split(',').map(v => v.trim().replace(/"/g,''));
-                    const obj = {};
-                    headers.forEach((h, idx) => obj[h] = vals[idx] || '');
-                    rows.push(obj);
-                }
-            } else {
-                // Excel con SheetJS
-                const data = new Uint8Array(e.target.result);
-                const wb = XLSX.read(data, { type: 'array', cellDates: false });
-                const ws = wb.Sheets[wb.SheetNames[0]];
-                rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
-            }
-
-            const incoming = parseRowsToRecords(rows);
-            if (incoming.length === 0) {
-                showToast('⚠️ No se encontraron datos válidos en el archivo.');
-                input.value = '';
-                return;
-            }
-
-            records = mergeRecords(incoming);
-            localStorage.setItem('tp_records', JSON.stringify(records));
-            renderRecords();
-            renderRecommendations();
-            showToast(`✅ ${incoming.length} registros importados correctamente.`);
-        } catch (err) {
-            showToast('❌ Error al leer el archivo. Verifica el formato.');
-            console.error(err);
-        }
-        input.value = '';
-    };
-
-    if (ext === 'csv') {
-        reader.readAsText(file, 'UTF-8');
-    } else {
-        reader.readAsArrayBuffer(file);
+    if (!url || !key) {
+        // Show config screen
+        document.getElementById('config-screen').style.display = 'flex';
+        document.getElementById('loading-overlay').classList.add('hidden');
+        return;
     }
-}
 
-function exportCSV() {
-    if (records.length === 0) { showToast('No hay registros para exportar.'); return; }
-    let csv = 'Territorio,Fecha,Turno\n';
-    records.forEach(r => {
-        const [y, m, d] = r.fecha.split('-');
-        csv += `${r.territorio},${d}/${m}/${y},${r.turno}\n`;
-    });
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Territorios_Backup_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-    showToast('✅ CSV exportado correctamente.');
-}
+    // Config exists, init Supabase
+    initSupabase(url, key);
+    document.getElementById('config-screen').classList.add('hidden');
 
-function exportExcel() {
-    if (records.length === 0) { showToast('No hay registros para exportar.'); return; }
-    const data = records.map(r => {
-        const [y, m, d] = r.fecha.split('-');
-        return { Territorio: parseInt(r.territorio), Fecha: `${d}/${m}/${y}`, Turno: r.turno };
-    });
-    const ws = XLSX.utils.json_to_sheet(data);
+    // Check for existing session
+    const session = localStorage.getItem('tp_session');
+    if (session) {
+        try {
+            currentUser = JSON.parse(session);
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            document.getElementById('login-screen').classList.add('hidden');
+            initApp();
+            return;
+        } catch(e) {
+            localStorage.removeItem('tp_session');
+        }
+    }
 
-    // Ancho de columnas
-    ws['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 10 }];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Territorios');
-    XLSX.writeFile(wb, `Territorios_Backup_${new Date().toISOString().split('T')[0]}.xlsx`);
-    showToast('✅ Excel exportado correctamente.');
-}
-
-// ═══════════════════════════════════════════════
-//  INICIO
-// ═══════════════════════════════════════════════
-initSchedule();
-renderRecords();
+    // Show login
+    document.getElementById('loading-overlay').classList.add('hidden');
+    showLoginScreen();
+})();
 </script>
 </body>
 </html>
