@@ -593,7 +593,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         .week-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
         .day-col { display: flex; flex-direction: column; gap: 14px; }
 
-        .day-card { background: var(--surface); border-radius: 24px; border: 1px solid var(--border); padding: 14px; aspect-ratio: 1/1; display: flex; flex-direction: column; position: relative; box-shadow: var(--shadow); transition: box-shadow 0.25s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1); }
+        .day-card { background: var(--surface); border-radius: 24px; border: 1px solid var(--border); padding: 14px 14px 8px; aspect-ratio: 1/1; display: flex; flex-direction: column; position: relative; box-shadow: var(--shadow); transition: box-shadow 0.25s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1); overflow: hidden; min-height: 0; }
         .day-card:hover { box-shadow: var(--shadow-lg); }
 
         .day-header { margin-bottom: 8px; }
@@ -604,7 +604,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         .shift-label.m { background: rgba(26,86,219,0.12); color: var(--morning); }
         .shift-label.t { background: rgba(217,119,6,0.12); color: var(--afternoon); }
 
-        .t-list { flex: 1; display: flex; flex-wrap: wrap; gap: 5px; align-content: center; justify-content: center; }
+        .t-list { flex: 1; display: flex; flex-wrap: wrap; gap: 5px; align-content: center; justify-content: center; overflow: hidden; min-height: 0; }
 
         .t-badge { background: var(--badge-bg); color: white; width: 38px; height: 38px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 1.05rem; font-weight: 500; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.18); transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s ease, background 0.3s ease, box-shadow 0.2s ease; animation: bounce-in 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
         .t-badge:hover { transform: scale(1.15) !important; box-shadow: 0 4px 16px rgba(0,0,0,0.22) !important; }
@@ -1123,14 +1123,14 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         
         /* ══ PUBLISHER PILL ON SCHEDULE CARD ══ */
         .slot-publisher {
-            display: flex; align-items: center; gap: 6px;
-            padding: 5px 10px; margin: 6px 8px 2px;
-            border-radius: 10px;
+            display: flex; align-items: center; gap: 5px;
+            padding: 4px 8px; margin: 4px 0 0;
+            border-radius: 8px;
             background: var(--surface2);
             border: 1px solid var(--border);
             cursor: pointer;
             transition: border-color 0.15s, background 0.15s;
-            min-height: 30px;
+            height: 26px; flex-shrink: 0; overflow: hidden;
         }
         .slot-publisher:hover { border-color: var(--accent); background: rgba(26,86,219,0.05); }
         .slot-publisher.has-publisher { border-color: rgba(26,86,219,0.3); }
