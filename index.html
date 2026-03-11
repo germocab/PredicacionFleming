@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FlemingPlans 13.5.3</title>
+    <title>FlemingPlans 13.6</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
@@ -1365,6 +1365,15 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         .td-history-shift.t { background: rgba(99,102,241,0.12); color: #6366f1; }
         .td-empty { text-align: center; color: var(--text2); font-size: 0.82rem; padding: 24px; }
 
+        
+        /* History publisher pill — read-only */
+        .hist-publisher-pill {
+            position: absolute !important; bottom: 10px !important;
+            left: 10px !important; right: 10px !important;
+            pointer-events: none !important; cursor: default !important;
+        }
+        .hist-publisher-pill .slot-publisher-clear { display: none !important; }
+
         </style>
 </head>
 <body>
@@ -1532,6 +1541,10 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
             <div id="history-week-label" class="hist-page-sub"></div>
         </div>
         <div style="display:flex; align-items:center; gap:10px;">
+            <button id="hist-delete-week" style="display:none; align-items:center; gap:6px; padding:7px 14px; border-radius:999px; border:1.5px solid var(--border); background:transparent; color:#ef4444; font-family:inherit; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.15s;" onmouseover="this.style.background='rgba(239,68,68,0.07)';this.style.borderColor='#ef4444'" onmouseout="this.style.background='transparent';this.style.borderColor='var(--border)'">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                Eliminar semana
+            </button>
             <div class="history-nav">
                 <button class="hist-nav-btn" id="hist-prev" onclick="historyNavWeek(-1)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
@@ -1541,6 +1554,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
             </div>
+        </div>
             <button class="btn-mas admin-only" onclick="toggleDbPanel()" id="btn-mas">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
@@ -2915,6 +2929,36 @@ function buildHistoryWeeks() {
     historyWeeks = Array.from(mondaySet).sort((a,b) => b.localeCompare(a));
 }
 
+
+async function deleteWeekFromHistory(monday) {
+    const startDate = dateFromMonday(monday, 0);
+    const endDate   = dateFromMonday(monday, 6);
+    const label     = `Semana del ${formatShort(startDate)} al ${formatShort(endDate)}`;
+    showConfirm(
+        `¿Eliminar ${label}?`,
+        'Se borrarán todos los registros de esa semana del historial. No se puede deshacer.',
+        async () => {
+            setSyncStatus('syncing', 'Eliminando...');
+            // Get all dates in that week
+            const dates = DAYS.map(d => dateFromMonday(monday, d.offset).toISOString().split('T')[0]);
+            // Delete from tp_history_log for those dates
+            for (const fecha of dates) {
+                await sbClient.from('tp_history_log').delete().eq('fecha', fecha);
+            }
+            // Also update tp_records: if a territory's latest record was in this week, remove it
+            const weekRecords = records.filter(r => dates.includes(r.fecha));
+            for (const r of weekRecords) {
+                await sbClient.from('tp_records').delete().eq('id', r.id);
+            }
+            await loadRecords();
+            renderRecords();
+            renderRecommendations();
+            setSyncStatus('', 'Sincronizado');
+            showToast('🗑 Semana eliminada del historial.');
+        }
+    );
+}
+
 function renderRecords() {
     buildHistoryWeeks();
     if (historyWeeks.length === 0) {
@@ -2948,6 +2992,14 @@ function renderHistoryWeek() {
     weekLabel.textContent = `Semana del ${formatShort(startDate)} al ${formatShort(dateFromMonday(monday, 6))} de ${startDate.getFullYear()}`;
 
     const isAdmin = currentUser && canPlanRole(currentUser);
+
+    // Delete week button
+    const delWeekBtn = document.getElementById('hist-delete-week');
+    if (delWeekBtn) {
+        delWeekBtn.style.display = isAdmin ? 'flex' : 'none';
+        delWeekBtn.onclick = () => deleteWeekFromHistory(monday);
+    }
+
     grid.innerHTML = '';
 
     DAYS.forEach((day, dIdx) => {
@@ -2975,6 +3027,9 @@ function renderHistoryWeek() {
             const tList = document.createElement('div');
             tList.className = 't-list';
 
+            // Publisher name: all entries in this slot share the same publisher
+            const slotPubName = matching.length > 0 ? (matching[0].publisher_name || null) : null;
+
             matching.forEach(r => {
                 const wrap = document.createElement('div');
                 wrap.className = 'hist-badge-wrap';
@@ -2991,15 +3046,6 @@ function renderHistoryWeek() {
                     del.onclick = () => showConfirm(`¿Eliminar Territorio ${r.territorio}?`, 'Esta acción no se puede deshacer.', () => deleteRecordFromHistory(recEntry ? recEntry.id : r.territorio));
                     wrap.appendChild(del);
                 }
-
-                // Publisher tag under badge
-                if (r.publisher_name) {
-                    const pubTag = document.createElement('div');
-                    pubTag.style.cssText = 'font-size:0.6rem;color:var(--text2);text-align:center;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56px;';
-                    pubTag.textContent = r.publisher_name;
-                    wrap.appendChild(pubTag);
-                }
-
                 tList.appendChild(wrap);
             });
 
@@ -3007,10 +3053,23 @@ function renderHistoryWeek() {
                 <div class="day-header">
                     <div class="day-name">${day.name}</div>
                     <div class="day-date">${dateDisp}</div>
+                    <span class="shift-label ${shiftClass}">${shiftLabel}</span>
                 </div>
-                ${day.slots.length > 1 ? `<span class="shift-label ${shiftClass}">${shiftLabel}</span>` : ''}
             `;
             card.appendChild(tList);
+
+            // Publisher pill — same style as schedule view, read-only
+            if (slotPubName) {
+                const pill = document.createElement('div');
+                pill.className = 'slot-publisher has-publisher hist-publisher-pill';
+                pill.style.cursor = 'default';
+                pill.innerHTML = `
+                    <svg class="slot-publisher-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                    <span class="slot-publisher-name">${slotPubName}</span>
+                `;
+                card.appendChild(pill);
+            }
+
             col.appendChild(card);
         });
 
