@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FlemingPlans 13.5.2</title>
+    <title>FlemingPlans 13.5.3</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
@@ -2297,7 +2297,7 @@ async function loadRecords() {
     historyLog = {};
     (hist || []).forEach(h => {
         if (!historyLog[h.territorio]) historyLog[h.territorio] = [];
-        historyLog[h.territorio].push({ fecha: h.fecha, turno: h.turno });
+        historyLog[h.territorio].push({ fecha: h.fecha, turno: h.turno, publisher_name: h.publisher_name || null });
     });
     // Load comment counts for current week
 }
@@ -2909,7 +2909,9 @@ function getMondayOf(dateStr) {
 
 function buildHistoryWeeks() {
     const mondaySet = new Set();
-    records.forEach(r => { if (r.fecha && r.fecha !== '0000-00-00') mondaySet.add(getMondayOf(r.fecha)); });
+    Object.values(historyLog).forEach(entries => {
+        entries.forEach(e => { if (e.fecha && e.fecha !== '0000-00-00') mondaySet.add(getMondayOf(e.fecha)); });
+    });
     historyWeeks = Array.from(mondaySet).sort((a,b) => b.localeCompare(a));
 }
 
@@ -2957,7 +2959,16 @@ function renderHistoryWeek() {
 
         day.slots.forEach((shift) => {
             const shiftLabel = SHIFT_LABEL[shift];
-            const matching = records.filter(r => r.fecha === dateStr && r.turno === shiftLabel);
+            // Build matching from historyLog (has publisher_name)
+            const matching = [];
+            Object.entries(historyLog).forEach(([territorio, entries]) => {
+                entries.forEach(e => {
+                    if (e.fecha === dateStr && e.turno === shiftLabel) {
+                        matching.push({ territorio, ...e });
+                    }
+                });
+            });
+            matching.sort((a,b) => parseInt(a.territorio) - parseInt(b.territorio));
             const card = document.createElement('div');
             card.className = 'day-card';
             const shiftClass = shift === 'M' ? 'm' : 't';
@@ -2973,11 +2984,20 @@ function renderHistoryWeek() {
                 wrap.appendChild(badge);
 
                 if (isAdmin) {
+                    const recEntry = records.find(rec => rec.territorio === r.territorio);
                     const del = document.createElement('button');
                     del.className = 'hist-badge-del';
                     del.innerHTML = `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-                    del.onclick = () => showConfirm(`¿Eliminar Territorio ${r.territorio}?`, 'Esta acción no se puede deshacer.', () => deleteRecordFromHistory(r.id || r.territorio));
+                    del.onclick = () => showConfirm(`¿Eliminar Territorio ${r.territorio}?`, 'Esta acción no se puede deshacer.', () => deleteRecordFromHistory(recEntry ? recEntry.id : r.territorio));
                     wrap.appendChild(del);
+                }
+
+                // Publisher tag under badge
+                if (r.publisher_name) {
+                    const pubTag = document.createElement('div');
+                    pubTag.style.cssText = 'font-size:0.6rem;color:var(--text2);text-align:center;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56px;';
+                    pubTag.textContent = r.publisher_name;
+                    wrap.appendChild(pubTag);
                 }
 
                 tList.appendChild(wrap);
