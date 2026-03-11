@@ -339,7 +339,9 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
             border-radius: 999px;
         }
 
+        .role-badge.dev     { background: rgba(139,92,246,0.14); color: #8b5cf6; }
         .role-badge.admin   { background: rgba(26,86,219,0.12); color: var(--accent); }
+        .role-badge.lite    { background: rgba(107,114,128,0.12); color: var(--text2); }
         .role-badge.viewer  { background: rgba(107,114,128,0.12); color: var(--text2); }
 
         /* User dropdown */
@@ -1456,8 +1458,8 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
             </div>
             <div class="form-row">
                 <select id="new-role">
-                    <option value="viewer">Viewer (solo lectura)</option>
-                    <option value="admin">Admin (acceso completo)</option>
+                    <option value="lite">Lite (solo lectura)</option>
+                    <option value="admin">Admin (planificación)</option>
                 </select>
                 <button class="btn-main" style="border-radius:11px;" onclick="createUser()">Crear</button>
             </div>
@@ -1611,34 +1613,42 @@ document.addEventListener('click', e => {
 });
 
 function applyUserPermissions() {
-    const isAdmin = currentUser.role === 'admin';
+    const role    = currentUser.role; // 'dev' | 'admin' | 'lite' | 'viewer' (legacy)
+    const isDev   = role === 'dev';
+    const isAdmin = isDev || role === 'admin';  // dev inherits all admin powers
+    const canPlan = isAdmin;                    // lite/viewer cannot plan
 
     // Nav display
     document.getElementById('nav-username').textContent = currentUser.username;
     setAvatarEl(document.getElementById('nav-avatar'), currentUser.username, currentUser.avatar_url);
     const roleBadge = document.getElementById('nav-role');
-    roleBadge.textContent = isAdmin ? 'Admin' : 'Viewer';
-    roleBadge.className = `role-badge ${currentUser.role}`;
+    const roleLabels = { dev: 'DEV', admin: 'Admin', lite: 'Lite', viewer: 'Lite' };
+    roleBadge.textContent = roleLabels[role] || role;
+    // Normalise 'viewer' legacy role to 'lite' badge class
+    roleBadge.className = `role-badge ${role === 'viewer' ? 'lite' : role}`;
 
-    // Show manage users button for admins
-    document.getElementById('dd-manage-users').style.display = isAdmin ? 'flex' : 'none';
-    document.getElementById('dd-cambiar-credenciales').style.display = isAdmin ? 'flex' : 'none';
+    // DEV-only items in dropdown
+    document.getElementById('dd-manage-users').style.display        = isDev  ? 'flex' : 'none';
+    document.getElementById('dd-cambiar-credenciales').style.display = isDev  ? 'flex' : 'none';
 
-    // Admin-only elements
+    // Admin-only UI elements (plan/confirm/register/import/export)
     document.querySelectorAll('.admin-only').forEach(el => {
-        if (!isAdmin) el.classList.add('viewer-hidden');
-        else el.classList.remove('viewer-hidden');
+        if (!canPlan) el.classList.add('viewer-hidden');
+        else          el.classList.remove('viewer-hidden');
     });
 
-    // Disable drag if viewer
-    if (!isAdmin) {
+    // Disable drag if lite/viewer
+    if (!canPlan) {
         document.querySelectorAll('.rec-chip').forEach(c => {
             c.draggable = false;
             c.style.cursor = 'default';
         });
-        // Hide date picker
+        // Lock date picker
         document.getElementById('date-box-ui').style.pointerEvents = 'none';
         document.getElementById('date-box-ui').style.opacity = '0.5';
+    } else {
+        document.getElementById('date-box-ui').style.pointerEvents = '';
+        document.getElementById('date-box-ui').style.opacity = '';
     }
 }
 
@@ -1660,24 +1670,30 @@ async function loadUsersList() {
     const { data } = await sbClient.from('tp_users').select('*').order('created_at');
     const list = document.getElementById('users-list');
     list.innerHTML = '';
+    const roleLabels = { dev: 'DEV', admin: 'Admin', lite: 'Lite', viewer: 'Lite' };
     (data || []).forEach(u => {
+        // DEV users hidden from everyone except themselves and other DEVs
+        if (u.role === 'dev' && u.id !== currentUser.id && !isDevRole(currentUser)) return;
         const row = document.createElement('div');
         row.className = 'user-row';
         const isSelf = u.id === currentUser.id;
+        const uRoleLabel = roleLabels[u.role] || u.role;
+        const uRoleClass = u.role === 'viewer' ? 'lite' : u.role;
+        // DEV users can't be deleted by non-DEVs; self can't be deleted
+        const canDelete = !isSelf && !(u.role === 'dev' && !isDevRole(currentUser));
         row.innerHTML = `
             <div class="user-row-info">
                 <div class="user-avatar" style="width:32px;height:32px;font-size:0.8rem;" data-uid="${u.id}"></div>
                 <div>
                     <div class="user-row-name">${u.username}${isSelf ? ' (tú)' : ''}</div>
-                    <div class="user-row-role">${u.role === 'admin' ? 'Admin' : 'Viewer'}</div>
+                    <div class="user-row-role"><span class="role-badge ${uRoleClass}" style="font-size:0.6rem;">${uRoleLabel}</span></div>
                 </div>
             </div>
             <div class="user-row-actions">
-                ${!isSelf ? `<button class="btn-user-del" onclick="deleteUser('${u.id}', '${u.username}')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>` : ''}
+                ${canDelete ? `<button class="btn-user-del" onclick="deleteUser('${u.id}', '${u.username}')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>` : ''}
             </div>
         `;
         list.appendChild(row);
-        // Populate avatar after setting innerHTML
         setAvatarEl(row.querySelector('.user-avatar[data-uid]'), u.username, u.avatar_url || null);
     });
 }
@@ -1739,6 +1755,17 @@ function setSyncStatus(status, msg) {
 }
 
 
+
+// Role helpers
+function canPlanRole(u) {
+    u = u || currentUser;
+    return u.role === 'dev' || u.role === 'admin';
+}
+function isDevRole(u) {
+    u = u || currentUser;
+    return u.role === 'dev';
+}
+
 // ══ AVATAR HELPERS ══
 function setAvatarEl(el, username, avatarUrl) {
     if (!el) return;
@@ -1763,8 +1790,9 @@ async function openProfileModal() {
     // Fill data
     document.getElementById('pm-username').textContent = currentUser.username;
     const badge = document.getElementById('pm-role-badge');
-    badge.textContent = currentUser.role === 'admin' ? 'Admin' : 'Viewer';
-    badge.className = `role-badge ${currentUser.role}`;
+    const _rl = { dev:'DEV', admin:'Admin', lite:'Lite', viewer:'Lite' };
+    badge.textContent = _rl[currentUser.role] || currentUser.role;
+    badge.className = `role-badge ${currentUser.role === 'viewer' ? 'lite' : currentUser.role}`;
     // Big avatar
     setAvatarEl(document.getElementById('pm-big-avatar'), currentUser.username, currentUser.avatar_url);
     // Re-add hover overlay (wiped by innerHTML)
@@ -2232,7 +2260,7 @@ function getRecommendations() {
 function renderRecommendations() {
     const row = document.getElementById('rec-week-grid');
     row.innerHTML = '';
-    const isAdmin = currentUser && currentUser.role === 'admin';
+    const isAdmin = currentUser && canPlanRole(currentUser);
     getRecommendations().forEach(rec => {
         const chip = document.createElement('div');
         chip.className = 'rec-chip';
@@ -2338,7 +2366,7 @@ function initSchedule() {
 }
 
 async function updateWeek() {
-    if (currentUser.role !== 'admin') return;
+    if (!canPlanRole(currentUser)) return;
     selectedMonday = document.getElementById('monday-picker').value;
     await saveMondayToCloud(selectedMonday);
     await loadSchedule();
@@ -2362,7 +2390,7 @@ function renderSchedule() {
 
     renderRecommendations();
 
-    const isAdmin = currentUser && currentUser.role === 'admin';
+    const isAdmin = currentUser && canPlanRole(currentUser);
 
     DAYS.forEach((day, dIdx) => {
         const col = document.createElement('div');
@@ -2668,7 +2696,7 @@ function renderHistoryWeek() {
     const startDate = dateFromMonday(monday, 0);
     weekLabel.textContent = `Semana del ${formatShort(startDate)} al ${formatShort(dateFromMonday(monday, 6))} de ${startDate.getFullYear()}`;
 
-    const isAdmin = currentUser && currentUser.role === 'admin';
+    const isAdmin = currentUser && canPlanRole(currentUser);
     grid.innerHTML = '';
 
     DAYS.forEach((day, dIdx) => {
@@ -2916,7 +2944,7 @@ async function loadCommentsForSlot(slotId, monday) {
         .order('created_at', { ascending: true });
 
     const list = document.getElementById('comments-list');
-    const isAdmin = currentUser && currentUser.role === 'admin';
+    const isAdmin = currentUser && canPlanRole(currentUser);
 
     if (!data || data.length === 0) {
         list.innerHTML = '<div class="comment-empty">Sin comentarios aún. ¡Sé el primero!</div>';
