@@ -1204,7 +1204,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         <svg width="15" height="15" id="dd-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <span id="dd-theme-label">Modo oscuro</span>
     </button>
-    <button class="dropdown-item" onclick="resetSupabaseConfig()">
+    <button class="dropdown-item" id="dd-cambiar-credenciales" onclick="resetSupabaseConfig()" style="display:none;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
         Cambiar credenciales
     </button>
@@ -1223,7 +1223,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 <nav class="nav">
     <div class="nav-pill-wrap">
         <div class="nav-tabs">
-            <button class="nav-tab active" onclick="switchView('schedule', this)">Planificación</button>
+            <button class="nav-tab active" onclick="switchView('schedule', this)">Programación</button>
             <button class="nav-tab" onclick="switchView('database', this)">Historial</button>
             <button class="nav-tab" onclick="switchView('territories', this)">Territorios</button>
         </div>
@@ -1243,7 +1243,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         <div id="view-schedule-inner" style="max-width:1100px; margin:0 auto;">
             <div class="schedule-header">
                 <div class="schedule-title">
-                    <h2>Planificación Semanal</h2>
+                    <h2>Programación Semanal</h2>
                     <p id="week-label">Selecciona el lunes para comenzar</p>
                 </div>
                 <div class="date-box" id="date-box-ui">
@@ -1622,6 +1622,7 @@ function applyUserPermissions() {
 
     // Show manage users button for admins
     document.getElementById('dd-manage-users').style.display = isAdmin ? 'flex' : 'none';
+    document.getElementById('dd-cambiar-credenciales').style.display = isAdmin ? 'flex' : 'none';
 
     // Admin-only elements
     document.querySelectorAll('.admin-only').forEach(el => {
@@ -1695,7 +1696,7 @@ async function createUser() {
 
     document.getElementById('new-username').value = '';
     document.getElementById('new-password').value = '';
-    showToast('Usuario creado correctamente.');
+    showToast('✅ Usuario creado correctamente.');
     await loadUsersList();
 }
 
@@ -1895,13 +1896,13 @@ async function uploadProfilePhoto(file) {
         refreshNavAvatar();
         openProfileModal();
         document.getElementById('pm-remove-btn').classList.add('show');
-        showToast('Foto de perfil actualizada.');
+        showToast('✅ Foto de perfil actualizada.');
 
     } catch (err) {
         progressWrap.style.display = 'none';
         progressBar.style.width = '0';
         console.error('Avatar upload error:', err);
-        showToast('Error al subir la foto: ' + (err.message || err));
+        showToast('❌ Error al subir la foto: ' + (err.message || err));
     }
 }
 
@@ -1922,9 +1923,9 @@ async function removeProfilePhoto() {
         refreshNavAvatar();
         document.getElementById('pm-remove-btn').classList.remove('show');
         openProfileModal(); // refresh modal
-        showToast('Foto eliminada.');
+        showToast('✅ Foto eliminada.');
     } catch (err) {
-        showToast('Error al eliminar la foto.');
+        showToast('❌ Error al eliminar la foto.');
         console.error(err);
     }
 }
@@ -1982,13 +1983,13 @@ function setupRealtimeSync() {
             renderRecords();
             renderRecommendations();
             setSyncStatus('', 'Sincronizado');
-            showToast('Historial actualizado');
+            showToast('🔄 Historial actualizado');
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'tp_schedule' }, async () => {
             await loadSchedule();
             renderSchedule();
             setSyncStatus('', 'Sincronizado');
-            showToast('Planificación actualizada');
+            showToast('🔄 Programación actualizada');
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'tp_settings' }, async () => {
             await loadSelectedMonday();
@@ -2291,9 +2292,9 @@ function dropOnSlot(slotId, num) {
     if (!scheduleData[slotId].includes(num)) {
         scheduleData[slotId].push(num);
         saveSchedule();
-        showToast(`Territorio ${num} añadido.`);
+        showToast(`✅ Territorio ${num} añadido.`);
     } else {
-        showToast(`El territorio ${num} ya está en ese día.`);
+        showToast(`⚠️ El territorio ${num} ya está en ese día.`);
     }
 }
 
@@ -2469,7 +2470,7 @@ async function confirmWeekToDatabase() {
             renderRecords();
             renderRecommendations();
             setSyncStatus('', 'Sincronizado');
-            showToast(`${toRegister.length} territorios registrados.`);
+            showToast(`✅ ${toRegister.length} territorios registrados.`);
         }
     );
 }
@@ -2603,7 +2604,7 @@ async function saveRecord() {
     renderRecords();
     renderRecommendations();
     setSyncStatus('', 'Sincronizado');
-    showToast('Registro guardado.');
+    showToast('✅ Registro guardado.');
 }
 
 async function deleteRecordFromHistory(id) {
@@ -2822,9 +2823,9 @@ async function importFile(input) {
             renderRecords();
             renderRecommendations();
             setSyncStatus('', 'Sincronizado');
-            showToast(`${incoming.length} registros importados.`);
+            showToast(`✅ ${incoming.length} registros importados.`);
         } catch(err) {
-            showToast('Error al leer el archivo.');
+            showToast('❌ Error al leer el archivo.');
             setSyncStatus('error', 'Error de sync');
             console.error(err);
         }
@@ -2844,7 +2845,7 @@ function exportCSV() {
     const link = document.createElement('a');
     link.href = url; link.download = `Territorios_${new Date().toISOString().split('T')[0]}.csv`; link.click();
     URL.revokeObjectURL(url);
-    showToast('CSV exportado.');
+    showToast('✅ CSV exportado.');
 }
 
 function exportExcel() {
@@ -2855,7 +2856,7 @@ function exportExcel() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Territorios');
     XLSX.writeFile(wb, `Territorios_${new Date().toISOString().split('T')[0]}.xlsx`);
-    showToast('Excel exportado.');
+    showToast('✅ Excel exportado.');
 }
 
 // ══════════════════════════════════════════════════════
@@ -3136,7 +3137,7 @@ function addTerritoryFromModal(num) {
     renderSchedule();
     renderATMGrid(); // refresh to show newly assigned
     // Don't close — let user add multiple territories
-    showToast(`Territorio ${num} agregado`);
+    showToast(`✅ Territorio ${num} agregado`);
 }
 
 // ══════════════════════════════════════════════════════
