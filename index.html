@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FlemingPlans 13.5</title>
+    <title>FlemingPlans 13.5.2</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
@@ -593,7 +593,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         .week-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
         .day-col { display: flex; flex-direction: column; gap: 14px; }
 
-        .day-card { background: var(--surface); border-radius: 24px; border: 1px solid var(--border); padding: 14px 14px 8px; aspect-ratio: 1/1; display: flex; flex-direction: column; position: relative; box-shadow: var(--shadow); transition: box-shadow 0.25s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1); overflow: hidden; min-height: 0; }
+        .day-card { background: var(--surface); border-radius: 24px; border: 1px solid var(--border); padding: 14px 14px 44px; height: 160px; display: flex; flex-direction: column; position: relative; box-shadow: var(--shadow); transition: box-shadow 0.25s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1); overflow: hidden; flex-shrink: 0; }
         .day-card:hover { box-shadow: var(--shadow-lg); }
 
         .day-header { margin-bottom: 8px; }
@@ -1124,13 +1124,15 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         /* ══ PUBLISHER PILL ON SCHEDULE CARD ══ */
         .slot-publisher {
             display: flex; align-items: center; gap: 5px;
-            padding: 4px 8px; margin: 4px 0 0;
+            padding: 4px 8px;
             border-radius: 8px;
             background: var(--surface2);
             border: 1px solid var(--border);
             cursor: pointer;
             transition: border-color 0.15s, background 0.15s;
-            height: 26px; flex-shrink: 0; overflow: hidden;
+            height: 26px; overflow: hidden;
+            position: absolute; bottom: 10px; left: 10px;
+            right: 44px; /* leave room for + button */
         }
         .slot-publisher:hover { border-color: var(--accent); background: rgba(26,86,219,0.05); }
         .slot-publisher.has-publisher { border-color: rgba(26,86,219,0.3); }
