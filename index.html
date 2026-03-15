@@ -3071,12 +3071,39 @@ async function saveRecord() {
     showToast('Registro guardado.');
 }
 
-async function deleteRecordFromHistory(id) {
-    await sbClient.from('tp_records').delete().eq('id', id);
+async function deleteRecordFromHistory(territorio, fecha, turno) {
+    // Borrar de tp_history_log (lo que muestra el historial)
+    await sbClient.from('tp_history_log')
+        .delete()
+        .eq('territorio', String(territorio))
+        .eq('fecha', fecha)
+        .eq('turno', turno);
+
+    // Si este era el registro más reciente en tp_records, actualizarlo
+    // con el siguiente registro más reciente, o borrarlo si no hay más
+    const { data: remaining } = await sbClient
+        .from('tp_history_log')
+        .select('fecha, turno')
+        .eq('territorio', String(territorio))
+        .order('fecha', { ascending: false })
+        .limit(1);
+
+    if (remaining && remaining.length > 0) {
+        await sbClient.from('tp_records').upsert({
+            id: String(territorio),
+            territorio: String(territorio),
+            fecha: remaining[0].fecha,
+            turno: remaining[0].turno,
+            updated_at: new Date().toISOString()
+        });
+    } else {
+        await sbClient.from('tp_records').delete().eq('id', String(territorio));
+    }
+
     await loadRecords();
     renderRecords();
     renderRecommendations();
-    showToast('🗑 Registro eliminado.');
+    showToast('🗑 Territorio eliminado.');
 }
 
 // ══════════════════════════════════════════════════════
@@ -3216,7 +3243,11 @@ function renderHistoryWeek() {
                     const del = document.createElement('button');
                     del.className = 'hist-badge-del';
                     del.innerHTML = `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-                    del.onclick = () => showConfirm(`¿Eliminar Territorio ${r.territorio}?`, 'Esta acción no se puede deshacer.', () => deleteRecordFromHistory(recEntry ? recEntry.id : r.territorio));
+                    del.onclick = () => showConfirm(
+    `¿Eliminar Territorio ${r.territorio}?`,
+    'Esta acción no se puede deshacer.',
+    () => deleteRecordFromHistory(r.territorio, dateStr, shiftLabel)
+);
                     wrap.appendChild(del);
                 }
                 tList.appendChild(wrap);
