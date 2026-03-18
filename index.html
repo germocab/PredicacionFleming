@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlemingPlans 15.1</title>
+    <title>FlemingPlans 15.2</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -4878,8 +4878,8 @@ function buildReportCard(link, rep, months) {
     if (rep && !rep.completed && rep.blocks_done) {
         extraHtml = `<div class="report-card-blocks">Manzanas realizadas: <strong>${rep.blocks_done}</strong></div>`;
     }
-    if (rep && rep.responder_name) {
-        extraHtml += `<div class="report-card-blocks">Respondido por: <strong>${rep.responder_name}</strong></div>`;
+    if (rep && rep.notes) {
+        extraHtml += `<div class="report-card-blocks" style="margin-top:3px;">${rep.notes}</div>`;
     }
 
     const url = `${location.origin}${location.pathname}?report=${link.token}`;
@@ -4888,10 +4888,9 @@ function buildReportCard(link, rep, months) {
         <div class="report-status-dot ${status}"></div>
         <div class="report-card-body">
             <div class="report-card-title">${link.day_label || '—'} · ${link.shift_label || '—'}</div>
-            <div class="report-card-meta">${dateDisp} · Territorios: ${terrList}</div>
+            <div class="report-card-meta">${dateDisp} · T: ${terrList}${link.publisher_name ? ' · ' + link.publisher_name : ''}</div>
             <div class="report-card-tags">
                 <span class="report-tag ${status}">${statusLabel[status]}</span>
-                ${link.publisher_name ? `<span class="report-tag">${link.publisher_name}</span>` : ''}
                 <span class="report-tag link-tag" onclick="copyText('${url}')">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:3px;vertical-align:middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                     Copiar link
@@ -4899,12 +4898,34 @@ function buildReportCard(link, rep, months) {
             </div>
             ${extraHtml}
         </div>
+        <button class="mp-pub-del" style="flex-shrink:0;align-self:flex-start;" onclick="deleteReport('${link.id}', '${link.token}')" title="Eliminar reporte">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
     `;
     return card;
 }
 
 function copyText(txt) {
     navigator.clipboard.writeText(txt).then(() => showToast('Link copiado.'));
+}
+
+async function deleteReport(linkId, token) {
+    showConfirm(
+        '¿Eliminar este reporte?',
+        'Se borrará el link y la respuesta. No se puede deshacer.',
+        async () => {
+            // Delete the response if exists
+            await sbClient.from('tp_reports').delete().eq('link_token', token);
+            // Delete the link
+            await sbClient.from('tp_report_links').delete().eq('id', linkId);
+            // Update local state
+            reportLinks = reportLinks.filter(l => l.id !== linkId);
+            reports     = reports.filter(r => r.link_token !== token);
+            renderReports();
+            updateReportsBadge();
+            showToast('Reporte eliminado.');
+        }
+    );
 }
 
 // ── Create Report Modal ──
@@ -5417,9 +5438,7 @@ async function renderReportPage() {
             ${addrRow}
         </div>
         <div class="rp-card">
-            <div class="rp-section-label">Tu nombre</div>
-            <input class="rp-name-input" id="rp-name" placeholder="Escribe tu nombre…" maxlength="80" oninput="rpCheckSubmit()">
-            <div class="rp-section-label" style="margin-top:18px;">¿Completaste el territorio?</div>
+            <div class="rp-section-label">¿Completaste el territorio?</div>
             <div class="rp-yn-row">
                 <button class="rp-yn-btn yes" id="rp-btn-yes" onclick="rpSetAnswer(true)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
@@ -5470,21 +5489,20 @@ function rpSetAnswer(val) {
     document.getElementById('rp-btn-yes')?.classList.toggle('active', val === true);
     document.getElementById('rp-btn-no')?.classList.toggle('active',  val === false);
     document.getElementById('rp-blocks-wrap')?.classList.toggle('visible', val === false);
-    rpCheckSubmit();
+    const btn = document.getElementById('rp-submit');
+    if (btn) btn.disabled = false;
 }
 
 function rpCheckSubmit() {
-    const name = (document.getElementById('rp-name')?.value || '').trim();
-    const ok   = name.length > 0 && window._rpAnswer !== undefined && window._rpAnswer !== null;
-    const btn  = document.getElementById('rp-submit');
-    if (btn) btn.disabled = !ok;
+    // No longer needed (no name field) but kept for compatibility
+    const btn = document.getElementById('rp-submit');
+    if (btn) btn.disabled = window._rpAnswer === undefined || window._rpAnswer === null;
 }
 
 async function rpSubmit(token) {
-    const name  = (document.getElementById('rp-name')?.value || '').trim();
-    const link  = window._rpLink;
+    const link   = window._rpLink;
     const answer = window._rpAnswer;
-    if (!name || answer === null || answer === undefined || !link) return;
+    if (answer === null || answer === undefined || !link) return;
 
     const btn = document.getElementById('rp-submit');
     if (btn) { btn.disabled = true; btn.textContent = 'Enviando…'; }
@@ -5502,7 +5520,6 @@ async function rpSubmit(token) {
         fecha:          link.fecha,
         turno:          link.shift_label,
         publisher_name: link.publisher_name || null,
-        responder_name: name,
         completed:      answer,
         blocks_done:    blocksDone,
         notes,
@@ -5511,9 +5528,7 @@ async function rpSubmit(token) {
     if (error) {
         if (btn) { btn.disabled = false; btn.textContent = 'Enviar reporte'; }
         document.getElementById('rp-content').insertAdjacentHTML('afterbegin',
-            `<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:12px;padding:12px 16px;color:#dc2626;font-size:0.85rem;margin-bottom:12px;">
-                Error al enviar: ${error.message}
-            </div>`);
+            '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:12px;padding:12px 16px;color:#dc2626;font-size:0.85rem;margin-bottom:12px;">Error al enviar: ' + error.message + '</div>');
         return;
     }
 
@@ -5525,17 +5540,15 @@ async function rpSubmit(token) {
         }
     }
 
-    // Show success
-    document.getElementById('rp-content').innerHTML = `<div class="rp-state">
-        <div class="rp-state-icon" style="background:#f0fdf4;color:#16a34a;">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <div class="rp-state-title">${answer ? '¡Territorio completado!' : 'Reporte enviado'}</div>
-        <div class="rp-state-sub">${answer
-            ? '¡Gracias! El territorio quedó registrado como completado.'
-            : 'El administrador fue notificado. El territorio será priorizado la próxima semana.'
-        }</div>
-    </div>`;
+    // Show success — same message regardless of completion
+    document.getElementById('rp-content').innerHTML =
+        '<div class="rp-state">' +
+        '<div class="rp-state-icon" style="background:#f0fdf4;color:#16a34a;">' +
+        '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' +
+        '</div>' +
+        '<div class="rp-state-title">¡Reporte enviado!</div>' +
+        '<div class="rp-state-sub">Gracias por tu cooperacion y por reportar. ¡Hasta la proxima!</div>' +
+        '</div>';
 }
 </script>
 
