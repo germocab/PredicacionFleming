@@ -2942,10 +2942,9 @@ async function initApp() {
 
     document.getElementById('main-app').style.display = '';
     applyUserPermissions();
-    applyReportsTabVisibility();
 
-    // Load all data from Supabase
-await Promise.all([loadPublishers(), loadAddresses(), loadMeetingPoints(), loadRecords(), loadSchedule(), loadSelectedMonday(), loadReports(), loadReportLinks()]);
+    // Load all data from Supabase — allSettled so a single failure never blocks the app
+    await Promise.allSettled([loadPublishers(), loadAddresses(), loadMeetingPoints(), loadRecords(), loadSchedule(), loadSelectedMonday(), loadReports(), loadReportLinks()]);
     // Init DB form
     const sel = document.getElementById('db-territorio');
     sel.innerHTML = '';
@@ -4766,19 +4765,24 @@ let reports        = [];   // tp_reports rows
 let incompleteNums = new Set(); // territory numbers from incomplete reports
 
 async function loadReportLinks() {
-    const { data } = await sbClient.from('tp_report_links').select('*').order('created_at', { ascending: false });
-    reportLinks = data || [];
+    try {
+        const { data, error } = await sbClient.from('tp_report_links').select('*').order('created_at', { ascending: false });
+        if (!error) reportLinks = data || [];
+    } catch (e) { console.warn('loadReportLinks:', e); }
 }
 
 async function loadReports() {
-    const { data } = await sbClient.from('tp_reports').select('*').order('created_at', { ascending: false });
-    reports = data || [];
-    // Build set of incomplete territory numbers for priority recommendations
-    incompleteNums = new Set(
-        reports.filter(r => r.completed === false)
-               .flatMap(r => (r.territories || [r.territorio]).filter(Boolean).map(String))
-    );
-    updateReportsBadge();
+    try {
+        const { data, error } = await sbClient.from('tp_reports').select('*').order('created_at', { ascending: false });
+        if (!error) {
+            reports = data || [];
+            incompleteNums = new Set(
+                reports.filter(r => r.completed === false)
+                       .flatMap(r => (r.territories || [r.territorio]).filter(Boolean).map(String))
+            );
+        }
+        updateReportsBadge();
+    } catch (e) { console.warn('loadReports:', e); }
 }
 
 function updateReportsBadge() {
