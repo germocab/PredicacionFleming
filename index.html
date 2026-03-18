@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlemingPlans 14.2</title>
+    <title>FlemingPlans 15</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
@@ -561,6 +561,8 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         #view-database { flex-direction: column; }
         #view-database.active { display: flex; }
         #view-territories.active { display: block; }
+        #view-reports { flex-direction: column; }
+        #view-reports.active { display: flex; }
 
         /* ══════════════════════════════════════
            SCHEDULE VIEW
@@ -1167,6 +1169,211 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
             z-index: 2; flex-shrink: 0;
         }
         .btn-day-info:hover { background: var(--accent); border-color: var(--accent); color: white; }
+
+        /* ══ REPORTS VIEW ══ */
+        #view-reports { flex-direction: column; }
+        #view-reports.active { display: flex; }
+        .reports-page-wrap { flex: 1; padding: 0 28px 48px; max-width: 860px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+        .reports-page-header { display: flex; justify-content: space-between; align-items: center; padding: 24px 28px 16px; max-width: 860px; width: 100%; margin: 0 auto; box-sizing: border-box; gap: 12px; flex-wrap: wrap; }
+        .reports-page-title { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; }
+        .reports-page-sub { color: var(--text2); font-size: 0.85rem; margin-top: 3px; }
+
+        /* badge on nav tab */
+        .nav-tab .tab-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 18px; height: 18px; border-radius: 999px;
+            background: #ef4444; color: white;
+            font-size: 0.65rem; font-weight: 800; padding: 0 5px;
+            margin-left: 5px; line-height: 1;
+        }
+        .nav-tab.active .tab-badge { background: rgba(255,255,255,0.35); }
+
+        /* generate link button */
+        .btn-gen-link {
+            display: flex; align-items: center; gap: 7px;
+            padding: 10px 18px; border-radius: 14px;
+            background: var(--accent); color: white; border: none;
+            font-family: inherit; font-size: 0.84rem; font-weight: 700;
+            cursor: pointer; box-shadow: 0 4px 14px rgba(26,86,219,0.25);
+            transition: opacity 0.15s, transform 0.15s;
+        }
+        .btn-gen-link:hover { opacity: 0.88; transform: translateY(-1px); }
+
+        /* report card */
+        .report-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 20px; padding: 16px 18px;
+            display: flex; gap: 14px; align-items: flex-start;
+            box-shadow: var(--shadow); transition: box-shadow 0.18s;
+            margin-bottom: 10px;
+        }
+        .report-card:hover { box-shadow: var(--shadow-lg); }
+        .report-status-dot {
+            width: 10px; height: 10px; border-radius: 999px; flex-shrink: 0; margin-top: 5px;
+        }
+        .report-status-dot.completed   { background: #16a34a; }
+        .report-status-dot.incomplete  { background: #f59e0b; }
+        .report-status-dot.pending     { background: var(--border); }
+        .report-card-body { flex: 1; min-width: 0; }
+        .report-card-title { font-size: 0.92rem; font-weight: 700; color: var(--text); }
+        .report-card-meta  { font-size: 0.75rem; color: var(--text2); margin-top: 3px; }
+        .report-card-tags  { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .report-tag {
+            padding: 2px 10px; border-radius: 999px;
+            font-size: 0.72rem; font-weight: 700;
+            background: var(--surface2); color: var(--text2);
+        }
+        .report-tag.completed  { background: rgba(22,163,74,0.1);  color: #16a34a; }
+        .report-tag.incomplete { background: rgba(245,158,11,0.1); color: #f59e0b; }
+        .report-tag.pending    { background: rgba(107,114,128,0.1); color: var(--text2); }
+        .report-tag.link-tag   { background: rgba(26,86,219,0.1); color: var(--accent); cursor: pointer; }
+        .report-tag.link-tag:hover { background: rgba(26,86,219,0.2); }
+        .report-card-blocks { font-size: 0.78rem; color: var(--text2); margin-top: 6px; }
+        .report-card-blocks strong { color: var(--text); }
+        .reports-empty { text-align: center; color: var(--text2); font-size: 0.9rem; padding: 48px 0; }
+        .reports-section-label { font-size: 0.72rem; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 8px; }
+
+        /* Generate Link Modal */
+        #gen-link-overlay {
+            position: fixed; inset: 0; z-index: 700;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            padding: 24px; opacity: 0; pointer-events: none; transition: opacity 0.22s;
+        }
+        #gen-link-overlay.open { opacity: 1; pointer-events: all; }
+        #gen-link-modal {
+            background: var(--surface); border-radius: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 32px 80px rgba(0,0,0,0.25);
+            width: min(94vw, 480px); max-height: 82vh;
+            display: flex; flex-direction: column;
+            transform: scale(0.94) translateY(16px);
+            transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+            overflow: hidden;
+        }
+        #gen-link-overlay.open #gen-link-modal { transform: scale(1) translateY(0); }
+        .gl-header { padding: 20px 20px 0; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+        .gl-title  { font-size: 1rem; font-weight: 700; }
+        .gl-close  { width: 28px; height: 28px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .gl-body   { padding: 16px 20px 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px; }
+        .gl-label  { font-size: 0.72rem; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+        .gl-slot-list { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
+        .gl-slot-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: 12px;
+            border: 1px solid var(--border); background: var(--surface2);
+            cursor: pointer; transition: border-color 0.15s, background 0.15s;
+        }
+        .gl-slot-item:hover { border-color: var(--accent); background: rgba(26,86,219,0.04); }
+        .gl-slot-item.selected { border-color: var(--accent); background: rgba(26,86,219,0.08); }
+        .gl-slot-day { font-size: 0.88rem; font-weight: 700; color: var(--text); flex: 1; }
+        .gl-slot-meta { font-size: 0.72rem; color: var(--text2); }
+        .gl-slot-check { color: var(--accent); display: none; }
+        .gl-slot-item.selected .gl-slot-check { display: block; }
+        .gl-url-box {
+            display: flex; gap: 8px; align-items: center;
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 12px; padding: 10px 12px;
+        }
+        .gl-url-text { flex: 1; font-size: 0.78rem; color: var(--text2); word-break: break-all; font-family: 'DM Mono', monospace; }
+        .gl-copy-btn {
+            flex-shrink: 0; padding: 7px 14px; border-radius: 10px;
+            background: var(--accent); color: white; border: none;
+            font-family: inherit; font-size: 0.8rem; font-weight: 700;
+            cursor: pointer; transition: opacity 0.15s;
+        }
+        .gl-copy-btn:hover { opacity: 0.85; }
+        .gl-empty { color: var(--text2); font-size: 0.82rem; text-align: center; padding: 20px 0; }
+
+        /* ── REPORT FORM (public page overlay) ── */
+        #report-form-overlay {
+            position: fixed; inset: 0; z-index: 9000;
+            background: var(--bg);
+            display: none; flex-direction: column;
+            overflow-y: auto;
+        }
+        #report-form-overlay.open { display: flex; }
+        .rf-wrap { max-width: 540px; width: 100%; margin: 0 auto; padding: 32px 20px 60px; }
+        .rf-map-wrap {
+            width: 100%; height: 220px; border-radius: 20px;
+            overflow: hidden; background: var(--surface2);
+            position: relative; margin-bottom: 24px;
+        }
+        .rf-map-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .rf-map-ph {
+            position: absolute; inset: 0; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 8px; color: var(--text2); font-size: 0.8rem;
+        }
+        .rf-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 20px; padding: 20px 22px; margin-bottom: 16px;
+        }
+        .rf-title { font-size: 1.2rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+        .rf-subtitle { font-size: 0.82rem; color: var(--text2); }
+        .rf-info-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+        .rf-info-row:last-child { border-bottom: none; }
+        .rf-info-icon { color: var(--text2); flex-shrink: 0; }
+        .rf-info-label { font-size: 0.7rem; color: var(--text2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+        .rf-info-value { font-size: 0.88rem; font-weight: 700; color: var(--text); }
+        .rf-section-label { font-size: 0.78rem; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 10px; }
+        .rf-name-input {
+            width: 100%; padding: 11px 14px; border-radius: 12px;
+            border: 1px solid var(--border); background: var(--surface2);
+            color: var(--text); font-family: inherit; font-size: 0.92rem;
+            outline: none; box-sizing: border-box; margin-bottom: 16px;
+        }
+        .rf-name-input:focus { border-color: var(--accent); }
+        .rf-yn-row { display: flex; gap: 10px; margin-bottom: 16px; }
+        .rf-yn-btn {
+            flex: 1; padding: 14px; border-radius: 14px;
+            border: 2px solid var(--border); background: var(--surface2);
+            color: var(--text); font-family: inherit; font-size: 0.9rem; font-weight: 700;
+            cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .rf-yn-btn.yes.active { border-color: #16a34a; background: rgba(22,163,74,0.1); color: #16a34a; }
+        .rf-yn-btn.no.active  { border-color: #f59e0b; background: rgba(245,158,11,0.1); color: #f59e0b; }
+        .rf-yn-btn:hover { border-color: var(--accent); }
+        .rf-blocks-wrap { display: none; margin-bottom: 16px; }
+        .rf-blocks-wrap.visible { display: block; }
+        .rf-blocks-hint { font-size: 0.78rem; color: var(--text2); margin-bottom: 8px; }
+        .rf-blocks-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+        .rf-block-chip {
+            width: 40px; height: 40px; border-radius: 10px;
+            border: 2px solid var(--border); background: var(--surface2);
+            color: var(--text2); font-family: inherit; font-size: 0.88rem; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.12s;
+        }
+        .rf-block-chip.selected { border-color: #16a34a; background: rgba(22,163,74,0.12); color: #16a34a; }
+        .rf-notes-input {
+            width: 100%; padding: 10px 14px; border-radius: 12px;
+            border: 1px solid var(--border); background: var(--surface2);
+            color: var(--text); font-family: inherit; font-size: 0.85rem;
+            outline: none; box-sizing: border-box; resize: none; min-height: 70px;
+        }
+        .rf-notes-input:focus { border-color: var(--accent); }
+        .rf-submit-btn {
+            width: 100%; padding: 15px; border-radius: 14px;
+            background: var(--accent); color: white; border: none;
+            font-family: inherit; font-size: 0.95rem; font-weight: 700;
+            cursor: pointer; box-shadow: 0 4px 14px rgba(26,86,219,0.25);
+            transition: opacity 0.15s, transform 0.15s;
+        }
+        .rf-submit-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+        .rf-submit-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+        .rf-success {
+            text-align: center; padding: 48px 20px;
+            display: none; flex-direction: column; align-items: center; gap: 16px;
+        }
+        .rf-success.visible { display: flex; }
+        .rf-success-icon { width: 64px; height: 64px; border-radius: 999px; background: rgba(22,163,74,0.12); color: #16a34a; display: flex; align-items: center; justify-content: center; }
+        .rf-success-title { font-size: 1.2rem; font-weight: 800; color: var(--text); }
+        .rf-success-sub { font-size: 0.85rem; color: var(--text2); }
+        .rf-already { text-align: center; padding: 60px 20px; color: var(--text2); font-size: 0.9rem; }
+        .rf-locked { text-align: center; padding: 60px 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .rf-locked-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+        .rf-locked-sub { font-size: 0.82rem; color: var(--text2); }
 
         /* ══ DAY DETAIL POPUP ══ */
         #day-detail-overlay {
@@ -1961,6 +2168,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
             <button class="nav-tab active" onclick="switchView('schedule', this)">Planificación</button>
             <button class="nav-tab" onclick="switchView('database', this)">Historial</button>
             <button class="nav-tab" onclick="switchView('territories', this)">Territorios</button>
+            <button class="nav-tab" id="nav-tab-reports" onclick="switchView('reports', this)" style="display:none;">Reportes<span class="tab-badge" id="reports-badge" style="display:none;">0</span></button>
         </div>
         <div class="nav-right">
                 <div class="user-pill" onclick="toggleUserDropdown()">
@@ -2054,6 +2262,29 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         </div>
     </div>
     <div class="tview-grid" id="territories-grid"></div>
+</div>
+
+<!-- REPORTS VIEW -->
+<div id="view-reports" class="view">
+    <div class="reports-page-header">
+        <div>
+            <h2 class="reports-page-title">Reportes</h2>
+            <div class="reports-page-sub" id="reports-page-sub">Seguimiento de territorios asignados</div>
+        </div>
+        <button class="btn-gen-link admin-only" onclick="openGenLink()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Generar link
+        </button>
+    </div>
+    <div class="reports-page-wrap">
+        <div id="reports-list-pending"></div>
+        <div id="reports-list-done"></div>
+        <div class="reports-empty" id="reports-empty" style="display:none;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--border);margin-bottom:8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <div>No hay reportes aún.</div>
+            <div style="font-size:0.8rem;margin-top:4px;">Genera un link y compártelo con el encargado del día.</div>
+        </div>
+    </div>
 </div>
 
 </div><!-- /main-app -->
@@ -2369,6 +2600,7 @@ function applyUserPermissions() {
     document.getElementById('dd-cambiar-credenciales').style.display = isDev  ? 'flex' : 'none';
     document.getElementById('dd-manage-publishers').style.display    = isAdmin ? 'flex' : 'none';
     document.getElementById('dd-manage-addresses').style.display     = isAdmin ? 'flex' : 'none';
+    document.getElementById('nav-tab-reports').style.display         = isAdmin ? '' : 'none';
 
     // Admin-only UI elements (plan/confirm/register/import/export)
     document.querySelectorAll('.admin-only').forEach(el => {
@@ -2710,9 +2942,10 @@ async function initApp() {
 
     document.getElementById('main-app').style.display = '';
     applyUserPermissions();
+    applyReportsTabVisibility();
 
     // Load all data from Supabase
-await Promise.all([loadPublishers(), loadAddresses(), loadMeetingPoints(), loadRecords(), loadSchedule(), loadSelectedMonday()]);
+await Promise.all([loadPublishers(), loadAddresses(), loadMeetingPoints(), loadRecords(), loadSchedule(), loadSelectedMonday(), loadReports(), loadReportLinks()]);
     // Init DB form
     const sel = document.getElementById('db-territorio');
     sel.innerHTML = '';
@@ -2740,6 +2973,10 @@ await Promise.all([loadPublishers(), loadAddresses(), loadMeetingPoints(), loadR
     setSyncStatus('', 'Sincronizado');
     const _t = localStorage.getItem('tp_theme') || 'light';
     updateThemeIcon(_t === 'dark');
+
+    // Check if opened via a report link
+    checkReportToken();
+    updateReportsBadge();
 }
 
 // ══════════════════════════════════════════════════════
@@ -2887,6 +3124,7 @@ function switchView(view, btn) {
     document.getElementById('view-' + view).classList.add('active');
     btn.classList.add('active');
     if (view === 'territories') renderTerritories();
+    if (view === 'reports') { renderReports(); clearReportsBadge(); }
 }
 
 // ══════════════════════════════════════════════════════
@@ -2999,10 +3237,21 @@ let dragTerritory = null;
 function getRecommendations() {
     const states = [];
     for (let i = 1; i <= 36; i++) {
-        const rec = records.find(r => parseInt(r.territorio) === i);
-        states.push({ num: i, fecha: rec ? rec.fecha : '0000-00-00', days: rec ? daysBetween(rec.fecha) : 9999 });
+        const rec      = records.find(r => parseInt(r.territorio) === i);
+        const isPriority = incompleteNums.has(String(i));
+        states.push({
+            num: i,
+            fecha: rec ? rec.fecha : '0000-00-00',
+            days: rec ? daysBetween(rec.fecha) : 9999,
+            priority: isPriority
+        });
     }
-    states.sort((a,b) => b.days - a.days);
+    // Sort: priority (incomplete) first, then by days desc
+    states.sort((a, b) => {
+        if (a.priority && !b.priority) return -1;
+        if (!a.priority && b.priority) return 1;
+        return b.days - a.days;
+    });
     return states.slice(0, 8);
 }
 
@@ -3016,7 +3265,8 @@ function renderRecommendations() {
         chip.draggable = isAdmin;
         chip.dataset.territory = rec.num;
 
-        const subtitle = rec.days === 9999 ? 'Sin asignar' : `hace ${rec.days}d`;
+        const subtitle = rec.priority ? '⚠ Incompleto' : (rec.days === 9999 ? 'Sin asignar' : `hace ${rec.days}d`);
+        if (rec.priority) chip.style.background = 'linear-gradient(135deg, #d97706, #f59e0b)';
         chip.innerHTML = `
             <span class="rnum">${rec.num}</span>
             <span class="rdate">${subtitle}</span>
@@ -4436,6 +4686,13 @@ async function deleteAddress(id, name) {
 }
 
 // ══════════════════════════════════════════════════════
+//  REPORTS
+// ══════════════════════════════════════════════════════
+
+
+
+
+// ══════════════════════════════════════════════════════
 //  MANAGE PUBLISHERS
 // ══════════════════════════════════════════════════════
 
@@ -4498,6 +4755,392 @@ async function deletePublisher(id, name) {
         renderSchedule();
         showToast('🗑 Publicador eliminado.');
     });
+}
+
+// ══════════════════════════════════════════════════════
+//  REPORTS
+// ══════════════════════════════════════════════════════
+
+let reportLinks    = [];   // tp_report_links rows
+let reports        = [];   // tp_reports rows
+let incompleteNums = new Set(); // territory numbers from incomplete reports
+
+async function loadReportLinks() {
+    const { data } = await sbClient.from('tp_report_links').select('*').order('created_at', { ascending: false });
+    reportLinks = data || [];
+}
+
+async function loadReports() {
+    const { data } = await sbClient.from('tp_reports').select('*').order('created_at', { ascending: false });
+    reports = data || [];
+    // Build set of incomplete territory numbers for priority recommendations
+    incompleteNums = new Set(
+        reports.filter(r => r.completed === false)
+               .flatMap(r => (r.territories || [r.territorio]).filter(Boolean).map(String))
+    );
+    updateReportsBadge();
+}
+
+function updateReportsBadge() {
+    const pending = reportLinks.filter(l => {
+        const rep = reports.find(r => r.link_token === l.token);
+        return !rep; // no response yet
+    }).length;
+    const badge = document.getElementById('reports-badge');
+    if (!badge) return;
+    if (pending > 0) { badge.textContent = pending; badge.style.display = ''; }
+    else badge.style.display = 'none';
+}
+
+function clearReportsBadge() {
+    const badge = document.getElementById('reports-badge');
+    if (badge) badge.style.display = 'none';
+}
+
+function renderReports() {
+    const pendingEl = document.getElementById('reports-list-pending');
+    const doneEl    = document.getElementById('reports-list-done');
+    const emptyEl   = document.getElementById('reports-empty');
+    if (!pendingEl) return;
+
+    pendingEl.innerHTML = '';
+    doneEl.innerHTML    = '';
+
+    const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+    const pending = [];
+    const done    = [];
+
+    reportLinks.forEach(link => {
+        const rep = reports.find(r => r.link_token === link.token);
+        if (rep) done.push({ link, rep });
+        else     pending.push({ link, rep: null });
+    });
+
+    if (reportLinks.length === 0) {
+        emptyEl.style.display = '';
+        return;
+    }
+    emptyEl.style.display = 'none';
+
+    // Pending section
+    if (pending.length > 0) {
+        const lbl = document.createElement('div');
+        lbl.className = 'reports-section-label';
+        lbl.textContent = `Pendientes (${pending.length})`;
+        pendingEl.appendChild(lbl);
+        pending.forEach(({ link }) => pendingEl.appendChild(buildReportCard(link, null, months)));
+    }
+
+    // Done section
+    if (done.length > 0) {
+        const lbl = document.createElement('div');
+        lbl.className = 'reports-section-label';
+        lbl.textContent = `Respondidos (${done.length})`;
+        doneEl.appendChild(lbl);
+        done.forEach(({ link, rep }) => doneEl.appendChild(buildReportCard(link, rep, months)));
+    }
+}
+
+function buildReportCard(link, rep, months) {
+    const card = document.createElement('div');
+    card.className = 'report-card';
+
+    const status = rep ? (rep.completed ? 'completed' : 'incomplete') : 'pending';
+    const statusLabel = { completed: 'Completado', incomplete: 'Incompleto', pending: 'Sin respuesta' };
+    const [y, m, d] = (link.fecha || '----').split('-');
+    const dateDisp = (y && m && d) ? `${parseInt(d)} ${months[parseInt(m)-1]} ${y}` : '—';
+
+    const terrList = (link.territories || []).join(', ') || '—';
+
+    let extraHtml = '';
+    if (rep && !rep.completed && rep.blocks_done) {
+        extraHtml = `<div class="report-card-blocks">Manzanas realizadas: <strong>${rep.blocks_done}</strong></div>`;
+    }
+    if (rep && rep.responder_name) {
+        extraHtml += `<div class="report-card-blocks">Respondido por: <strong>${rep.responder_name}</strong></div>`;
+    }
+
+    const url = `${location.origin}${location.pathname}?report=${link.token}`;
+
+    card.innerHTML = `
+        <div class="report-status-dot ${status}"></div>
+        <div class="report-card-body">
+            <div class="report-card-title">${link.day_label || '—'} · ${link.shift_label || '—'}</div>
+            <div class="report-card-meta">${dateDisp} · Territorios: ${terrList}</div>
+            <div class="report-card-tags">
+                <span class="report-tag ${status}">${statusLabel[status]}</span>
+                ${link.publisher_name ? `<span class="report-tag">${link.publisher_name}</span>` : ''}
+                <span class="report-tag link-tag" onclick="copyText('${url}')">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:3px;vertical-align:middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    Copiar link
+                </span>
+            </div>
+            ${extraHtml}
+        </div>
+    `;
+    return card;
+}
+
+function copyText(txt) {
+    navigator.clipboard.writeText(txt).then(() => showToast('Link copiado.'));
+}
+
+// ── Generate Link Modal ──
+
+let genLinkSelectedSlot = null;
+let genLinkToken        = null;
+
+function openGenLink() {
+    genLinkSelectedSlot = null;
+    genLinkToken        = null;
+    document.getElementById('gl-url-section').style.display = 'none';
+    renderGenLinkSlots();
+    document.getElementById('gen-link-overlay').classList.add('open');
+}
+function closeGenLink(e) {
+    if (e && e.target !== document.getElementById('gen-link-overlay')) return;
+    document.getElementById('gen-link-overlay').classList.remove('open');
+}
+function closeGenLinkDirect() {
+    document.getElementById('gen-link-overlay').classList.remove('open');
+}
+
+function renderGenLinkSlots() {
+    const list = document.getElementById('gl-slot-list');
+    list.innerHTML = '';
+    const slots = [];
+    DAYS.forEach((day, dIdx) => {
+        day.slots.forEach((shift, sIdx) => {
+            const id = `slot-${dIdx}-${sIdx}`;
+            const territories = scheduleData[id] || [];
+            if (territories.length === 0) return; // only slots with territories
+            const fecha = selectedMonday
+                ? dateFromMonday(selectedMonday, day.offset).toISOString().split('T')[0]
+                : null;
+            const pub   = slotPublishers[id] || {};
+            slots.push({ id, day, shift, territories, fecha, pub });
+        });
+    });
+
+    if (slots.length === 0) {
+        list.innerHTML = '<div class="gl-empty">No hay territorios asignados esta semana.<br>Primero planifica la semana.</div>';
+        return;
+    }
+
+    slots.forEach(s => {
+        const shiftLabel = SHIFT_LABEL[s.shift];
+        const existing   = reportLinks.find(l => l.slot_id === s.id && l.monday === selectedMonday);
+        const item = document.createElement('div');
+        item.className = 'gl-slot-item' + (genLinkSelectedSlot === s.id ? ' selected' : '');
+        item.innerHTML = `
+            <div class="gl-slot-day">${s.day.name} · ${shiftLabel}</div>
+            <div class="gl-slot-meta">T: ${s.territories.join(', ')}${s.pub.name ? ' · ' + s.pub.name : ''}${existing ? ' · link activo' : ''}</div>
+            <svg class="gl-slot-check" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        `;
+        item.onclick = () => selectGenLinkSlot(s);
+        list.appendChild(item);
+    });
+}
+
+async function selectGenLinkSlot(s) {
+    genLinkSelectedSlot = s.id;
+    renderGenLinkSlots();
+
+    // Generate or retrieve token
+    const existing = reportLinks.find(l => l.slot_id === s.id && l.monday === selectedMonday);
+    let token;
+    if (existing) {
+        token = existing.token;
+    } else {
+        token = crypto.randomUUID();
+        const addr = slotAddresses[s.id] || {};
+        const row = {
+            token,
+            slot_id:        s.id,
+            monday:         selectedMonday,
+            day_label:      s.day.name,
+            shift_label:    SHIFT_LABEL[s.shift],
+            fecha:          s.fecha,
+            territories:    s.territories,
+            publisher_id:   s.pub.id   || null,
+            publisher_name: s.pub.name || null,
+            address_name:   addr.name  || null,
+            address:        addr.address || null,
+        };
+        const { data, error } = await sbClient.from('tp_report_links').upsert(row, { onConflict: 'slot_id,monday' }).select().single();
+        if (error) { showToast('Error al generar link.'); return; }
+        reportLinks.unshift(data);
+        token = data.token;
+    }
+
+    genLinkToken = token;
+    const url = `${location.origin}${location.pathname}?report=${token}`;
+    document.getElementById('gl-url-text').textContent = url;
+    document.getElementById('gl-url-section').style.display = '';
+}
+
+function copyReportLink() {
+    const url = document.getElementById('gl-url-text').textContent;
+    navigator.clipboard.writeText(url).then(() => showToast('Link copiado.'));
+}
+
+// ── Report Form (public, no login) ──
+
+let rfAnswer       = null;  // true = completed, false = incomplete
+let rfSelectedBlocks = new Set();
+let rfCurrentLink  = null;
+
+async function checkReportToken() {
+    const params = new URLSearchParams(location.search);
+    const token  = params.get('report');
+    if (!token) return;
+
+    // Show form overlay immediately
+    document.getElementById('report-form-overlay').classList.add('open');
+    // Hide main app nav/content
+    document.getElementById('main-app').style.display = 'none';
+
+    // Load link data
+    const { data: link, error } = await sbClient
+        .from('tp_report_links').select('*').eq('token', token).single();
+
+    if (error || !link) {
+        document.getElementById('rf-form-content').style.display = '';
+        document.querySelector('#rf-form-content .rf-card').innerHTML =
+            '<div style="text-align:center;padding:20px;color:var(--text2);">Link inválido o expirado.</div>';
+        return;
+    }
+    rfCurrentLink = link;
+
+    // Check if already responded
+    const { data: existing } = await sbClient
+        .from('tp_reports').select('id').eq('link_token', token).single();
+    if (existing) {
+        document.getElementById('rf-already').style.display = '';
+        return;
+    }
+
+    // Check time lock: available from 11:00am on the assigned date
+    if (link.fecha) {
+        const now       = new Date();
+        const available = new Date(link.fecha + 'T11:00:00');
+        if (now < available) {
+            const opts = { weekday:'long', day:'numeric', month:'long' };
+            document.getElementById('rf-locked-sub').textContent =
+                `El formulario estará disponible a partir de las 11:00am del ${available.toLocaleDateString('es-ES', opts)}.`;
+            document.getElementById('rf-locked').style.display = 'flex';
+            return;
+        }
+    }
+
+    // Populate form
+    const terrs = link.territories || [];
+    const firstTerr = terrs[0] || null;
+
+    // Map image
+    if (firstTerr) {
+        document.getElementById('rf-map-img').src = `territorios/${firstTerr}.png`;
+    } else {
+        document.getElementById('rf-map-img').style.display = 'none';
+        document.getElementById('rf-map-ph').style.display  = 'flex';
+    }
+
+    document.getElementById('rf-title').textContent    = `${link.day_label} · ${link.shift_label}`;
+    document.getElementById('rf-subtitle').textContent = link.fecha
+        ? new Date(link.fecha + 'T12:00:00').toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
+        : '—';
+    document.getElementById('rf-territory-val').textContent  = terrs.length ? `Territorio${terrs.length > 1 ? 's' : ''}: ${terrs.join(', ')}` : '—';
+    document.getElementById('rf-publisher-val').textContent  = link.publisher_name || '—';
+    if (link.address_name || link.address) {
+        document.getElementById('rf-addr-row').style.display = '';
+        document.getElementById('rf-addr-val').textContent   = link.address_name || link.address;
+    }
+
+    // Blocks grid (A–J, 10 manzanas)
+    const grid = document.getElementById('rf-blocks-grid');
+    grid.innerHTML = '';
+    'ABCDEFGHIJ'.split('').forEach(letter => {
+        const btn = document.createElement('button');
+        btn.className = 'rf-block-chip';
+        btn.textContent = letter;
+        btn.onclick = () => {
+            if (rfSelectedBlocks.has(letter)) { rfSelectedBlocks.delete(letter); btn.classList.remove('selected'); }
+            else { rfSelectedBlocks.add(letter); btn.classList.add('selected'); }
+        };
+        grid.appendChild(btn);
+    });
+
+    // Name input → enable submit
+    document.getElementById('rf-name-input').oninput = rfCheckSubmit;
+    document.getElementById('rf-form-content').style.display = '';
+}
+
+function rfSetAnswer(val) {
+    rfAnswer = val;
+    document.getElementById('rf-btn-yes').classList.toggle('active', val === true);
+    document.getElementById('rf-btn-no').classList.toggle('active',  val === false);
+    document.getElementById('rf-blocks-wrap').classList.toggle('visible', val === false);
+    rfCheckSubmit();
+}
+
+function rfCheckSubmit() {
+    const name = (document.getElementById('rf-name-input').value || '').trim();
+    const ok   = name.length > 0 && rfAnswer !== null;
+    document.getElementById('rf-submit-btn').disabled = !ok;
+}
+
+async function submitReport() {
+    const name = (document.getElementById('rf-name-input').value || '').trim();
+    if (!name || rfAnswer === null || !rfCurrentLink) return;
+    document.getElementById('rf-submit-btn').disabled = true;
+
+    const blocksDone = rfAnswer === false && rfSelectedBlocks.size > 0
+        ? Array.from(rfSelectedBlocks).sort().join(', ')
+        : null;
+
+    const row = {
+        link_token:     rfCurrentLink.token,
+        slot_id:        rfCurrentLink.slot_id,
+        monday:         rfCurrentLink.monday,
+        territorio:     (rfCurrentLink.territories || [])[0] || null,
+        territories:    rfCurrentLink.territories  || [],
+        fecha:          rfCurrentLink.fecha,
+        turno:          rfCurrentLink.shift_label,
+        publisher_name: rfCurrentLink.publisher_name || null,
+        responder_name: name,
+        completed:      rfAnswer,
+        blocks_done:    blocksDone,
+        notes:          (document.getElementById('rf-notes-input').value || '').trim() || null,
+    };
+
+    const { error } = await sbClient.from('tp_reports').insert(row);
+    if (error) {
+        document.getElementById('rf-submit-btn').disabled = false;
+        showToast('Error al enviar. Intenta nuevamente.'); return;
+    }
+
+    // If incomplete → mark tp_records as incomplete for priority suggestion
+    if (!rfAnswer) {
+        for (const t of (rfCurrentLink.territories || [])) {
+            await sbClient.from('tp_records').upsert({
+                id: String(t), territorio: String(t),
+                fecha: rfCurrentLink.fecha || new Date().toISOString().split('T')[0],
+                turno: rfCurrentLink.shift_label || 'Mañana',
+                incomplete: true,
+                blocks_done: blocksDone,
+                updated_at: new Date().toISOString()
+            });
+        }
+    }
+
+    // Show success
+    document.getElementById('rf-form-content').style.display = 'none';
+    document.getElementById('rf-success-title').textContent  = rfAnswer ? '¡Territorio completado!' : 'Reporte enviado';
+    document.getElementById('rf-success-sub').textContent    = rfAnswer
+        ? 'Gracias por completar el territorio. ¡Buen trabajo!'
+        : 'El administrador fue notificado. El territorio será priorizado la próxima semana.';
+    document.getElementById('rf-success').classList.add('visible');
 }
 
 // ══════════════════════════════════════════════════════
@@ -4627,6 +5270,12 @@ function closeTerritoryDetailDirect() {
 
     document.getElementById('config-screen').style.display = 'none';
     initSupabase(url, key);
+
+    // Check if this is a public report link — handle before login
+    if (new URLSearchParams(location.search).has('report')) {
+        await checkReportToken();
+        return; // Don't show login or app
+    }
 
     // Check for existing session
     const session = localStorage.getItem('tp_session');
@@ -4826,6 +5475,130 @@ function closeTerritoryDetailDirect() {
     </div>
 </div>
 
+<!-- ══ GENERATE LINK MODAL ══ -->
+<div id="gen-link-overlay" onclick="closeGenLink(event)">
+    <div id="gen-link-modal">
+        <div class="gl-header">
+            <div class="gl-title">Generar link de reporte</div>
+            <button class="gl-close" onclick="closeGenLinkDirect()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="gl-body">
+            <div>
+                <div class="gl-label">Selecciona el día</div>
+                <div class="gl-slot-list" id="gl-slot-list"></div>
+            </div>
+            <div id="gl-url-section" style="display:none;">
+                <div class="gl-label">Link generado</div>
+                <div class="gl-url-box">
+                    <span class="gl-url-text" id="gl-url-text">—</span>
+                    <button class="gl-copy-btn" onclick="copyReportLink()">Copiar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ REPORT FORM (public, no login) ══ -->
+<div id="report-form-overlay">
+    <div class="rf-wrap">
+        <!-- Map -->
+        <div class="rf-map-wrap" id="rf-map-wrap">
+            <img id="rf-map-img" src="" alt="" onerror="document.getElementById('rf-map-ph').style.display='flex'; this.style.display='none';">
+            <div class="rf-map-ph" id="rf-map-ph" style="display:none;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>Sin imagen de territorio</span>
+            </div>
+        </div>
+
+        <!-- Already answered -->
+        <div class="rf-already" id="rf-already" style="display:none;">
+            Este reporte ya fue respondido. Gracias.
+        </div>
+
+        <!-- Too early -->
+        <div class="rf-locked" id="rf-locked" style="display:none;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text2)"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <div class="rf-locked-title">Aún no disponible</div>
+            <div class="rf-locked-sub" id="rf-locked-sub">El formulario estará disponible después de las 11:00 AM del día asignado.</div>
+        </div>
+
+        <!-- Form -->
+        <div id="rf-form-inner" style="display:none;">
+            <!-- Info card -->
+            <div class="rf-card">
+                <div class="rf-title" id="rf-title">—</div>
+                <div class="rf-subtitle" id="rf-subtitle">—</div>
+                <div style="margin-top:14px;">
+                    <div class="rf-info-row">
+                        <svg class="rf-info-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+                        <div>
+                            <div class="rf-info-label">Territorio</div>
+                            <div class="rf-info-value" id="rf-territorio">—</div>
+                        </div>
+                    </div>
+                    <div class="rf-info-row">
+                        <svg class="rf-info-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                        <div>
+                            <div class="rf-info-label">Encargado</div>
+                            <div class="rf-info-value" id="rf-publisher">—</div>
+                        </div>
+                    </div>
+                    <div class="rf-info-row">
+                        <svg class="rf-info-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2"/></svg>
+                        <div>
+                            <div class="rf-info-label">Dirección</div>
+                            <div class="rf-info-value" id="rf-address">—</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Name -->
+            <div class="rf-card">
+                <div class="rf-section-label">Tu nombre</div>
+                <input class="rf-name-input" id="rf-name" placeholder="Escribe tu nombre…" oninput="rfCheckReady()">
+
+                <!-- Yes/No -->
+                <div class="rf-section-label" style="margin-top:16px;">¿Completaste el territorio?</div>
+                <div class="rf-yn-row">
+                    <button class="rf-yn-btn yes" id="rf-btn-yes" onclick="rfSelectAnswer(true)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        Sí, completo
+                    </button>
+                    <button class="rf-yn-btn no" id="rf-btn-no" onclick="rfSelectAnswer(false)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        No, incompleto
+                    </button>
+                </div>
+
+                <!-- Blocks (only when No) -->
+                <div class="rf-blocks-wrap" id="rf-blocks-wrap">
+                    <div class="rf-section-label">Manzanas realizadas</div>
+                    <div class="rf-blocks-hint">Selecciona las manzanas que SÍ completaste:</div>
+                    <div class="rf-blocks-grid" id="rf-blocks-grid"></div>
+                    <div class="rf-section-label" style="margin-top:12px;">Nota adicional (opcional)</div>
+                    <textarea class="rf-notes-input" id="rf-notes" placeholder="Ej: Quedaron pendientes las casas del fondo…" rows="3"></textarea>
+                </div>
+
+                <button class="rf-submit-btn" id="rf-submit-btn" onclick="submitReport()" disabled>
+                    Enviar reporte
+                </button>
+            </div>
+        </div>
+
+        <!-- Success -->
+        <div class="rf-success" id="rf-success">
+            <div class="rf-success-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="rf-success-title">¡Reporte enviado!</div>
+            <div class="rf-success-sub" id="rf-success-sub">Gracias por reportar. El administrador ha sido notificado.</div>
+        </div>
+    </div>
+</div>
+
 <!-- ══ DAY DETAIL POPUP ══ -->
 <div id="day-detail-overlay" onclick="closeDayDetail(event)">
     <div id="day-detail-popup">
@@ -4959,6 +5732,116 @@ function closeTerritoryDetailDirect() {
             <button class="btn-main" style="border-radius:12px;padding:0 16px;align-self:flex-end;" onclick="addAddress()">Guardar</button>
         </div>
         <div class="ma-list" id="ma-list"></div>
+    </div>
+</div>
+
+<!-- ══ GENERATE REPORT LINK MODAL ══ -->
+<div id="gen-link-overlay" onclick="closeGenLink(event)">
+    <div id="gen-link-modal">
+        <div class="gl-header">
+            <div class="gl-title">Generar link de reporte</div>
+            <button class="gl-close" onclick="closeGenLinkDirect()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="gl-body">
+            <div>
+                <div class="gl-label">Selecciona el día</div>
+                <div class="gl-slot-list" id="gl-slot-list"></div>
+            </div>
+            <div id="gl-url-section" style="display:none;">
+                <div class="gl-label">Link generado</div>
+                <div class="gl-url-box">
+                    <span class="gl-url-text" id="gl-url-text">—</span>
+                    <button class="gl-copy-btn" onclick="copyReportLink()">Copiar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ REPORT FORM OVERLAY (public, no login) ══ -->
+<div id="report-form-overlay">
+    <div class="rf-wrap">
+        <!-- success state -->
+        <div class="rf-success" id="rf-success">
+            <div class="rf-success-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="rf-success-title" id="rf-success-title">¡Reporte enviado!</div>
+            <div class="rf-success-sub" id="rf-success-sub">Gracias por informar.</div>
+        </div>
+        <!-- already submitted -->
+        <div class="rf-already" id="rf-already" style="display:none;">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--border);margin-bottom:8px;display:block;margin-left:auto;margin-right:auto;"><polyline points="20 6 9 17 4 12"/></svg>
+            Este reporte ya fue respondido. Gracias.
+        </div>
+        <!-- too early -->
+        <div class="rf-locked" id="rf-locked" style="display:none;">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--border);"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <div class="rf-locked-title">Aún no disponible</div>
+            <div class="rf-locked-sub" id="rf-locked-sub">El formulario estará disponible a partir de las 11:00am del día asignado.</div>
+        </div>
+        <!-- main form -->
+        <div id="rf-form-content" style="display:none;">
+            <div class="rf-map-wrap" id="rf-map-wrap">
+                <img id="rf-map-img" src="" alt="" onerror="this.style.display='none';document.getElementById('rf-map-ph').style.display='flex';">
+                <div class="rf-map-ph" id="rf-map-ph" style="display:none;">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Sin imagen disponible
+                </div>
+            </div>
+            <div class="rf-card">
+                <div class="rf-title" id="rf-title">—</div>
+                <div class="rf-subtitle" id="rf-subtitle">—</div>
+            </div>
+            <div class="rf-card">
+                <div class="rf-info-row">
+                    <div class="rf-info-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg></div>
+                    <div style="flex:1">
+                        <div class="rf-info-label">Territorio</div>
+                        <div class="rf-info-value" id="rf-territory-val">—</div>
+                    </div>
+                </div>
+                <div class="rf-info-row">
+                    <div class="rf-info-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+                    <div style="flex:1">
+                        <div class="rf-info-label">Encargado</div>
+                        <div class="rf-info-value" id="rf-publisher-val">—</div>
+                    </div>
+                </div>
+                <div class="rf-info-row" id="rf-addr-row" style="display:none;">
+                    <div class="rf-info-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2"/></svg></div>
+                    <div style="flex:1">
+                        <div class="rf-info-label">Dirección</div>
+                        <div class="rf-info-value" id="rf-addr-val">—</div>
+                    </div>
+                </div>
+            </div>
+            <div class="rf-card">
+                <div class="rf-section-label">Tu nombre</div>
+                <input class="rf-name-input" id="rf-name-input" placeholder="Escribe tu nombre…" maxlength="80">
+                <div class="rf-section-label">¿Completaste el territorio?</div>
+                <div class="rf-yn-row">
+                    <button class="rf-yn-btn yes" id="rf-btn-yes" onclick="rfSetAnswer(true)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Sí, completé
+                    </button>
+                    <button class="rf-yn-btn no" id="rf-btn-no" onclick="rfSetAnswer(false)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        No, quedó incompleto
+                    </button>
+                </div>
+                <div class="rf-blocks-wrap" id="rf-blocks-wrap">
+                    <div class="rf-section-label">Manzanas realizadas</div>
+                    <div class="rf-blocks-hint">Selecciona las manzanas que sí completaste:</div>
+                    <div class="rf-blocks-grid" id="rf-blocks-grid"></div>
+                    <div class="rf-section-label" style="margin-top:12px;">Notas adicionales (opcional)</div>
+                    <textarea class="rf-notes-input" id="rf-notes-input" placeholder="Ej: quedaron 3 casas sin visitar en la manzana D…"></textarea>
+                </div>
+                <button class="rf-submit-btn" id="rf-submit-btn" onclick="submitReport()" disabled>Enviar reporte</button>
+            </div>
+        </div>
     </div>
 </div>
 
