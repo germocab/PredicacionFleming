@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlemingPlans 14</title>
+    <title>FlemingPlans 14.0.1</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
@@ -641,7 +641,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         .hist-page-grid-wrap { flex: 1; padding: 0 28px 48px; max-width: 1140px; width: 100%; margin: 0 auto; box-sizing: border-box; }
 
         #history-grid { align-items: stretch; grid-template-columns: repeat(6, 1fr); width: 100%; gap: 14px; }
-        #history-grid .day-card { aspect-ratio: unset; min-height: 160px; height: 100%; }
+        #history-grid .day-card { aspect-ratio: unset; min-height: 185px; height: 100%; padding-bottom: 70px; }
         #history-grid .day-col { align-items: stretch; }
 
         .btn-mas { width: 42px; height: 42px; border-radius: 999px; border: none; background: var(--accent); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(26,86,219,0.3); transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease; flex-shrink: 0; }
@@ -1189,7 +1189,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         .slot-address-clear:hover { background: rgba(239,68,68,0.2); color: #ef4444; }
         /* hist address pill */
         .hist-address-pill {
-            position: absolute; bottom: 40px; left: 10px; right: 10px;
+            position: absolute; bottom: 10px; left: 10px; right: 10px;
             cursor: default;
         }
         .hist-address-pill .slot-address-clear { display: none !important; }
@@ -1414,6 +1414,9 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
             pointer-events: none !important; cursor: default !important;
         }
         .hist-publisher-pill .slot-publisher-clear { display: none !important; }
+        /* When both address and publisher pills are present in history, stack them */
+        .hist-address-pill + .hist-publisher-pill,
+        .hist-address-pill ~ .hist-publisher-pill { bottom: 40px !important; }
 
         
         /* ══ TERRITORY DETAIL CHART ══ */
@@ -1490,11 +1493,15 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
             .day-date { font-size: 0.6rem; }
             .shift-label { font-size: 0.55rem; padding: 2px 6px; border-radius: 6px; margin-top: 2px; }
             .t-badge { font-size: 0.65rem; padding: 3px 7px; border-radius: 7px; }
-            .slot-publisher { left: 6px; bottom: 6px; right: 36px; height: 22px; border-radius: 6px; }
+            .slot-publisher { left: 6px; bottom: 36px; right: 36px; height: 22px; border-radius: 6px; }
+            .slot-address   { left: 6px; bottom: 6px;  right: 36px; height: 22px; border-radius: 6px; }
             .slot-publisher-name { font-size: 0.6rem; }
             .slot-publisher-icon { width: 10px; height: 10px; }
+            .slot-address-text   { font-size: 0.6rem; }
+            .slot-address-icon   { width: 10px; height: 10px; }
             .btn-add { width: 24px; height: 24px; bottom: 6px; right: 6px; font-size: 0.95rem; }
-            .hist-publisher-pill { left: 6px !important; bottom: 6px !important; right: 6px !important; height: 22px !important; }
+            .hist-publisher-pill { left: 6px !important; bottom: 36px !important; right: 6px !important; height: 22px !important; }
+            .hist-address-pill   { left: 6px !important; bottom: 6px  !important; right: 6px !important; height: 22px !important; }
 
             /* Schedule actions */
             .schedule-actions { flex-direction: column; align-items: stretch; gap: 8px; margin-top: 16px; }
@@ -3330,19 +3337,7 @@ function renderHistoryWeek() {
             `;
             card.appendChild(tList);
 
-            // Publisher pill — same style as schedule view, read-only
-            if (slotPubName) {
-                const pill = document.createElement('div');
-                pill.className = 'slot-publisher has-publisher hist-publisher-pill';
-                pill.style.cursor = 'default';
-                pill.innerHTML = `
-                    <svg class="slot-publisher-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                    <span class="slot-publisher-name">${slotPubName}</span>
-                `;
-                card.appendChild(pill);
-            }
-
-            // Address pill — read-only in history
+            // Address pill — read-only in history, sits at bottom:10px
             if (slotAddress) {
                 const addrPill = document.createElement('div');
                 addrPill.className = 'slot-address has-address hist-address-pill';
@@ -3352,6 +3347,20 @@ function renderHistoryWeek() {
                     <span class="slot-address-text">${slotAddress}</span>
                 `;
                 card.appendChild(addrPill);
+            }
+
+            // Publisher pill — sits above address pill when both present
+            if (slotPubName) {
+                const pill = document.createElement('div');
+                pill.className = 'slot-publisher has-publisher hist-publisher-pill';
+                pill.style.cursor = 'default';
+                // If there's also an address pill, raise this one up
+                if (slotAddress) pill.style.bottom = '40px';
+                pill.innerHTML = `
+                    <svg class="slot-publisher-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                    <span class="slot-publisher-name">${slotPubName}</span>
+                `;
+                card.appendChild(pill);
             }
 
             col.appendChild(card);
