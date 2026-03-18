@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlemingPlans 15.0.7</title>
+    <title>FlemingPlans 15.1</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -1263,6 +1263,13 @@
         }
         .gl-copy-btn:hover { opacity: 0.85; }
         .gl-empty { color: var(--text2); font-size: 0.82rem; text-align: center; padding: 20px 0; }
+        .gl-select {
+            width: 100%; padding: 9px 14px; border-radius: 12px;
+            border: 1px solid var(--border); background: var(--surface2);
+            color: var(--text); font-family: inherit; font-size: 0.85rem;
+            outline: none; appearance: none; cursor: pointer;
+        }
+        .gl-select:focus { border-color: var(--accent); }
 
         /* ── REPORT FORM (public page overlay) ── */
         #report-form-overlay {
@@ -2252,7 +2259,7 @@
         </div>
         <button class="btn-gen-link admin-only" onclick="openGenLink()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Generar link
+            Crear reporte
         </button>
     </div>
     <div class="reports-page-wrap">
@@ -4900,18 +4907,37 @@ function copyText(txt) {
     navigator.clipboard.writeText(txt).then(() => showToast('Link copiado.'));
 }
 
-// ── Generate Link Modal ──
-
-let genLinkSelectedSlot = null;
-let genLinkToken        = null;
+// ── Create Report Modal ──
 
 function openGenLink() {
-    genLinkSelectedSlot = null;
-    genLinkToken        = null;
     document.getElementById('gl-url-section').style.display = 'none';
-    renderGenLinkSlots();
+
+    // Populate publisher select
+    const pubSel = document.getElementById('gl-publisher');
+    pubSel.innerHTML = '<option value="">Selecciona un encargado…</option>';
+    publishers.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id; opt.textContent = p.name;
+        pubSel.appendChild(opt);
+    });
+
+    // Populate territory select
+    const terrSel = document.getElementById('gl-territorio');
+    terrSel.innerHTML = '<option value="">Selecciona un territorio…</option>';
+    for (let i = 1; i <= 36; i++) {
+        const opt = document.createElement('option');
+        opt.value = i; opt.textContent = 'Territorio ' + i;
+        terrSel.appendChild(opt);
+    }
+
+    // Default date to today
+    const today = new Date();
+    document.getElementById('gl-fecha').value =
+        new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+
     document.getElementById('gen-link-overlay').classList.add('open');
 }
+
 function closeGenLink(e) {
     if (e && e.target !== document.getElementById('gen-link-overlay')) return;
     document.getElementById('gen-link-overlay').classList.remove('open');
@@ -4920,78 +4946,47 @@ function closeGenLinkDirect() {
     document.getElementById('gen-link-overlay').classList.remove('open');
 }
 
-function renderGenLinkSlots() {
-    const list = document.getElementById('gl-slot-list');
-    list.innerHTML = '';
-    const slots = [];
-    DAYS.forEach((day, dIdx) => {
-        day.slots.forEach((shift, sIdx) => {
-            const id = `slot-${dIdx}-${sIdx}`;
-            const territories = scheduleData[id] || [];
-            if (territories.length === 0) return; // only slots with territories
-            const fecha = selectedMonday
-                ? dateFromMonday(selectedMonday, day.offset).toISOString().split('T')[0]
-                : null;
-            const pub   = slotPublishers[id] || {};
-            slots.push({ id, day, shift, territories, fecha, pub });
-        });
-    });
+async function generateReportLink() {
+    const pubSel   = document.getElementById('gl-publisher');
+    const terrSel  = document.getElementById('gl-territorio');
+    const fecha    = document.getElementById('gl-fecha').value;
+    const turno    = document.getElementById('gl-turno').value;
 
-    if (slots.length === 0) {
-        list.innerHTML = '<div class="gl-empty">No hay territorios asignados esta semana.<br>Primero planifica la semana.</div>';
-        return;
-    }
+    const publisherId   = pubSel.value;
+    const publisherName = pubSel.options[pubSel.selectedIndex]?.text || null;
+    const territorio    = terrSel.value;
 
-    slots.forEach(s => {
-        const shiftLabel = SHIFT_LABEL[s.shift];
-        const existing   = reportLinks.find(l => l.slot_id === s.id && l.monday === selectedMonday);
-        const item = document.createElement('div');
-        item.className = 'gl-slot-item' + (genLinkSelectedSlot === s.id ? ' selected' : '');
-        item.innerHTML = `
-            <div class="gl-slot-day">${s.day.name} · ${shiftLabel}</div>
-            <div class="gl-slot-meta">T: ${s.territories.join(', ')}${s.pub.name ? ' · ' + s.pub.name : ''}${existing ? ' · link activo' : ''}</div>
-            <svg class="gl-slot-check" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-        `;
-        item.onclick = () => selectGenLinkSlot(s);
-        list.appendChild(item);
-    });
-}
+    if (!publisherId) { showToast('Selecciona un encargado.'); return; }
+    if (!territorio)  { showToast('Selecciona un territorio.'); return; }
+    if (!fecha)       { showToast('Selecciona una fecha.'); return; }
 
-async function selectGenLinkSlot(s) {
-    genLinkSelectedSlot = s.id;
-    renderGenLinkSlots();
+    // Get day label from fecha
+    const dateObj  = new Date(fecha + 'T12:00:00');
+    const dayLabel = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
 
-    // Generate or retrieve token
-    const existing = reportLinks.find(l => l.slot_id === s.id && l.monday === selectedMonday);
-    let token;
-    if (existing) {
-        token = existing.token;
-    } else {
-        token = crypto.randomUUID();
-        const addr = slotAddresses[s.id] || {};
-        const row = {
-            token,
-            slot_id:        s.id,
-            monday:         selectedMonday,
-            day_label:      s.day.name,
-            shift_label:    SHIFT_LABEL[s.shift],
-            fecha:          s.fecha,
-            territories:    s.territories,
-            publisher_id:   s.pub.id   || null,
-            publisher_name: s.pub.name || null,
-            address_name:   addr.name  || null,
-            address:        addr.address || null,
-        };
-        const { data, error } = await sbClient.from('tp_report_links').upsert(row, { onConflict: 'slot_id,monday' }).select().single();
-        if (error) { showToast('Error al generar link.'); return; }
-        reportLinks.unshift(data);
-        token = data.token;
-    }
+    const token = crypto.randomUUID();
+    const row = {
+        token,
+        slot_id:        null,
+        monday:         null,
+        day_label:      dayLabel,
+        shift_label:    turno,
+        fecha,
+        territories:    [parseInt(territorio)],
+        publisher_id:   publisherId || null,
+        publisher_name: publisherName !== 'Selecciona un encargado…' ? publisherName : null,
+        address_name:   null,
+        address:        null,
+    };
 
-    genLinkToken = token;
-    const url = `${location.origin}${location.pathname}?report=${token}`;
+    const { data, error } = await sbClient.from('tp_report_links').insert(row).select().single();
+    if (error) { showToast('Error al generar link: ' + error.message); return; }
+    reportLinks.unshift(data);
+
+    const url = location.origin + location.pathname + '?report=' + token;
     document.getElementById('gl-url-text').textContent = url;
     document.getElementById('gl-url-section').style.display = '';
+    showToast('Link generado.');
 }
 
 function copyReportLink() {
@@ -5719,31 +5714,6 @@ async function rpSubmit(token) {
     </div>
 </div>
 
-<!-- ══ GENERATE LINK MODAL ══ -->
-<div id="gen-link-overlay" onclick="closeGenLink(event)">
-    <div id="gen-link-modal">
-        <div class="gl-header">
-            <div class="gl-title">Generar link de reporte</div>
-            <button class="gl-close" onclick="closeGenLinkDirect()">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-        </div>
-        <div class="gl-body">
-            <div>
-                <div class="gl-label">Selecciona el día</div>
-                <div class="gl-slot-list" id="gl-slot-list"></div>
-            </div>
-            <div id="gl-url-section" style="display:none;">
-                <div class="gl-label">Link generado</div>
-                <div class="gl-url-box">
-                    <span class="gl-url-text" id="gl-url-text">—</span>
-                    <button class="gl-copy-btn" onclick="copyReportLink()">Copiar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- ══ DAY DETAIL POPUP ══ -->
 <div id="day-detail-overlay" onclick="closeDayDetail(event)">
     <div id="day-detail-popup">
@@ -5880,22 +5850,48 @@ async function rpSubmit(token) {
     </div>
 </div>
 
-<!-- ══ GENERATE REPORT LINK MODAL ══ -->
+<!-- ══ CREATE REPORT MODAL ══ -->
 <div id="gen-link-overlay" onclick="closeGenLink(event)">
     <div id="gen-link-modal">
         <div class="gl-header">
-            <div class="gl-title">Generar link de reporte</div>
+            <div class="gl-title">Crear reporte</div>
             <button class="gl-close" onclick="closeGenLinkDirect()">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
         <div class="gl-body">
             <div>
-                <div class="gl-label">Selecciona el día</div>
-                <div class="gl-slot-list" id="gl-slot-list"></div>
+                <div class="gl-label">Encargado</div>
+                <select class="gl-select" id="gl-publisher">
+                    <option value="">Selecciona un encargado…</option>
+                </select>
+            </div>
+            <div>
+                <div class="gl-label">Territorio</div>
+                <select class="gl-select" id="gl-territorio">
+                    <option value="">Selecciona un territorio…</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;">
+                    <div class="gl-label">Fecha</div>
+                    <input type="date" class="gl-select" id="gl-fecha">
+                </div>
+                <div style="flex:1;">
+                    <div class="gl-label">Jornada</div>
+                    <select class="gl-select" id="gl-turno">
+                        <option value="Mañana">Mañana</option>
+                        <option value="Tarde">Tarde</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <button class="gl-copy-btn" style="width:100%;padding:11px;border-radius:12px;" onclick="generateReportLink()">
+                    Generar link
+                </button>
             </div>
             <div id="gl-url-section" style="display:none;">
-                <div class="gl-label">Link generado</div>
+                <div class="gl-label">Link generado — compártelo con el encargado</div>
                 <div class="gl-url-box">
                     <span class="gl-url-text" id="gl-url-text">—</span>
                     <button class="gl-copy-btn" onclick="copyReportLink()">Copiar</button>
