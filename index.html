@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlemingPlans 13.8</title>
+    <title>FlemingPlans 14.2</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
@@ -1155,6 +1155,133 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         }
         .slot-publisher.has-publisher .slot-publisher-clear { display: flex; }
         .slot-publisher-clear:hover { background: rgba(239,68,68,0.2); color: #ef4444; }
+
+        /* ══ INFO ICON ON CARD ══ */
+        .btn-day-info {
+            position: absolute; top: 10px; right: 10px;
+            width: 22px; height: 22px; border-radius: 999px;
+            border: 1px solid var(--border); background: var(--surface2);
+            color: var(--text2); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            z-index: 2; flex-shrink: 0;
+        }
+        .btn-day-info:hover { background: var(--accent); border-color: var(--accent); color: white; }
+
+        /* ══ DAY DETAIL POPUP ══ */
+        #day-detail-overlay {
+            position: fixed; inset: 0; z-index: 700;
+            background: rgba(0,0,0,0.55); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+            opacity: 0; pointer-events: none; transition: opacity 0.22s;
+        }
+        #day-detail-overlay.open { opacity: 1; pointer-events: all; }
+        #day-detail-popup {
+            background: var(--surface); border-radius: 28px;
+            border: 1px solid var(--border);
+            box-shadow: 0 40px 100px rgba(0,0,0,0.3);
+            width: min(94vw, 500px); max-height: 88vh;
+            display: flex; flex-direction: column;
+            transform: scale(0.93) translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+            overflow: hidden;
+        }
+        #day-detail-overlay.open #day-detail-popup { transform: scale(1) translateY(0); }
+
+        /* map / image area */
+        .ddp-map-wrap {
+            width: 100%; height: 200px; position: relative;
+            background: var(--surface2); flex-shrink: 0; overflow: hidden;
+            border-radius: 28px 28px 0 0;
+        }
+        .ddp-map-wrap img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            border-radius: 28px 28px 0 0;
+        }
+        .ddp-map-placeholder {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 8px; color: var(--text2); font-size: 0.8rem; font-weight: 500;
+            border-radius: 28px 28px 0 0;
+        }
+        /* territory badge overlay on map */
+        .ddp-territory-badge {
+            position: absolute; top: 14px; left: 16px;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
+            color: white; font-size: 0.78rem; font-weight: 800;
+            padding: 4px 12px; border-radius: 999px; letter-spacing: 0.3px;
+        }
+        /* close button */
+        .ddp-close {
+            position: absolute; top: 12px; right: 12px;
+            width: 30px; height: 30px; border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(0,0,0,0.35); backdrop-filter: blur(6px);
+            color: white; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s;
+        }
+        .ddp-close:hover { background: rgba(0,0,0,0.6); }
+        /* no-map close */
+        .ddp-map-wrap.no-map .ddp-close {
+            border-color: var(--border); background: var(--surface2);
+            color: var(--text2);
+        }
+
+        /* body */
+        .ddp-body { padding: 20px 22px 22px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+
+        /* header row */
+        .ddp-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+        .ddp-title { font-size: 1.15rem; font-weight: 800; color: var(--text); line-height: 1.2; }
+        .ddp-subtitle { font-size: 0.8rem; color: var(--text2); margin-top: 3px; font-weight: 500; }
+        .ddp-shift-badge {
+            padding: 4px 12px; border-radius: 999px; font-size: 0.72rem; font-weight: 700;
+            flex-shrink: 0; margin-top: 2px;
+        }
+        .ddp-shift-badge.m { background: rgba(245,158,11,0.12); color: #f59e0b; }
+        .ddp-shift-badge.t { background: rgba(99,102,241,0.12); color: #818cf8; }
+
+        /* info rows */
+        .ddp-info-grid { display: flex; flex-direction: column; gap: 10px; }
+        .ddp-info-row {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 14px; border-radius: 14px;
+            background: var(--surface2); border: 1px solid var(--border);
+        }
+        .ddp-info-icon {
+            width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .ddp-info-icon.pub  { background: rgba(26,86,219,0.1);  color: var(--accent); }
+        .ddp-info-icon.addr { background: rgba(245,158,11,0.1); color: #f59e0b; }
+        .ddp-info-icon.terr { background: rgba(22,163,74,0.1);  color: #16a34a; }
+        .ddp-info-content { flex: 1; min-width: 0; }
+        .ddp-info-label { font-size: 0.68rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; }
+        .ddp-info-value { font-size: 0.88rem; font-weight: 700; color: var(--text); margin-top: 1px; }
+        .ddp-info-value.empty { color: var(--text2); font-weight: 500; font-style: italic; }
+        .ddp-info-value.addr-sub { font-size: 0.75rem; font-weight: 500; color: var(--text2); margin-top: 1px; }
+
+        /* territory chips in popup */
+        .ddp-terr-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+        .ddp-terr-chip {
+            padding: 3px 10px; border-radius: 8px;
+            font-size: 0.82rem; font-weight: 700;
+            background: rgba(22,163,74,0.12); color: #16a34a;
+        }
+
+        /* action buttons */
+        .ddp-actions { display: flex; gap: 10px; }
+        .ddp-btn {
+            flex: 1; padding: 12px; border-radius: 14px;
+            border: 1px solid var(--border); background: var(--surface2);
+            color: var(--text); font-family: inherit; font-size: 0.84rem; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+        }
+        .ddp-btn:hover { background: var(--surface); border-color: var(--accent); color: var(--accent); }
+        .ddp-btn.danger:hover { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.06); }
 
         /* ══ ADDRESS PILL ON SCHEDULE CARD ══ */
         .slot-address {
@@ -3046,6 +3173,9 @@ function renderSchedule() {
                     <div class="day-date">${dateStr}</div>
                     <span class="shift-label ${shiftClass}">${shiftText}</span>
                 </div>
+                <button class="btn-day-info" onclick="openDayDetail('${id}', event)" title="Ver detalle del día">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="8" stroke-linecap="round" stroke-width="3"/><line x1="12" y1="12" x2="12" y2="16" stroke-linecap="round"/></svg>
+                </button>
                 <div class="t-list" id="badges-${id}">${badges}</div>
                 ${isAdmin ? `
                 <div class="slot-address ${addrLabel ? 'has-address' : ''}" onclick="openAssignAddr('${id}', '${day.name} ${shiftText}', event)">
@@ -4068,6 +4198,171 @@ function clearSlotAddress(slotId, e) {
 }
 
 // ══════════════════════════════════════════════════════
+//  DAY DETAIL POPUP
+// ══════════════════════════════════════════════════════
+
+let dayDetailSlotId = null;
+
+function openDayDetail(slotId, e) {
+    if (e) e.stopPropagation();
+    dayDetailSlotId = slotId;
+    renderDayDetail();
+    document.getElementById('day-detail-overlay').classList.add('open');
+}
+
+function closeDayDetail(e) {
+    if (e && e.target !== document.getElementById('day-detail-overlay')) return;
+    document.getElementById('day-detail-overlay').classList.remove('open');
+}
+function closeDayDetailDirect() {
+    document.getElementById('day-detail-overlay').classList.remove('open');
+}
+
+function renderDayDetail() {
+    const id = dayDetailSlotId;
+    if (!id) return;
+
+    // Parse slot id → day index + shift index
+    const [, dIdxStr, sIdxStr] = id.split('-');
+    const dIdx = parseInt(dIdxStr), sIdx = parseInt(sIdxStr);
+    const day   = DAYS[dIdx];
+    const shift = day.slots[sIdx];
+    const shiftText  = SHIFT_LABEL[shift];
+    const shiftClass = shift === 'M' ? 'm' : 't';
+
+    const dateObj  = dateFromMonday(selectedMonday, day.offset);
+    const dateStr  = dateObj.toISOString().split('T')[0];
+    const dateDisp = formatShort(dateObj);
+
+    const territories = scheduleData[id] || [];
+    const pub   = slotPublishers[id] || {};
+    const addr  = slotAddresses[id]  || {};
+    const isAdmin = currentUser && canPlanRole(currentUser);
+
+    // Map image — use first territory if available
+    const firstTerr = territories[0] || null;
+    const popup = document.getElementById('day-detail-popup');
+
+    // Build map section
+    const mapWrap = popup.querySelector('.ddp-map-wrap');
+    const mapImg  = popup.querySelector('.ddp-map-img');
+    const mapPh   = popup.querySelector('.ddp-map-placeholder');
+    const terrBadge = popup.querySelector('.ddp-territory-badge');
+
+    if (firstTerr) {
+        mapImg.src = `territorios/${firstTerr}.png`;
+        mapImg.style.display = '';
+        mapPh.style.display  = 'none';
+        mapWrap.classList.remove('no-map');
+        terrBadge.textContent = territories.length === 1
+            ? `Territorio ${firstTerr}`
+            : `Territorios: ${territories.join(', ')}`;
+        terrBadge.style.display = '';
+    } else {
+        mapImg.src = '';
+        mapImg.style.display = 'none';
+        mapPh.style.display  = 'flex';
+        mapWrap.classList.add('no-map');
+        terrBadge.style.display = 'none';
+    }
+
+    // Title
+    popup.querySelector('.ddp-title').textContent    = `${day.name}`;
+    popup.querySelector('.ddp-subtitle').textContent = `${dateDisp} de ${dateObj.getFullYear()}`;
+    const shiftBadge = popup.querySelector('.ddp-shift-badge');
+    shiftBadge.textContent  = shiftText;
+    shiftBadge.className    = `ddp-shift-badge ${shiftClass}`;
+
+    // Territories row
+    const terrValue = popup.querySelector('.ddp-terr-value');
+    if (territories.length === 0) {
+        terrValue.innerHTML = '<span class="ddp-info-value empty">Sin territorios asignados</span>';
+    } else {
+        terrValue.innerHTML = `<div class="ddp-terr-chips">${
+            territories.map(n => `<span class="ddp-terr-chip">${n}</span>`).join('')
+        }</div>`;
+    }
+
+    // Publisher row
+    const pubValue = popup.querySelector('.ddp-pub-value');
+    pubValue.innerHTML = pub.name
+        ? `<div class="ddp-info-value">${pub.name}</div>`
+        : `<div class="ddp-info-value empty">Sin encargado</div>`;
+
+    // Address row
+    const addrValue = popup.querySelector('.ddp-addr-value');
+    if (addr.name || addr.address) {
+        addrValue.innerHTML = `
+            <div class="ddp-info-value">${addr.name || addr.address}</div>
+            ${addr.name && addr.address ? `<div class="ddp-info-value addr-sub">${addr.address}</div>` : ''}
+        `;
+    } else {
+        addrValue.innerHTML = `<div class="ddp-info-value empty">Sin dirección</div>`;
+    }
+
+    // Action buttons — only admins see Edit/Delete
+    const actionsEl = popup.querySelector('.ddp-actions');
+    actionsEl.style.display = isAdmin ? 'flex' : 'none';
+}
+
+function dayDetailEdit() {
+    const id = dayDetailSlotId;
+    if (!id) return;
+    const [, dIdxStr, sIdxStr] = id.split('-');
+    const day   = DAYS[parseInt(dIdxStr)];
+    const shift = day.slots[parseInt(sIdxStr)];
+    const shiftText = SHIFT_LABEL[shift];
+    const label = `${day.name} · ${shiftText}`;
+
+    // Open the add-territory modal for this slot
+    closeDayDetailDirect();
+    showAddTerritory(id);
+}
+
+function dayDetailEditPublisher() {
+    const id = dayDetailSlotId;
+    if (!id) return;
+    const [, dIdxStr, sIdxStr] = id.split('-');
+    const day   = DAYS[parseInt(dIdxStr)];
+    const shift = day.slots[parseInt(sIdxStr)];
+    const label = `${day.name} · ${SHIFT_LABEL[shift]}`;
+    closeDayDetailDirect();
+    openAssignPub(id, label, null);
+}
+
+function dayDetailEditAddress() {
+    const id = dayDetailSlotId;
+    if (!id) return;
+    const [, dIdxStr, sIdxStr] = id.split('-');
+    const day   = DAYS[parseInt(dIdxStr)];
+    const shift = day.slots[parseInt(sIdxStr)];
+    const label = `${day.name} · ${SHIFT_LABEL[shift]}`;
+    closeDayDetailDirect();
+    openAssignAddr(id, label, null);
+}
+
+function dayDetailDelete() {
+    const id = dayDetailSlotId;
+    if (!id) return;
+    const [, dIdxStr, sIdxStr] = id.split('-');
+    const day   = DAYS[parseInt(dIdxStr)];
+    const shift = day.slots[parseInt(sIdxStr)];
+    closeDayDetailDirect();
+    showConfirm(
+        `¿Eliminar todo el arreglo de ${day.name} ${SHIFT_LABEL[shift]}?`,
+        'Se borrarán territorios, encargado y dirección de este slot.',
+        async () => {
+            delete scheduleData[id];
+            delete slotPublishers[id];
+            delete slotAddresses[id];
+            await sbClient.from('tp_schedule').delete().eq('id', id).eq('monday', selectedMonday);
+            renderSchedule();
+            showToast('Arreglo eliminado.');
+        }
+    );
+}
+
+// ══════════════════════════════════════════════════════
 //  MANAGE ADDRESSES
 // ══════════════════════════════════════════════════════
 
@@ -4527,6 +4822,97 @@ function closeTerritoryDetailDirect() {
             </div>
             <div class="td-section-label">Historial de visitas</div>
             <div class="td-history-list" id="td-history-list"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ DAY DETAIL POPUP ══ -->
+<div id="day-detail-overlay" onclick="closeDayDetail(event)">
+    <div id="day-detail-popup">
+
+        <!-- Map / Image area -->
+        <div class="ddp-map-wrap no-map">
+            <img class="ddp-map-img" src="" alt="" onerror="this.style.display='none'; this.closest('.ddp-map-wrap').querySelector('.ddp-map-placeholder').style.display='flex'; this.closest('.ddp-map-wrap').classList.add('no-map');">
+            <div class="ddp-map-placeholder">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>Sin territorio asignado</span>
+            </div>
+            <div class="ddp-territory-badge" style="display:none;"></div>
+            <button class="ddp-close" onclick="closeDayDetailDirect()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="ddp-body">
+
+            <!-- Header: day name + date + shift -->
+            <div class="ddp-header">
+                <div>
+                    <div class="ddp-title">—</div>
+                    <div class="ddp-subtitle">—</div>
+                </div>
+                <span class="ddp-shift-badge m">Mañana</span>
+            </div>
+
+            <!-- Info rows -->
+            <div class="ddp-info-grid">
+
+                <!-- Territories -->
+                <div class="ddp-info-row">
+                    <div class="ddp-info-icon terr">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+                    </div>
+                    <div class="ddp-info-content">
+                        <div class="ddp-info-label">Territorios</div>
+                        <div class="ddp-terr-value"></div>
+                    </div>
+                </div>
+
+                <!-- Publisher -->
+                <div class="ddp-info-row">
+                    <div class="ddp-info-icon pub">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                    </div>
+                    <div class="ddp-info-content">
+                        <div class="ddp-info-label">Encargado</div>
+                        <div class="ddp-pub-value"></div>
+                    </div>
+                </div>
+
+                <!-- Address -->
+                <div class="ddp-info-row">
+                    <div class="ddp-info-icon addr">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2"/></svg>
+                    </div>
+                    <div class="ddp-info-content">
+                        <div class="ddp-info-label">Dirección</div>
+                        <div class="ddp-addr-value"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Action buttons (admin only) -->
+            <div class="ddp-actions">
+                <button class="ddp-btn" onclick="dayDetailEdit()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>
+                    Territorios
+                </button>
+                <button class="ddp-btn" onclick="dayDetailEditPublisher()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                    Encargado
+                </button>
+                <button class="ddp-btn" onclick="dayDetailEditAddress()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2"/></svg>
+                    Dirección
+                </button>
+                <button class="ddp-btn danger" onclick="dayDetailDelete()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                    Eliminar
+                </button>
+            </div>
+
         </div>
     </div>
 </div>
