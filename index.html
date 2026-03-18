@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlemingPlans 14.0.2</title>
+    <title>FlemingPlans 13.8</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
@@ -591,7 +591,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 
         .day-card.drag-over { border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.25); background: rgba(22,163,74,0.04); }
 
-        .week-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+        .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 14px; }
         .day-col { display: flex; flex-direction: column; gap: 14px; }
 
         .day-card { background: var(--surface); border-radius: 24px; border: 1px solid var(--border); padding: 14px 14px 70px; height: 185px; display: flex; flex-direction: column; position: relative; box-shadow: var(--shadow); transition: box-shadow 0.25s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1); overflow: hidden; flex-shrink: 0; }
@@ -640,7 +640,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         .hist-page-sub { color: var(--text2); font-size: 0.85rem; margin-top: 3px; }
         .hist-page-grid-wrap { flex: 1; padding: 0 28px 48px; max-width: 1140px; width: 100%; margin: 0 auto; box-sizing: border-box; }
 
-        #history-grid { align-items: stretch; grid-template-columns: repeat(6, 1fr); width: 100%; gap: 14px; }
+        #history-grid { align-items: stretch; grid-template-columns: repeat(7, 1fr); width: 100%; gap: 14px; }
         #history-grid .day-card { aspect-ratio: unset; min-height: 185px; height: 100%; padding-bottom: 70px; }
         #history-grid .day-col { align-items: stretch; }
 
@@ -783,6 +783,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         .day-col:nth-child(4) .day-card { animation: fadeUp 0.4s cubic-bezier(0.22,1,0.36,1) 0.20s both; }
         .day-col:nth-child(5) .day-card { animation: fadeUp 0.4s cubic-bezier(0.22,1,0.36,1) 0.25s both; }
         .day-col:nth-child(6) .day-card { animation: fadeUp 0.4s cubic-bezier(0.22,1,0.36,1) 0.30s both; }
+        .day-col:nth-child(7) .day-card { animation: fadeUp 0.4s cubic-bezier(0.22,1,0.36,1) 0.35s both; }
 
         #territories-grid .t-card { animation: stagger-fade 0.4s cubic-bezier(0.22,1,0.36,1) both; }
         #territories-grid .t-card:nth-child(1)  { animation-delay: 0.03s; }
@@ -2345,6 +2346,7 @@ const DAYS = [
     { name: 'Miércoles', offset: 2, slots: ['M', 'T'] },
     { name: 'Jueves',    offset: 3, slots: ['M'] },
     { name: 'Viernes',   offset: 4, slots: ['M', 'T'] },
+    { name: 'Sábado',    offset: 5, slots: ['M'] },
     { name: 'Domingo',   offset: 6, slots: ['M'] }
 ];
 
@@ -2937,6 +2939,9 @@ function renderRecommendations() {
 
 function dropOnSlot(slotId, num) {
     if (!scheduleData[slotId]) scheduleData[slotId] = [];
+    if (scheduleData[slotId].length >= 8) {
+        showToast('⚠️ Máximo 8 territorios por día.'); return;
+    }
     if (!scheduleData[slotId].includes(num)) {
         scheduleData[slotId].push(num);
         saveSchedule();
@@ -3807,7 +3812,7 @@ function showAddTerritory(slotId) {
     // Build subtitle with day info
     const dayNames = { 'slot-0-0':'Lunes M', 'slot-1-0':'Martes M', 'slot-2-0':'Miércoles M',
                        'slot-2-1':'Miércoles T', 'slot-3-0':'Jueves M', 'slot-4-0':'Viernes M',
-                       'slot-4-1':'Viernes T', 'slot-5-0':'Domingo M' };
+                       'slot-4-1':'Viernes T', 'slot-5-0':'Sábado M', 'slot-6-0':'Domingo M' };
     document.getElementById('atm-subtitle').textContent =
         'Agregando para: ' + (dayNames[slotId] || slotId);
 
@@ -3925,12 +3930,14 @@ function renderATMGrid() {
 function addTerritoryFromModal(num) {
     if (!atmSlotId) return;
     if (!scheduleData[atmSlotId]) scheduleData[atmSlotId] = [];
+    if (scheduleData[atmSlotId].length >= 8) {
+        showToast('⚠️ Máximo 8 territorios por día.'); return;
+    }
     if (scheduleData[atmSlotId].includes(num)) return;
     scheduleData[atmSlotId].push(num);
     saveScheduleToCloud();
     renderSchedule();
-    renderATMGrid(); // refresh to show newly assigned
-    // Don't close — let user add multiple territories
+    renderATMGrid();
     showToast(`Territorio ${num} agregado`);
 }
 
