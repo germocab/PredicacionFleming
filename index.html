@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlemingPlans 14.0.1</title>
+    <title>FlemingPlans 14.0.2</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
@@ -1194,6 +1194,128 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         }
         .hist-address-pill .slot-address-clear { display: none !important; }
 
+        /* ══ ASSIGN ADDRESS MODAL ══ */
+        #assign-addr-overlay {
+            position: fixed; inset: 0; z-index: 600;
+            background: rgba(0,0,0,0.45); backdrop-filter: blur(8px);
+            display: flex; align-items: flex-end; justify-content: center;
+            padding: 0;
+            opacity: 0; pointer-events: none; transition: opacity 0.22s;
+        }
+        #assign-addr-overlay.open { opacity: 1; pointer-events: all; }
+        #assign-addr-sheet {
+            background: var(--surface); border-radius: 24px 24px 0 0;
+            border: 1px solid var(--border); border-bottom: none;
+            width: min(100vw, 520px); max-height: 75vh;
+            display: flex; flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.34,1.1,0.64,1);
+            overflow: hidden;
+        }
+        #assign-addr-overlay.open #assign-addr-sheet { transform: translateY(0); }
+
+        /* ══ MANAGE ADDRESSES MODAL ══ */
+        #manage-addr-overlay {
+            position: fixed; inset: 0; z-index: 650;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            padding: 24px;
+            opacity: 0; pointer-events: none; transition: opacity 0.22s;
+        }
+        #manage-addr-overlay.open { opacity: 1; pointer-events: all; }
+        #manage-addr-modal {
+            background: var(--surface); border-radius: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 32px 80px rgba(0,0,0,0.25);
+            width: min(92vw, 460px); max-height: 80vh;
+            display: flex; flex-direction: column;
+            transform: scale(0.94) translateY(16px);
+            transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+            overflow: hidden;
+        }
+        #manage-addr-overlay.open #manage-addr-modal { transform: scale(1) translateY(0); }
+        .ma-header {
+            padding: 20px 20px 0;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .ma-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+        .ma-close {
+            width: 28px; height: 28px; border-radius: 999px;
+            border: 1px solid var(--border); background: var(--surface2);
+            color: var(--text2); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .ma-add-block {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex; flex-direction: column; gap: 8px;
+            flex-shrink: 0;
+        }
+        .ma-inputs { display: flex; gap: 8px; }
+        .ma-input {
+            flex: 1; padding: 9px 14px; border-radius: 12px;
+            border: 1px solid var(--border); background: var(--surface2);
+            color: var(--text); font-family: inherit; font-size: 0.85rem;
+            outline: none; min-width: 0;
+        }
+        .ma-input:focus { border-color: var(--accent); }
+        .ma-list { overflow-y: auto; flex: 1; padding: 8px 8px 16px; }
+        .ma-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 12px; border-radius: 12px;
+            transition: background 0.12s;
+        }
+        .ma-row:hover { background: var(--surface2); }
+        .ma-icon {
+            width: 30px; height: 30px; border-radius: 999px;
+            background: rgba(245,158,11,0.15); color: #f59e0b;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .ma-info { flex: 1; min-width: 0; }
+        .ma-row-name { font-size: 0.85rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ma-row-addr { font-size: 0.75rem; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ma-del {
+            width: 24px; height: 24px; border-radius: 999px;
+            border: 1px solid var(--border); background: transparent;
+            color: var(--text2); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.12s, color 0.12s, border-color 0.12s;
+            flex-shrink: 0;
+        }
+        .ma-del:hover { background: rgba(239,68,68,0.1); color: #ef4444; border-color: #ef4444; }
+        .ma-empty { text-align: center; color: var(--text2); font-size: 0.82rem; padding: 24px; }
+        /* assign-addr list items */
+        .aa-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: 12px;
+            cursor: pointer; transition: background 0.12s;
+        }
+        .aa-item:hover { background: var(--surface2); }
+        .aa-item.selected { background: rgba(245,158,11,0.1); }
+        .aa-icon {
+            width: 34px; height: 34px; border-radius: 999px;
+            background: rgba(245,158,11,0.15); color: #f59e0b;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .aa-info { flex: 1; min-width: 0; }
+        .aa-name { font-size: 0.88rem; font-weight: 700; color: var(--text); }
+        .aa-addr { font-size: 0.75rem; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .aa-check { color: #f59e0b; display: none; flex-shrink: 0; }
+        .aa-item.selected .aa-check { display: block; }
+        .aa-empty { text-align: center; color: var(--text2); font-size: 0.82rem; padding: 24px; }
+        .aa-manage-btn {
+            margin: 8px 16px 4px; padding: 9px 14px;
+            border-radius: 12px; border: 1px dashed var(--border);
+            background: transparent; color: var(--text2);
+            font-family: inherit; font-size: 0.82rem; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; gap: 6px;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .aa-manage-btn:hover { border-color: #f59e0b; color: #f59e0b; }
+
         /* ══ ASSIGN PUBLISHER MODAL ══ */
         #assign-pub-overlay {
             position: fixed; inset: 0; z-index: 600;
@@ -1676,6 +1798,10 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
         Publicadores
     </button>
+    <button class="dropdown-item" id="dd-manage-addresses" onclick="openManageAddresses(); closeUserDropdown();" style="display:none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2"/></svg>
+        Direcciones
+    </button>
     <button class="dropdown-item" id="dd-manage-users" onclick="openManageUsers()" style="display:none;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Gestionar usuarios
@@ -2114,6 +2240,7 @@ function applyUserPermissions() {
     document.getElementById('dd-manage-users').style.display        = isDev  ? 'flex' : 'none';
     document.getElementById('dd-cambiar-credenciales').style.display = isDev  ? 'flex' : 'none';
     document.getElementById('dd-manage-publishers').style.display    = isAdmin ? 'flex' : 'none';
+    document.getElementById('dd-manage-addresses').style.display     = isAdmin ? 'flex' : 'none';
 
     // Admin-only UI elements (plan/confirm/register/import/export)
     document.querySelectorAll('.admin-only').forEach(el => {
@@ -2226,6 +2353,7 @@ const SHIFT_LABEL = { M: 'Mañana', T: 'Tarde' };
 let scheduleData   = {};
 let slotPublishers = {};   // { 'slot-0-0': { id, name }, ... } for current week
 let slotAddresses  = {};   // { 'slot-0-0': 'Big Blue Avenue 432', ... } for current week
+let addresses      = [];   // all tp_addresses
 let meetingPoints   = [];
 let slotMeetingPoints = {};
 let publishers     = [];   // all tp_publishers
@@ -2455,7 +2583,7 @@ async function initApp() {
     applyUserPermissions();
 
     // Load all data from Supabase
-await Promise.all([loadPublishers(), loadMeetingPoints(), loadRecords(), loadSchedule(), loadSelectedMonday()]);
+await Promise.all([loadPublishers(), loadAddresses(), loadMeetingPoints(), loadRecords(), loadSchedule(), loadSelectedMonday()]);
     // Init DB form
     const sel = document.getElementById('db-territorio');
     sel.innerHTML = '';
@@ -2529,11 +2657,11 @@ async function loadRecords() {
     const { data } = await sbClient.from('tp_records').select('*');
     records = data || [];
     // Build historyLog from history table
-    const { data: hist } = await sbClient.from('tp_history_log').select('*, publisher_name, address').order('fecha', { ascending: false });
+    const { data: hist } = await sbClient.from('tp_history_log').select('*, publisher_name, address_name, address').order('fecha', { ascending: false });
     historyLog = {};
     (hist || []).forEach(h => {
         if (!historyLog[h.territorio]) historyLog[h.territorio] = [];
-        historyLog[h.territorio].push({ fecha: h.fecha, turno: h.turno, publisher_name: h.publisher_name || null, address: h.address || null });
+        historyLog[h.territorio].push({ fecha: h.fecha, turno: h.turno, publisher_name: h.publisher_name || null, address_name: h.address_name || null, address: h.address || null });
     });
     // Load comment counts for current week
 }
@@ -2548,13 +2676,20 @@ async function loadSchedule() {
         if (row.publisher_id || row.publisher_name) {
             slotPublishers[row.id] = { id: row.publisher_id, name: row.publisher_name };
         }
-        if (row.address) slotAddresses[row.id] = row.address;
+        if (row.address_id || row.address_name || row.address) {
+            slotAddresses[row.id] = { id: row.address_id || null, name: row.address_name || null, address: row.address || null };
+        }
     });
 }
 
 async function loadPublishers() {
     const { data } = await sbClient.from('tp_publishers').select('*').order('name');
     publishers = data || [];
+}
+
+async function loadAddresses() {
+    const { data } = await sbClient.from('tp_addresses').select('*').order('name');
+    addresses = data || [];
 }
 
 async function loadMeetingPoints() {
@@ -2574,12 +2709,15 @@ async function saveScheduleToCloud() {
     const allSlots = new Set([...Object.keys(scheduleData), ...Object.keys(slotPublishers), ...Object.keys(slotAddresses)]);
     for (const id of allSlots) {
         const territories = scheduleData[id] || [];
-        const pub = slotPublishers[id] || {};
+        const pub  = slotPublishers[id] || {};
+        const addr = slotAddresses[id]  || {};
         await sbClient.from('tp_schedule').upsert({
             id, monday: selectedMonday, territories,
-            publisher_id: pub.id || null,
-            publisher_name: pub.name || null,
-            address: slotAddresses[id] || null,
+            publisher_id:  pub.id      || null,
+            publisher_name: pub.name   || null,
+            address_id:    addr.id     || null,
+            address_name:  addr.name   || null,
+            address:       addr.address || null,
             updated_at: new Date().toISOString()
         });
     }
@@ -2896,6 +3034,7 @@ function renderSchedule() {
             const pub = slotPublishers[id];
             const pubName = pub ? pub.name : null;
             const addr = slotAddresses[id] || null;
+            const addrLabel = addr ? (addr.name || addr.address || 'Dirección') : null;
             card.innerHTML = `
                 <div class="day-header">
                     <div class="day-name">${day.name}</div>
@@ -2904,10 +3043,10 @@ function renderSchedule() {
                 </div>
                 <div class="t-list" id="badges-${id}">${badges}</div>
                 ${isAdmin ? `
-                <div class="slot-address ${addr ? 'has-address' : ''}" onclick="editSlotAddress('${id}', event)">
+                <div class="slot-address ${addrLabel ? 'has-address' : ''}" onclick="openAssignAddr('${id}', '${day.name} ${shiftText}', event)">
                     <svg class="slot-address-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2"/></svg>
-                    <span class="slot-address-text" id="addr-label-${id}">${addr || 'Sin dirección'}</span>
-                    ${addr ? `<button class="slot-address-clear" onclick="clearSlotAddress('${id}', event)">
+                    <span class="slot-address-text" id="addr-label-${id}">${addrLabel || 'Sin dirección'}</span>
+                    ${addrLabel ? `<button class="slot-address-clear" onclick="clearSlotAddress('${id}', event)">
                         <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>` : ''}
                 </div>
@@ -2964,13 +3103,15 @@ async function confirmWeekToDatabase() {
             const territories = scheduleData[id] || [];
             const fecha = dateFromMonday(selectedMonday, day.offset).toISOString().split('T')[0];
             const turno = SHIFT_LABEL[shift];
-            const pub = slotPublishers[id] || {};
-            const addr = slotAddresses[id] || null;
+            const pub  = slotPublishers[id] || {};
+            const addr = slotAddresses[id]  || {};
             territories.forEach(num => toRegister.push({
                 territorio: String(num), fecha, turno,
-                publisher_id:   pub.id   || null,
-                publisher_name: pub.name || null,
-                address: addr
+                publisher_id:   pub.id      || null,
+                publisher_name: pub.name    || null,
+                address_id:    addr.id      || null,
+                address_name:  addr.name    || null,
+                address:       addr.address || null
             }));
         });
     });
@@ -3000,7 +3141,9 @@ async function confirmWeekToDatabase() {
                     turno: entry.turno,
                     publisher_id:   entry.publisher_id   || null,
                     publisher_name: entry.publisher_name || null,
-                    address: entry.address || null
+                    address_id:    entry.address_id      || null,
+                    address_name:  entry.address_name    || null,
+                    address:       entry.address         || null
                 }, { onConflict: 'territorio,fecha,turno', ignoreDuplicates: true });
             }
 
@@ -3302,8 +3445,10 @@ function renderHistoryWeek() {
             tList.className = 't-list';
 
             // Publisher name: all entries in this slot share the same publisher
-            const slotPubName = matching.length > 0 ? (matching[0].publisher_name || null) : null;
-            const slotAddress = matching.length > 0 ? (matching[0].address || null) : null;
+            const slotPubName  = matching.length > 0 ? (matching[0].publisher_name || null) : null;
+            const slotAddrName = matching.length > 0 ? (matching[0].address_name   || null) : null;
+            const slotAddrText = matching.length > 0 ? (matching[0].address        || null) : null;
+            const slotAddress  = slotAddrName || slotAddrText;
 
             matching.forEach(r => {
                 const wrap = document.createElement('div');
@@ -3849,19 +3994,63 @@ function clearSlotPublisher(slotId, e) {
     renderSchedule();
 }
 
-function editSlotAddress(slotId, e) {
+// ══════════════════════════════════════════════════════
+//  ASSIGN ADDRESS
+// ══════════════════════════════════════════════════════
+
+let assignAddrSlotId = null;
+
+function openAssignAddr(slotId, label, e) {
     if (e) e.stopPropagation();
-    const current = slotAddresses[slotId] || '';
-    const val = window.prompt('Dirección del punto de reunión:', current);
-    if (val === null) return; // cancelled
-    const trimmed = val.trim();
-    if (trimmed) {
-        slotAddresses[slotId] = trimmed;
-    } else {
-        delete slotAddresses[slotId];
+    assignAddrSlotId = slotId;
+    document.getElementById('aa-slot-label').textContent = label;
+    document.getElementById('aa-search').value = '';
+    renderAssignAddrList();
+    document.getElementById('assign-addr-overlay').classList.add('open');
+}
+
+function closeAssignAddr(e) {
+    if (e && e.target !== document.getElementById('assign-addr-overlay')) return;
+    document.getElementById('assign-addr-overlay').classList.remove('open');
+}
+function closeAssignAddrDirect() {
+    document.getElementById('assign-addr-overlay').classList.remove('open');
+}
+
+function renderAssignAddrList() {
+    const q = (document.getElementById('aa-search').value || '').toLowerCase();
+    const list = document.getElementById('aa-list');
+    const current = slotAddresses[assignAddrSlotId];
+
+    let filtered = addresses.filter(a =>
+        a.name.toLowerCase().includes(q) || (a.address || '').toLowerCase().includes(q)
+    );
+    if (filtered.length === 0) {
+        list.innerHTML = `<div class="aa-empty">${q ? 'No se encontró ninguna dirección' : 'Aún no hay direcciones guardadas'}</div>`;
+        return;
     }
+    list.innerHTML = filtered.map(a => {
+        const isSel = current && current.id === a.id;
+        return `<div class="aa-item ${isSel ? 'selected' : ''}" onclick="selectAddress('${a.id}', '${a.name.replace(/'/g,"\\'")}', '${(a.address||'').replace(/'/g,"\\'")}')">
+            <div class="aa-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2"/></svg>
+            </div>
+            <div class="aa-info">
+                <div class="aa-name">${a.name}</div>
+                <div class="aa-addr">${a.address || '—'}</div>
+            </div>
+            <svg class="aa-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>`;
+    }).join('');
+}
+
+function selectAddress(id, name, address) {
+    if (!assignAddrSlotId) return;
+    slotAddresses[assignAddrSlotId] = { id, name, address };
     saveScheduleToCloud();
     renderSchedule();
+    closeAssignAddrDirect();
+    showToast(`Dirección: ${name}`);
 }
 
 function clearSlotAddress(slotId, e) {
@@ -3869,6 +4058,79 @@ function clearSlotAddress(slotId, e) {
     delete slotAddresses[slotId];
     saveScheduleToCloud();
     renderSchedule();
+}
+
+// ══════════════════════════════════════════════════════
+//  MANAGE ADDRESSES
+// ══════════════════════════════════════════════════════
+
+async function openManageAddresses() {
+    closeAssignAddrDirect();
+    renderAddressesList();
+    document.getElementById('manage-addr-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('ma-new-name').focus(), 200);
+}
+
+function closeManageAddresses(e) {
+    if (e && e.target !== document.getElementById('manage-addr-overlay')) return;
+    document.getElementById('manage-addr-overlay').classList.remove('open');
+}
+function closeManageAddressesDirect() {
+    document.getElementById('manage-addr-overlay').classList.remove('open');
+}
+
+function renderAddressesList() {
+    const list = document.getElementById('ma-list');
+    if (addresses.length === 0) {
+        list.innerHTML = '<div class="ma-empty">Aún no hay direcciones. Agrega la primera.</div>';
+        return;
+    }
+    list.innerHTML = addresses.map(a => `
+        <div class="ma-row">
+            <div class="ma-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2"/></svg>
+            </div>
+            <div class="ma-info">
+                <div class="ma-row-name">${a.name}</div>
+                <div class="ma-row-addr">${a.address || '—'}</div>
+            </div>
+            <button class="ma-del" onclick="deleteAddress('${a.id}', '${a.name.replace(/'/g,"\\'")}')">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>`).join('');
+}
+
+async function addAddress() {
+    const nameInput = document.getElementById('ma-new-name');
+    const addrInput = document.getElementById('ma-new-addr');
+    const name    = nameInput.value.trim();
+    const address = addrInput.value.trim();
+    if (!name) { nameInput.focus(); return; }
+    if (addresses.some(a => a.name.toLowerCase() === name.toLowerCase())) {
+        showToast('Ya existe una dirección con ese nombre.'); return;
+    }
+    const { data, error } = await sbClient.from('tp_addresses').insert({ name, address: address || null }).select().single();
+    if (error) { showToast('Error al guardar.'); return; }
+    addresses.push(data);
+    addresses.sort((a,b) => a.name.localeCompare(b.name));
+    nameInput.value = '';
+    addrInput.value = '';
+    renderAddressesList();
+    renderAssignAddrList();
+    showToast(`"${name}" guardada.`);
+}
+
+async function deleteAddress(id, name) {
+    showConfirm(`¿Eliminar "${name}"?`, 'Se quitará de todos los slots actuales.', async () => {
+        await sbClient.from('tp_addresses').delete().eq('id', id);
+        addresses = addresses.filter(a => a.id !== id);
+        for (const [slotId, addr] of Object.entries(slotAddresses)) {
+            if (addr.id === id) delete slotAddresses[slotId];
+        }
+        renderAddressesList();
+        renderSchedule();
+        showToast('🗑 Dirección eliminada.');
+    });
 }
 
 // ══════════════════════════════════════════════════════
@@ -3978,7 +4240,7 @@ async function openTerritoryDetail(num) {
         const monthStr  = months[parseInt(m) - 1] || m;
         const shiftClass = entry.turno === 'Mañana' ? 'm' : 't';
         const pubName   = entry.publisher_name || '—';
-        const addrText  = entry.address ? `<div class="td-history-address">${entry.address}</div>` : '';
+        const addrText  = (entry.address_name || entry.address) ? `<div class="td-history-address">${entry.address_name || entry.address}</div>` : '';
         const daysAgo   = daysBetween(entry.fecha);
         const daysStr   = daysAgo === 0 ? 'Hoy' : `Hace ${daysAgo} día${daysAgo !== 1 ? 's' : ''}`;
         return `
@@ -4259,6 +4521,51 @@ function closeTerritoryDetailDirect() {
             <div class="td-section-label">Historial de visitas</div>
             <div class="td-history-list" id="td-history-list"></div>
         </div>
+    </div>
+</div>
+
+<!-- ══ ASSIGN ADDRESS SHEET ══ -->
+<div id="assign-addr-overlay" onclick="closeAssignAddr(event)">
+    <div id="assign-addr-sheet">
+        <div class="ap-header">
+            <div>
+                <div class="ap-title">Dirección del punto de reunión</div>
+                <div class="ap-sub" id="aa-slot-label">—</div>
+            </div>
+            <button class="ap-close" onclick="closeAssignAddrDirect()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="ap-search-wrap">
+            <input class="ap-search" id="aa-search" placeholder="Buscar dirección…" oninput="renderAssignAddrList()">
+        </div>
+        <button class="aa-manage-btn" onclick="openManageAddresses()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Crear o gestionar direcciones
+        </button>
+        <div class="ap-list" id="aa-list"></div>
+    </div>
+</div>
+
+<!-- ══ MANAGE ADDRESSES MODAL ══ -->
+<div id="manage-addr-overlay" onclick="closeManageAddresses(event)">
+    <div id="manage-addr-modal">
+        <div class="ma-header">
+            <div class="ma-title">Direcciones guardadas</div>
+            <button class="ma-close" onclick="closeManageAddressesDirect()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="ma-add-block">
+            <div class="ma-inputs">
+                <input class="ma-input" id="ma-new-name" placeholder="Nombre (ej: Casa de María)"
+                    onkeydown="if(event.key==='Enter') document.getElementById('ma-new-addr').focus()">
+                <input class="ma-input" id="ma-new-addr" placeholder="Dirección (ej: Av. Siempre Viva 742)"
+                    onkeydown="if(event.key==='Enter') addAddress()">
+            </div>
+            <button class="btn-main" style="border-radius:12px;padding:0 16px;align-self:flex-end;" onclick="addAddress()">Guardar</button>
+        </div>
+        <div class="ma-list" id="ma-list"></div>
     </div>
 </div>
 
