@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlemingPlans 15.0.6</title>
+    <title>FlemingPlans 15.0.7</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -5283,27 +5283,21 @@ function closeTerritoryDetailDirect() {
 
 (async function bootstrap() {
     const { url, key } = getSupabaseConfig();
-
-    document.getElementById('config-screen').style.display = 'none';
     initSupabase(url, key);
 
-    // Check if this is a public report link — handle before login
+    // Check if this is a public report link — render a clean page, no app needed
     if (new URLSearchParams(location.search).has('report')) {
-        // Hide everything, show only the report form
-        document.getElementById('loading-overlay').classList.add('hidden');
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('main-app').style.display = 'none';
-        document.getElementById('report-form-overlay').classList.add('open');
-        await checkReportToken();
-        return; // Don't show login or app
+        renderReportPage();
+        return;
     }
+
+    document.getElementById('config-screen').style.display = 'none';
 
     // Check for existing session
     const session = localStorage.getItem('tp_session');
     if (session) {
         try {
             currentUser = JSON.parse(session);
-            // Refresh avatar_url from DB (may have changed on another device)
             const { data: freshUser } = await sbClient.from('tp_users').select('avatar_url').eq('id', currentUser.id).maybeSingle();
             if (freshUser) currentUser.avatar_url = freshUser.avatar_url || null;
             document.getElementById('loading-overlay').classList.remove('hidden');
@@ -5319,6 +5313,235 @@ function closeTerritoryDetailDirect() {
     document.getElementById('loading-overlay').classList.add('hidden');
     showLoginScreen();
 })();
+
+// ══════════════════════════════════════════════════════
+//  REPORT PAGE (public, no login)
+// ══════════════════════════════════════════════════════
+
+async function renderReportPage() {
+    const token = new URLSearchParams(location.search).get('report');
+
+    // Inject report page CSS into head (avoids style tag inside template literal)
+    const rpStyle = document.createElement('style');
+    rpStyle.textContent = '* { box-sizing: border-box; margin: 0; padding: 0; } body { font-family: "DM Sans", -apple-system, sans-serif; background: #f0f1f5; min-height: 100vh; color: #111827; } .rp-wrap { max-width: 520px; margin: 0 auto; padding: 28px 16px 60px; } .rp-logo { font-size: 1rem; font-weight: 800; color: #1a56db; margin-bottom: 24px; letter-spacing: -0.3px; } .rp-card { background: white; border-radius: 20px; border: 1px solid #e5e7eb; padding: 20px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); } .rp-map { width: 100%; height: 200px; border-radius: 14px; object-fit: cover; display: block; background: #f3f4f6; margin-bottom: 14px; } .rp-map-ph { width: 100%; height: 200px; border-radius: 14px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; color: #9ca3af; font-size: 0.82rem; margin-bottom: 14px; } .rp-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 4px; } .rp-sub { font-size: 0.82rem; color: #6b7280; } .rp-info-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f3f4f6; } .rp-info-row:last-child { border-bottom: none; } .rp-info-icon { color: #9ca3af; flex-shrink: 0; margin-top: 1px; } .rp-info-label { font-size: 0.68rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.4px; } .rp-info-value { font-size: 0.88rem; font-weight: 700; color: #111827; margin-top: 1px; } .rp-section-label { font-size: 0.72rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 10px; } .rp-name-input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1.5px solid #e5e7eb; background: #f9fafb; font-family: inherit; font-size: 0.92rem; outline: none; transition: border-color 0.15s; } .rp-name-input:focus { border-color: #1a56db; background: white; } .rp-yn-row { display: flex; gap: 10px; margin-top: 14px; } .rp-yn-btn { flex: 1; padding: 14px; border-radius: 14px; border: 2px solid #e5e7eb; background: #f9fafb; font-family: inherit; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; } .rp-yn-btn.yes.active { border-color: #16a34a; background: #f0fdf4; color: #16a34a; } .rp-yn-btn.no.active { border-color: #f59e0b; background: #fffbeb; color: #d97706; } .rp-blocks-wrap { display: none; margin-top: 18px; } .rp-blocks-wrap.visible { display: block; } .rp-blocks-hint { font-size: 0.78rem; color: #6b7280; margin-bottom: 10px; } .rp-blocks-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; } .rp-block-chip { width: 42px; height: 42px; border-radius: 10px; border: 2px solid #e5e7eb; background: #f9fafb; font-family: inherit; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.12s; } .rp-block-chip.selected { border-color: #16a34a; background: #f0fdf4; color: #16a34a; } .rp-notes { width: 100%; padding: 10px 14px; border-radius: 12px; border: 1.5px solid #e5e7eb; background: #f9fafb; font-family: inherit; font-size: 0.85rem; outline: none; resize: none; min-height: 70px; margin-top: 12px; } .rp-notes:focus { border-color: #1a56db; background: white; } .rp-submit { width: 100%; padding: 15px; border-radius: 14px; background: #1a56db; color: white; border: none; font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 6px; transition: opacity 0.15s; } .rp-submit:disabled { opacity: 0.4; cursor: not-allowed; } .rp-submit:not(:disabled):hover { opacity: 0.88; } .rp-state { text-align: center; padding: 60px 20px; display: flex; flex-direction: column; align-items: center; gap: 14px; } .rp-state-icon { width: 64px; height: 64px; border-radius: 999px; display: flex; align-items: center; justify-content: center; } .rp-state-title { font-size: 1.1rem; font-weight: 800; } .rp-state-sub { font-size: 0.85rem; color: #6b7280; max-width: 300px; text-align: center; line-height: 1.5; } .rp-spinner { animation: rp-spin 1s linear infinite; } @keyframes rp-spin { to { transform: rotate(360deg); } }';
+    document.head.appendChild(rpStyle);
+
+    // Replace body with clean minimal HTML (no style tag — injected above)
+    document.body.innerHTML =
+        '<div class="rp-wrap">' +
+        '<div class="rp-logo">FlemingPlans</div>' +
+        '<div id="rp-content">' +
+        '<div class="rp-state">' +
+        '<svg class="rp-spinner" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1a56db" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>' +
+        '<div class="rp-state-sub">Cargando formulario...</div>' +
+        '</div></div></div>';
+
+    const content = document.getElementById('rp-content');
+
+    // Fetch link data
+    const { data: link, error } = await sbClient
+        .from('tp_report_links').select('*').eq('token', token).single();
+
+    if (error || !link) {
+        content.innerHTML = `<div class="rp-state">
+            <div class="rp-state-icon" style="background:#fef2f2;color:#ef4444;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg>
+            </div>
+            <div class="rp-state-title">Link inválido</div>
+            <div class="rp-state-sub">Este link de reporte no existe o ya no está disponible.</div>
+        </div>`;
+        return;
+    }
+
+    // Check already responded
+    const { data: existing } = await sbClient
+        .from('tp_reports').select('id').eq('link_token', token).maybeSingle();
+    if (existing) {
+        content.innerHTML = `<div class="rp-state">
+            <div class="rp-state-icon" style="background:#f0fdf4;color:#16a34a;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="rp-state-title">Ya respondido</div>
+            <div class="rp-state-sub">Este reporte ya fue enviado. ¡Gracias!</div>
+        </div>`;
+        return;
+    }
+
+    // Check time lock (11am on assigned date)
+    if (link.fecha) {
+        const now = new Date();
+        const available = new Date(link.fecha + 'T11:00:00');
+        if (now < available) {
+            const dateStr = available.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long' });
+            content.innerHTML = `<div class="rp-state">
+                <div class="rp-state-icon" style="background:#f9fafb;color:#6b7280;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <div class="rp-state-title">Aún no disponible</div>
+                <div class="rp-state-sub">El formulario estará disponible a partir de las 11:00am del ${dateStr}.</div>
+            </div>`;
+            return;
+        }
+    }
+
+    // Build form
+    const terrs = link.territories || [];
+    const firstTerr = terrs[0] || null;
+    let rpAnswer = null;
+    const rpBlocks = new Set();
+
+    const mapHTML = firstTerr
+        ? `<img class="rp-map" id="rp-map-img" src="territorios/${firstTerr}.png" alt="Mapa" style="margin-bottom:14px;">`
+        : `<div class="rp-map-ph"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Sin mapa disponible</span></div>`;
+
+    const dateDisp = link.fecha
+        ? new Date(link.fecha + 'T12:00:00').toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
+        : '—';
+
+    const addrRow = (link.address_name || link.address) ? `
+        <div class="rp-info-row">
+            <svg class="rp-info-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2"/></svg>
+            <div><div class="rp-info-label">Dirección</div><div class="rp-info-value">${link.address_name || link.address}</div></div>
+        </div>` : '';
+
+    content.innerHTML = `
+        ${mapHTML}
+        <div class="rp-card">
+            <div class="rp-title">${link.day_label || ''} · ${link.shift_label || ''}</div>
+            <div class="rp-sub">${dateDisp}</div>
+        </div>
+        <div class="rp-card">
+            <div class="rp-info-row">
+                <svg class="rp-info-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>
+                <div><div class="rp-info-label">Territorio</div><div class="rp-info-value">${terrs.length ? terrs.join(', ') : '—'}</div></div>
+            </div>
+            <div class="rp-info-row">
+                <svg class="rp-info-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                <div><div class="rp-info-label">Encargado</div><div class="rp-info-value">${link.publisher_name || '—'}</div></div>
+            </div>
+            ${addrRow}
+        </div>
+        <div class="rp-card">
+            <div class="rp-section-label">Tu nombre</div>
+            <input class="rp-name-input" id="rp-name" placeholder="Escribe tu nombre…" maxlength="80" oninput="rpCheckSubmit()">
+            <div class="rp-section-label" style="margin-top:18px;">¿Completaste el territorio?</div>
+            <div class="rp-yn-row">
+                <button class="rp-yn-btn yes" id="rp-btn-yes" onclick="rpSetAnswer(true)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    Sí, completo
+                </button>
+                <button class="rp-yn-btn no" id="rp-btn-no" onclick="rpSetAnswer(false)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    No, incompleto
+                </button>
+            </div>
+            <div class="rp-blocks-wrap" id="rp-blocks-wrap">
+                <div class="rp-section-label" style="margin-top:18px;">Manzanas realizadas</div>
+                <div class="rp-blocks-hint">Selecciona las que SÍ completaste:</div>
+                <div class="rp-blocks-grid" id="rp-blocks-grid"></div>
+                <textarea class="rp-notes" id="rp-notes" placeholder="Notas adicionales (opcional)…"></textarea>
+            </div>
+            <button class="rp-submit" id="rp-submit" onclick="rpSubmit('${token}')" disabled>Enviar reporte</button>
+        </div>`;
+
+    // Handle map image error
+    const mapImg = document.getElementById('rp-map-img');
+    if (mapImg) {
+        mapImg.onerror = () => {
+            mapImg.outerHTML = `<div class="rp-map-ph"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Sin imagen disponible</span></div>`;
+        };
+    }
+
+    // Build blocks grid A–J
+    const grid = document.getElementById('rp-blocks-grid');
+    'ABCDEFGHIJ'.split('').forEach(letter => {
+        const btn = document.createElement('button');
+        btn.className = 'rp-block-chip';
+        btn.textContent = letter;
+        btn.onclick = () => {
+            if (rpBlocks.has(letter)) { rpBlocks.delete(letter); btn.classList.remove('selected'); }
+            else { rpBlocks.add(letter); btn.classList.add('selected'); }
+        };
+        grid.appendChild(btn);
+    });
+
+    // Expose to global scope for inline handlers
+    window._rpLink   = link;
+    window._rpBlocks = rpBlocks;
+}
+
+function rpSetAnswer(val) {
+    window._rpAnswer = val;
+    document.getElementById('rp-btn-yes')?.classList.toggle('active', val === true);
+    document.getElementById('rp-btn-no')?.classList.toggle('active',  val === false);
+    document.getElementById('rp-blocks-wrap')?.classList.toggle('visible', val === false);
+    rpCheckSubmit();
+}
+
+function rpCheckSubmit() {
+    const name = (document.getElementById('rp-name')?.value || '').trim();
+    const ok   = name.length > 0 && window._rpAnswer !== undefined && window._rpAnswer !== null;
+    const btn  = document.getElementById('rp-submit');
+    if (btn) btn.disabled = !ok;
+}
+
+async function rpSubmit(token) {
+    const name  = (document.getElementById('rp-name')?.value || '').trim();
+    const link  = window._rpLink;
+    const answer = window._rpAnswer;
+    if (!name || answer === null || answer === undefined || !link) return;
+
+    const btn = document.getElementById('rp-submit');
+    if (btn) { btn.disabled = true; btn.textContent = 'Enviando…'; }
+
+    const blocksDone = answer === false && window._rpBlocks?.size > 0
+        ? Array.from(window._rpBlocks).sort().join(', ') : null;
+    const notes = (document.getElementById('rp-notes')?.value || '').trim() || null;
+
+    const { error } = await sbClient.from('tp_reports').insert({
+        link_token:     token,
+        slot_id:        link.slot_id,
+        monday:         link.monday,
+        territorio:     String((link.territories || [])[0] || ''),
+        territories:    link.territories || [],
+        fecha:          link.fecha,
+        turno:          link.shift_label,
+        publisher_name: link.publisher_name || null,
+        responder_name: name,
+        completed:      answer,
+        blocks_done:    blocksDone,
+        notes,
+    });
+
+    if (error) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Enviar reporte'; }
+        document.getElementById('rp-content').insertAdjacentHTML('afterbegin',
+            `<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:12px;padding:12px 16px;color:#dc2626;font-size:0.85rem;margin-bottom:12px;">
+                Error al enviar: ${error.message}
+            </div>`);
+        return;
+    }
+
+    // If incomplete → mark territory as priority
+    if (!answer) {
+        for (const t of (link.territories || [])) {
+            await sbClient.from('tp_records').update({ incomplete: true })
+                .eq('territorio', String(t));
+        }
+    }
+
+    // Show success
+    document.getElementById('rp-content').innerHTML = `<div class="rp-state">
+        <div class="rp-state-icon" style="background:#f0fdf4;color:#16a34a;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="rp-state-title">${answer ? '¡Territorio completado!' : 'Reporte enviado'}</div>
+        <div class="rp-state-sub">${answer
+            ? '¡Gracias! El territorio quedó registrado como completado.'
+            : 'El administrador fue notificado. El territorio será priorizado la próxima semana.'
+        }</div>
+    </div>`;
+}
 </script>
 
 <!-- ADD TERRITORY MODAL -->
