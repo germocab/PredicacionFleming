@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlemingPlans 15.0.5</title>
+    <title>FlemingPlans 15.0.5.1</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -3513,8 +3513,8 @@ async function confirmWeekToDatabase() {
                 });
 
                 // Append to tp_history_log — insert only guaranteed base columns
-                // Skip if already exists for this territorio+fecha+turno
-                const { data: alreadyExists } = await sbClient
+                // Insert to tp_history_log — check for duplicate first
+                const { data: alreadyExists, error: checkErr } = await sbClient
                     .from('tp_history_log')
                     .select('territorio')
                     .eq('territorio', entry.territorio)
@@ -3522,20 +3522,22 @@ async function confirmWeekToDatabase() {
                     .eq('turno',      entry.turno)
                     .maybeSingle();
 
+                if (checkErr) console.error('tp_history_log check error:', checkErr);
+
                 if (!alreadyExists) {
-                    // Build row with only columns that are guaranteed to exist
                     const histRow = {
                         territorio:     entry.territorio,
                         fecha:          entry.fecha,
                         turno:          entry.turno,
                         publisher_name: entry.publisher_name || null,
+                        address_name:   entry.address_name   || null,
+                        address:        entry.address        || null,
                     };
-                    // Optionally add newer columns if they were added to the DB
-                    if (entry.address_name) histRow.address_name = entry.address_name;
-                    if (entry.address)      histRow.address      = entry.address;
-
                     const { error: insErr } = await sbClient.from('tp_history_log').insert(histRow);
-                    if (insErr) console.error('tp_history_log insert error:', insErr, histRow);
+                    if (insErr) {
+                        console.error('tp_history_log insert error:', insErr.message, insErr.details, histRow);
+                        showToast(`⚠️ Error al registrar T${entry.territorio}: ${insErr.message}`);
+                    }
                 }
             }
 
