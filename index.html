@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlemingPlans 15</title>
+    <title>FlemingPlans 15.0.3</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
@@ -3021,14 +3021,29 @@ function setupRealtimeSync() {
 async function loadRecords() {
     const { data } = await sbClient.from('tp_records').select('*');
     records = data || [];
-    // Build historyLog from history table
-    const { data: hist } = await sbClient.from('tp_history_log').select('*, publisher_name, address_name, address').order('fecha', { ascending: false });
+    // Build historyLog from history table — select safely, falling back if new columns don't exist yet
+    const { data: hist, error: histErr } = await sbClient
+        .from('tp_history_log')
+        .select('territorio, fecha, turno, publisher_name, address_name, address')
+        .order('fecha', { ascending: false });
+    if (histErr) {
+        // Fallback: select only guaranteed base columns
+        const { data: histBase } = await sbClient
+            .from('tp_history_log')
+            .select('territorio, fecha, turno, publisher_name')
+            .order('fecha', { ascending: false });
+        historyLog = {};
+        (histBase || []).forEach(h => {
+            if (!historyLog[h.territorio]) historyLog[h.territorio] = [];
+            historyLog[h.territorio].push({ fecha: h.fecha, turno: h.turno, publisher_name: h.publisher_name || null, address_name: null, address: null });
+        });
+        return;
+    }
     historyLog = {};
     (hist || []).forEach(h => {
         if (!historyLog[h.territorio]) historyLog[h.territorio] = [];
         historyLog[h.territorio].push({ fecha: h.fecha, turno: h.turno, publisher_name: h.publisher_name || null, address_name: h.address_name || null, address: h.address || null });
     });
-    // Load comment counts for current week
 }
 
 async function loadSchedule() {
