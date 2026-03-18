@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlemingPlans 15.0.3</title>
+    <title>FlemingPlans 15.0.4</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
@@ -3533,8 +3533,8 @@ async function confirmWeekToDatabase() {
                     updated_at: new Date().toISOString()
                 });
 
-                // Append to tp_history_log with publisher
-                await sbClient.from('tp_history_log').upsert({
+                // Append to tp_history_log
+                const histRow = {
                     territorio: entry.territorio,
                     fecha: entry.fecha,
                     turno: entry.turno,
@@ -3543,7 +3543,17 @@ async function confirmWeekToDatabase() {
                     address_id:    entry.address_id      || null,
                     address_name:  entry.address_name    || null,
                     address:       entry.address         || null
-                }, { onConflict: 'territorio,fecha,turno', ignoreDuplicates: true });
+                };
+                // Try upsert first; if no unique constraint exists, fall back to plain insert
+                const { error: upsertErr } = await sbClient.from('tp_history_log')
+                    .upsert(histRow, { onConflict: 'territorio,fecha,turno', ignoreDuplicates: true });
+                if (upsertErr) {
+                    // Fallback: check if already exists, insert if not
+                    const { data: exists } = await sbClient.from('tp_history_log')
+                        .select('id').eq('territorio', entry.territorio)
+                        .eq('fecha', entry.fecha).eq('turno', entry.turno).maybeSingle();
+                    if (!exists) await sbClient.from('tp_history_log').insert(histRow);
+                }
             }
 
             await loadRecords();
@@ -5015,26 +5025,26 @@ async function checkReportToken() {
     const token  = params.get('report');
     if (!token) return;
 
-    // Show form overlay immediately
+    // Hide loading overlay and login screen, show report form
+    document.getElementById('loading-overlay').classList.add('hidden');
+    document.getElementById('login-screen').classList.add('hidden');
+    if (document.getElementById('main-app')) document.getElementById('main-app').style.display = 'none';
     document.getElementById('report-form-overlay').classList.add('open');
-    // Hide main app nav/content
-    document.getElementById('main-app').style.display = 'none';
 
     // Load link data
     const { data: link, error } = await sbClient
         .from('tp_report_links').select('*').eq('token', token).single();
 
     if (error || !link) {
-        document.getElementById('rf-form-content').style.display = '';
-        document.querySelector('#rf-form-content .rf-card').innerHTML =
-            '<div style="text-align:center;padding:20px;color:var(--text2);">Link inválido o expirado.</div>';
+        document.getElementById('rf-locked').style.display = 'flex';
+        document.getElementById('rf-locked-sub').textContent = 'Link inválido o expirado.';
         return;
     }
     rfCurrentLink = link;
 
     // Check if already responded
     const { data: existing } = await sbClient
-        .from('tp_reports').select('id').eq('link_token', token).single();
+        .from('tp_reports').select('id').eq('link_token', token).maybeSingle();
     if (existing) {
         document.getElementById('rf-already').style.display = '';
         return;
@@ -5057,7 +5067,6 @@ async function checkReportToken() {
     const terrs = link.territories || [];
     const firstTerr = terrs[0] || null;
 
-    // Map image
     if (firstTerr) {
         document.getElementById('rf-map-img').src = `territorios/${firstTerr}.png`;
     } else {
@@ -5065,18 +5074,18 @@ async function checkReportToken() {
         document.getElementById('rf-map-ph').style.display  = 'flex';
     }
 
-    document.getElementById('rf-title').textContent    = `${link.day_label} · ${link.shift_label}`;
+    document.getElementById('rf-title').textContent    = `${link.day_label || ''} · ${link.shift_label || ''}`;
     document.getElementById('rf-subtitle').textContent = link.fecha
         ? new Date(link.fecha + 'T12:00:00').toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
         : '—';
-    document.getElementById('rf-territory-val').textContent  = terrs.length ? `Territorio${terrs.length > 1 ? 's' : ''}: ${terrs.join(', ')}` : '—';
-    document.getElementById('rf-publisher-val').textContent  = link.publisher_name || '—';
+    document.getElementById('rf-territory-val').textContent = terrs.length ? `Territorio${terrs.length > 1 ? 's' : ''}: ${terrs.join(', ')}` : '—';
+    document.getElementById('rf-publisher-val').textContent = link.publisher_name || '—';
     if (link.address_name || link.address) {
         document.getElementById('rf-addr-row').style.display = '';
         document.getElementById('rf-addr-val').textContent   = link.address_name || link.address;
     }
 
-    // Blocks grid (A–J, 10 manzanas)
+    // Blocks grid (A–J)
     const grid = document.getElementById('rf-blocks-grid');
     grid.innerHTML = '';
     'ABCDEFGHIJ'.split('').forEach(letter => {
@@ -5090,7 +5099,6 @@ async function checkReportToken() {
         grid.appendChild(btn);
     });
 
-    // Name input → enable submit
     document.getElementById('rf-name-input').oninput = rfCheckSubmit;
     document.getElementById('rf-form-content').style.display = '';
 }
@@ -5515,105 +5523,6 @@ function closeTerritoryDetailDirect() {
                     <button class="gl-copy-btn" onclick="copyReportLink()">Copiar</button>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- ══ REPORT FORM (public, no login) ══ -->
-<div id="report-form-overlay">
-    <div class="rf-wrap">
-        <!-- Map -->
-        <div class="rf-map-wrap" id="rf-map-wrap">
-            <img id="rf-map-img" src="" alt="" onerror="document.getElementById('rf-map-ph').style.display='flex'; this.style.display='none';">
-            <div class="rf-map-ph" id="rf-map-ph" style="display:none;">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                <span>Sin imagen de territorio</span>
-            </div>
-        </div>
-
-        <!-- Already answered -->
-        <div class="rf-already" id="rf-already" style="display:none;">
-            Este reporte ya fue respondido. Gracias.
-        </div>
-
-        <!-- Too early -->
-        <div class="rf-locked" id="rf-locked" style="display:none;">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text2)"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <div class="rf-locked-title">Aún no disponible</div>
-            <div class="rf-locked-sub" id="rf-locked-sub">El formulario estará disponible después de las 11:00 AM del día asignado.</div>
-        </div>
-
-        <!-- Form -->
-        <div id="rf-form-inner" style="display:none;">
-            <!-- Info card -->
-            <div class="rf-card">
-                <div class="rf-title" id="rf-title">—</div>
-                <div class="rf-subtitle" id="rf-subtitle">—</div>
-                <div style="margin-top:14px;">
-                    <div class="rf-info-row">
-                        <svg class="rf-info-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
-                        <div>
-                            <div class="rf-info-label">Territorio</div>
-                            <div class="rf-info-value" id="rf-territorio">—</div>
-                        </div>
-                    </div>
-                    <div class="rf-info-row">
-                        <svg class="rf-info-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                        <div>
-                            <div class="rf-info-label">Encargado</div>
-                            <div class="rf-info-value" id="rf-publisher">—</div>
-                        </div>
-                    </div>
-                    <div class="rf-info-row">
-                        <svg class="rf-info-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2"/></svg>
-                        <div>
-                            <div class="rf-info-label">Dirección</div>
-                            <div class="rf-info-value" id="rf-address">—</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Name -->
-            <div class="rf-card">
-                <div class="rf-section-label">Tu nombre</div>
-                <input class="rf-name-input" id="rf-name" placeholder="Escribe tu nombre…" oninput="rfCheckReady()">
-
-                <!-- Yes/No -->
-                <div class="rf-section-label" style="margin-top:16px;">¿Completaste el territorio?</div>
-                <div class="rf-yn-row">
-                    <button class="rf-yn-btn yes" id="rf-btn-yes" onclick="rfSelectAnswer(true)">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                        Sí, completo
-                    </button>
-                    <button class="rf-yn-btn no" id="rf-btn-no" onclick="rfSelectAnswer(false)">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                        No, incompleto
-                    </button>
-                </div>
-
-                <!-- Blocks (only when No) -->
-                <div class="rf-blocks-wrap" id="rf-blocks-wrap">
-                    <div class="rf-section-label">Manzanas realizadas</div>
-                    <div class="rf-blocks-hint">Selecciona las manzanas que SÍ completaste:</div>
-                    <div class="rf-blocks-grid" id="rf-blocks-grid"></div>
-                    <div class="rf-section-label" style="margin-top:12px;">Nota adicional (opcional)</div>
-                    <textarea class="rf-notes-input" id="rf-notes" placeholder="Ej: Quedaron pendientes las casas del fondo…" rows="3"></textarea>
-                </div>
-
-                <button class="rf-submit-btn" id="rf-submit-btn" onclick="submitReport()" disabled>
-                    Enviar reporte
-                </button>
-            </div>
-        </div>
-
-        <!-- Success -->
-        <div class="rf-success" id="rf-success">
-            <div class="rf-success-icon">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <div class="rf-success-title">¡Reporte enviado!</div>
-            <div class="rf-success-sub" id="rf-success-sub">Gracias por reportar. El administrador ha sido notificado.</div>
         </div>
     </div>
 </div>
