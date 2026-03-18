@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlemingPlans 15.0.5.1</title>
+    <title>FlemingPlans 15.0.6</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -5010,15 +5010,19 @@ async function checkReportToken() {
     const token  = params.get('report');
     if (!token) return;
 
-    // Hide loading overlay and login screen, show report form
-    document.getElementById('loading-overlay').classList.add('hidden');
-    document.getElementById('login-screen').classList.add('hidden');
-    if (document.getElementById('main-app')) document.getElementById('main-app').style.display = 'none';
-    document.getElementById('report-form-overlay').classList.add('open');
+    // Show a loading spinner while we fetch
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'rf-loading';
+    loadingDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px;color:var(--text2);';
+    loadingDiv.innerHTML = `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg><span style="font-size:0.9rem;font-weight:500;">Cargando formulario…</span><style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+    document.querySelector('#report-form-overlay .rf-wrap').prepend(loadingDiv);
 
     // Load link data
     const { data: link, error } = await sbClient
         .from('tp_report_links').select('*').eq('token', token).single();
+
+    // Remove loading spinner
+    loadingDiv.remove();
 
     if (error || !link) {
         document.getElementById('rf-locked').style.display = 'flex';
@@ -5285,6 +5289,11 @@ function closeTerritoryDetailDirect() {
 
     // Check if this is a public report link — handle before login
     if (new URLSearchParams(location.search).has('report')) {
+        // Hide everything, show only the report form
+        document.getElementById('loading-overlay').classList.add('hidden');
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('main-app').style.display = 'none';
+        document.getElementById('report-form-overlay').classList.add('open');
         await checkReportToken();
         return; // Don't show login or app
     }
