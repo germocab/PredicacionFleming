@@ -2491,8 +2491,14 @@ async function loadRecords() {
 
 async function loadSchedule() {
     const { data } = await sbClient.from('tp_schedule').select('*').eq('monday', selectedMonday || '');
-    scheduleData = {};
-    (data || []).forEach(row => { scheduleData[row.id] = row.territories; });
+    scheduleData   = {};
+    slotPublishers = {};
+    (data || []).forEach(row => {
+        scheduleData[row.id] = row.territories;
+        if (row.publisher_id || row.publisher_name) {
+            slotPublishers[row.id] = { id: row.publisher_id, name: row.publisher_name };
+        }
+    });
 }
 
 async function loadPublishers() {
@@ -2920,14 +2926,14 @@ async function confirmWeekToDatabase() {
                     updated_at: new Date().toISOString()
                 });
 
-                // Append to tp_history_log with publisher
+                // Append to tp_history_log with publisher (merge so publisher_name updates)
                 await sbClient.from('tp_history_log').upsert({
                     territorio: entry.territorio,
                     fecha: entry.fecha,
                     turno: entry.turno,
                     publisher_id:   entry.publisher_id   || null,
                     publisher_name: entry.publisher_name || null
-                }, { onConflict: 'territorio,fecha,turno', ignoreDuplicates: true });
+                }, { onConflict: 'territorio,fecha,turno' });
             }
 
             await loadRecords();
