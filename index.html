@@ -3077,8 +3077,16 @@ async function saveRecord() {
     showToast('✅ Registro guardado.');
 }
 
-async function deleteRecordFromHistory(id) {
-    await sbClient.from('tp_records').delete().eq('id', id);
+async function deleteRecordFromHistory(id, territorio, fecha, turno) {
+    // Borra la entrada puntual del historial (tabla que realmente pinta la semana)
+    if (territorio && fecha && turno) {
+        await sbClient.from('tp_history_log').delete()
+            .eq('territorio', territorio).eq('fecha', fecha).eq('turno', turno);
+    }
+    // Si esa asignación era además el "último registro" del territorio, también se borra
+    if (id) {
+        await sbClient.from('tp_records').delete().eq('id', id);
+    }
     await loadRecords();
     renderRecords();
     renderRecommendations();
@@ -3222,7 +3230,7 @@ function renderHistoryWeek() {
                     const del = document.createElement('button');
                     del.className = 'hist-badge-del';
                     del.innerHTML = `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-                    del.onclick = () => showConfirm(`¿Eliminar Territorio ${r.territorio}?`, 'Esta acción no se puede deshacer.', () => deleteRecordFromHistory(recEntry ? recEntry.id : r.territorio));
+                    del.onclick = () => showConfirm(`¿Eliminar Territorio ${r.territorio}?`, 'Esta acción no se puede deshacer.', () => deleteRecordFromHistory(recEntry ? recEntry.id : null, r.territorio, r.fecha, r.turno));
                     wrap.appendChild(del);
                 }
                 tList.appendChild(wrap);
