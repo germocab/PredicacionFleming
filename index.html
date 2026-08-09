@@ -531,6 +531,22 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 
         .nav-tabs { display: flex; gap: 4px; }
 
+        .nav-version-pill {
+            display: flex;
+            align-items: center;
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text2);
+            font-family: inherit;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+            margin-right: 2px;
+        }
+
         .nav-tab {
             padding: 9px 22px;
             border-radius: 999px;
@@ -1420,6 +1436,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
             nav { padding: 10px 12px; }
             .nav-pill-wrap { gap: 4px; padding: 4px; border-radius: 20px; max-width: calc(100vw - 24px); }
             .nav-tab { padding: 8px 14px; font-size: 0.78rem; }
+            .nav-version-pill { padding: 4px 8px; font-size: 0.62rem; }
             .user-pill { padding: 4px 10px 4px 6px; gap: 5px; }
             .user-name { font-size: 0.72rem; max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .user-dropdown { top: 64px; right: 12px; left: 12px; min-width: unset; border-radius: 16px; }
@@ -1656,6 +1673,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 <!-- NAV -->
 <nav class="nav">
     <div class="nav-pill-wrap">
+        <span class="nav-version-pill" id="app-version-pill">v17.5</span>
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="switchView('schedule', this)">Programación</button>
             <button class="nav-tab" onclick="switchView('database', this)">Historial</button>
@@ -2597,9 +2615,9 @@ function renderTerritories() {
         const days = rec ? daysBetween(rec.fecha) : null;
         let daysLabel, daysClass;
         if (days === null) { daysLabel = 'Sin registro'; daysClass = 'never'; }
-        else if (days <= 30) { daysLabel = `Hace ${days} día${days!==1?'s':''}`; daysClass = 'recent'; }
-        else if (days <= 90) { daysLabel = `Hace ${days} días`; daysClass = 'medium'; }
-        else { daysLabel = `Hace ${days} días`; daysClass = 'old'; }
+        else if (days <= 30) { daysLabel = formatDaysLabel(days); daysClass = 'recent'; }
+        else if (days <= 90) { daysLabel = formatDaysLabel(days); daysClass = 'medium'; }
+        else { daysLabel = formatDaysLabel(days); daysClass = 'old'; }
 
         let dateStr = '–';
         if (rec) { const [y,m,d] = rec.fecha.split('-'); dateStr = `${d}/${m}/${y} · ${rec.turno}`; }
@@ -2666,6 +2684,16 @@ function daysBetween(dateStr) {
     return Math.floor((today - d) / 86400000);
 }
 
+// Formatea el texto "Hace X días" / "En X días" a partir del resultado de daysBetween.
+// Si days es negativo (fecha futura), usa "En X días" en vez de "Hace -X días".
+function formatDaysLabel(days, { short = false } = {}) {
+    const future = days < 0;
+    const n = Math.abs(days);
+    const prefix = future ? 'En' : 'Hace';
+    if (short) return `${prefix} ${n}d`;
+    return `${prefix} ${n} día${n !== 1 ? 's' : ''}`;
+}
+
 // ══════════════════════════════════════════════════════
 //  RECOMMENDATIONS
 // ══════════════════════════════════════════════════════
@@ -2692,7 +2720,7 @@ function renderRecommendations() {
         chip.draggable = isAdmin;
         chip.dataset.territory = rec.num;
 
-        const subtitle = rec.days === 9999 ? 'Sin asignar' : `hace ${rec.days}d`;
+        const subtitle = rec.days === 9999 ? 'Sin asignar' : formatDaysLabel(rec.days, { short: true }).toLowerCase();
         chip.innerHTML = `
             <span class="rnum">${rec.num}</span>
             <span class="rdate">${subtitle}</span>
@@ -3297,7 +3325,7 @@ function openTerritoryPopup(slotId, idx, num, e) {
     if (rec) {
         const [y,m,d] = rec.fecha.split('-');
         const days = daysBetween(rec.fecha);
-        lastContact = `${d}/${m}/${y} · hace ${days} día${days!==1?'s':''} (${rec.turno})`;
+        lastContact = `${d}/${m}/${y} · ${formatDaysLabel(days).toLowerCase()} (${rec.turno})`;
     }
     document.getElementById('t-popup-num').textContent = num;
     document.getElementById('t-popup-last').textContent = lastContact;
@@ -3662,9 +3690,9 @@ function renderATMGrid() {
         const days  = rec ? daysBetween(rec.fecha) : null;
         let daysLabel, daysClass;
         if (days === null)      { daysLabel = 'Sin registro'; daysClass = 'never'; }
-        else if (days <= 30)    { daysLabel = `Hace ${days}d`; daysClass = 'recent'; }
-        else if (days <= 90)    { daysLabel = `Hace ${days}d`; daysClass = 'medium'; }
-        else                    { daysLabel = `Hace ${days}d`; daysClass = 'old'; }
+        else if (days <= 30)    { daysLabel = formatDaysLabel(days, { short: true }); daysClass = 'recent'; }
+        else if (days <= 90)    { daysLabel = formatDaysLabel(days, { short: true }); daysClass = 'medium'; }
+        else                    { daysLabel = formatDaysLabel(days, { short: true }); daysClass = 'old'; }
 
         let dateStr = '–';
         if (rec) { const [y,m,d] = rec.fecha.split('-'); dateStr = `${d}/${m}/${y}`; }
@@ -3876,7 +3904,7 @@ async function openTerritoryDetail(num) {
         const shiftClass = entry.turno === 'Mañana' ? 'm' : 't';
         const pubName   = entry.publisher_name || '—';
         const daysAgo   = daysBetween(entry.fecha);
-        const daysStr   = daysAgo === 0 ? 'Hoy' : `Hace ${daysAgo} día${daysAgo !== 1 ? 's' : ''}`;
+        const daysStr   = daysAgo === 0 ? 'Hoy' : formatDaysLabel(daysAgo);
         return `
         <div class="td-history-item">
             <div class="td-history-date">
