@@ -3077,14 +3077,35 @@ async function saveRecord() {
     showToast('✅ Registro guardado.');
 }
 
+// Recalcula cuál es la asignación más reciente que queda en el historial para un
+// territorio (tp_history_log) y actualiza tp_records en consecuencia. Así, si se borra
+// la última asignación, el territorio "cae" a la anterior en vez de quedar "Sin asignar".
+async function recalcLatestRecord(territorio) {
+    const { data: remaining } = await sbClient.from('tp_history_log')
+        .select('*')
+        .eq('territorio', territorio)
+        .order('fecha', { ascending: false })
+        .limit(1);
+    if (remaining && remaining.length > 0) {
+        const latest = remaining[0];
+        await sbClient.from('tp_records').upsert({
+            id: territorio, territorio, fecha: latest.fecha, turno: latest.turno, updated_at: new Date().toISOString()
+        });
+    } else {
+        await sbClient.from('tp_records').delete().eq('id', territorio);
+    }
+}
+
 async function deleteRecordFromHistory(id, territorio, fecha, turno) {
     // Borra la entrada puntual del historial (tabla que realmente pinta la semana)
     if (territorio && fecha && turno) {
         await sbClient.from('tp_history_log').delete()
             .eq('territorio', territorio).eq('fecha', fecha).eq('turno', turno);
     }
-    // Si esa asignación era además el "último registro" del territorio, también se borra
-    if (id) {
+    // Recalcula la última asignación restante de ese territorio (si queda alguna)
+    if (territorio) {
+        await recalcLatestRecord(territorio);
+    } else if (id) {
         await sbClient.from('tp_records').delete().eq('id', id);
     }
     await loadRecords();
@@ -3132,10 +3153,11 @@ async function deleteWeekFromHistory(monday) {
             for (const fecha of dates) {
                 await sbClient.from('tp_history_log').delete().eq('fecha', fecha);
             }
-            // Also update tp_records: if a territory's latest record was in this week, remove it
+            // Also update tp_records: si el último registro de un territorio estaba en
+            // esta semana, recalcular cuál queda como más reciente (o "Sin asignar" si no queda ninguno)
             const weekRecords = records.filter(r => dates.includes(r.fecha));
             for (const r of weekRecords) {
-                await sbClient.from('tp_records').delete().eq('id', r.id);
+                await recalcLatestRecord(r.territorio);
             }
             await loadRecords();
             renderRecords();
