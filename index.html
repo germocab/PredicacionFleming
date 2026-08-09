@@ -532,19 +532,24 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         .nav-tabs { display: flex; gap: 4px; }
 
         .nav-version-pill {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
             display: flex;
             align-items: center;
-            padding: 5px 12px;
+            padding: 6px 13px;
             border-radius: 999px;
-            background: var(--surface2);
+            background: var(--surface);
             border: 1px solid var(--border);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.10);
             color: var(--text2);
             font-family: inherit;
             font-size: 0.68rem;
             font-weight: 700;
             letter-spacing: 0.02em;
             white-space: nowrap;
-            margin-right: 2px;
+            animation: fadeDown 0.5s cubic-bezier(0.22,1,0.36,1) both;
         }
 
         .nav-tab {
@@ -1227,6 +1232,8 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
             font-size: 0.85rem; font-weight: 700; flex-shrink: 0;
         }
         .ap-name { font-size: 0.88rem; font-weight: 600; color: var(--text); flex: 1; }
+        .ap-house-sub { font-size: 0.72rem; font-weight: 500; color: var(--text2); margin-top: 2px; }
+        .ap-section-note { padding: 4px 12px 10px; font-size: 0.72rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.03em; }
         .ap-check { color: var(--accent); display: none; }
         .ap-item.selected .ap-check { display: block; }
         .ap-empty { text-align: center; color: var(--text2); font-size: 0.82rem; padding: 24px; }
@@ -1263,12 +1270,16 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
             color: var(--text2); cursor: pointer;
             display: flex; align-items: center; justify-content: center;
         }
-        .mp-add-row {
-            display: flex; gap: 8px;
+        .mp-form {
+            display: flex; flex-direction: column; gap: 8px;
             padding: 14px 16px;
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
         }
+        .mp-form-title { font-size: 0.78rem; font-weight: 700; color: var(--text2); margin-bottom: 2px; }
+        .mp-form-actions { display: flex; align-items: center; justify-content: flex-end; gap: 14px; margin-top: 2px; }
+        .mp-cancel-edit { font-size: 0.78rem; font-weight: 600; color: var(--text2); cursor: pointer; text-decoration: none; }
+        .mp-cancel-edit:hover { color: var(--text); text-decoration: underline; }
         .mp-input {
             flex: 1; padding: 9px 14px; border-radius: 12px;
             border: 1px solid var(--border); background: var(--surface2);
@@ -1289,13 +1300,23 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
             display: flex; align-items: center; justify-content: center;
             font-size: 0.78rem; font-weight: 700; flex-shrink: 0;
         }
-        .mp-pub-name { font-size: 0.85rem; font-weight: 600; color: var(--text); flex: 1; }
+        .mp-pub-name { font-size: 0.85rem; font-weight: 600; color: var(--text); flex: 1; min-width: 0; }
+        .mp-pub-edit {
+            width: 24px; height: 24px; border-radius: 999px;
+            border: 1px solid var(--border); background: transparent;
+            color: var(--text2); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.12s, color 0.12s, border-color 0.12s;
+            flex-shrink: 0;
+        }
+        .mp-pub-edit:hover { background: rgba(26,86,219,0.1); color: var(--accent); border-color: var(--accent); }
         .mp-pub-del {
             width: 24px; height: 24px; border-radius: 999px;
             border: 1px solid var(--border); background: transparent;
             color: var(--text2); cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             transition: background 0.12s, color 0.12s, border-color 0.12s;
+            flex-shrink: 0;
         }
         .mp-pub-del:hover { background: rgba(239,68,68,0.1); color: #ef4444; border-color: #ef4444; }
         .mp-empty { text-align: center; color: var(--text2); font-size: 0.82rem; padding: 24px; }
@@ -1433,10 +1454,10 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         @media (max-width: 768px) {
 
             /* ── NAV ── */
-            nav { padding: 10px 12px; }
+            nav { padding: 10px 12px; flex-direction: column; gap: 6px; }
             .nav-pill-wrap { gap: 4px; padding: 4px; border-radius: 20px; max-width: calc(100vw - 24px); }
             .nav-tab { padding: 8px 14px; font-size: 0.78rem; }
-            .nav-version-pill { padding: 4px 8px; font-size: 0.62rem; }
+            .nav-version-pill { position: static; transform: none; padding: 4px 8px; font-size: 0.62rem; box-shadow: none; }
             .user-pill { padding: 4px 10px 4px 6px; gap: 5px; }
             .user-name { font-size: 0.72rem; max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .user-dropdown { top: 64px; right: 12px; left: 12px; min-width: unset; border-radius: 16px; }
@@ -1642,9 +1663,9 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
         Mi perfil
     </button>
-    <button class="dropdown-item" id="dd-manage-publishers" onclick="openManagePublishers()" style="display:none;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-        Publicadores
+    <button class="dropdown-item" id="dd-manage-publishers" onclick="openManageHouses()" style="display:none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Casas
     </button>
     <button class="dropdown-item" id="dd-manage-users" onclick="openManageUsers()" style="display:none;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -1672,8 +1693,8 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 
 <!-- NAV -->
 <nav class="nav">
+    <span class="nav-version-pill" id="app-version-pill">v18.0</span>
     <div class="nav-pill-wrap">
-        <span class="nav-version-pill" id="app-version-pill">v17.5</span>
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="switchView('schedule', this)">Programación</button>
             <button class="nav-tab" onclick="switchView('database', this)">Historial</button>
@@ -2195,8 +2216,8 @@ const DAYS = [
 const SHIFT_LABEL = { M: 'Mañana', T: 'Tarde' };
 
 let scheduleData   = {};
-let slotPublishers = {};   // { 'slot-0-0': { id, name }, ... } for current week
-let publishers     = [];   // all tp_publishers
+let slotHouses      = {};   // { 'slot-0-0': { id, name }, ... } for current week — 'name' = nombre del amo de casa
+let houses          = [];   // all tp_houses: { id, direccion, nombre_amo, territorios: [n,...] }
 let selectedMonday = '';
 let records        = [];
 let historyLog     = {};
@@ -2423,7 +2444,7 @@ async function initApp() {
     applyUserPermissions();
 
     // Load all data from Supabase
-    await Promise.all([loadPublishers(), loadRecords(), loadSchedule(), loadSelectedMonday()]);
+    await Promise.all([loadHouses(), loadRecords(), loadSchedule(), loadSelectedMonday()]);
 
     // Init DB form
     const sel = document.getElementById('db-territorio');
@@ -2509,19 +2530,19 @@ async function loadRecords() {
 
 async function loadSchedule() {
     const { data } = await sbClient.from('tp_schedule').select('*').eq('monday', selectedMonday || '');
-    scheduleData   = {};
-    slotPublishers = {};
+    scheduleData = {};
+    slotHouses   = {};
     (data || []).forEach(row => {
         scheduleData[row.id] = row.territories;
         if (row.publisher_id || row.publisher_name) {
-            slotPublishers[row.id] = { id: row.publisher_id, name: row.publisher_name };
+            slotHouses[row.id] = { id: row.publisher_id, name: row.publisher_name };
         }
     });
 }
 
-async function loadPublishers() {
-    const { data } = await sbClient.from('tp_publishers').select('*').order('name');
-    publishers = data || [];
+async function loadHouses() {
+    const { data } = await sbClient.from('tp_houses').select('*').order('nombre_amo');
+    houses = data || [];
 }
 
 async function loadSelectedMonday() {
@@ -2532,15 +2553,15 @@ async function loadSelectedMonday() {
 
 async function saveScheduleToCloud() {
     setSyncStatus('syncing', 'Guardando...');
-    // Collect all known slot IDs (from scheduleData + slotPublishers)
-    const allSlots = new Set([...Object.keys(scheduleData), ...Object.keys(slotPublishers)]);
+    // Collect all known slot IDs (from scheduleData + slotHouses)
+    const allSlots = new Set([...Object.keys(scheduleData), ...Object.keys(slotHouses)]);
     for (const id of allSlots) {
         const territories = scheduleData[id] || [];
-        const pub = slotPublishers[id] || {};
+        const house = slotHouses[id] || {};
         await sbClient.from('tp_schedule').upsert({
             id, monday: selectedMonday, territories,
-            publisher_id: pub.id || null,
-            publisher_name: pub.name || null,
+            publisher_id: house.id || null,
+            publisher_name: house.name || null,
             updated_at: new Date().toISOString()
         });
     }
@@ -2864,8 +2885,8 @@ function renderSchedule() {
                 `<div class="t-badge" id="tbadge-${id}-${i}" onclick="openTerritoryPopup('${id}', ${i}, ${n}, event)">${n}</div>`
             ).join('');
 
-            const pub = slotPublishers[id];
-            const pubName = pub ? pub.name : null;
+            const house = slotHouses[id];
+            const houseName = house ? house.name : null;
             card.innerHTML = `
                 <div class="day-header">
                     <div class="day-name">${day.name}</div>
@@ -2874,10 +2895,10 @@ function renderSchedule() {
                 </div>
                 <div class="t-list" id="badges-${id}">${badges}</div>
                 ${isAdmin ? `
-                <div class="slot-publisher ${pubName ? 'has-publisher' : ''}" onclick="openAssignPub('${id}', '${day.name} ${shiftText}', event)">
-                    <svg class="slot-publisher-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                    <span class="slot-publisher-name" id="pub-label-${id}">${pubName || 'Sin encargado'}</span>
-                    ${pubName ? `<button class="slot-publisher-clear" onclick="clearSlotPublisher('${id}', event)">
+                <div class="slot-publisher ${houseName ? 'has-publisher' : ''}" onclick="openAssignHouse('${id}', '${day.name} ${shiftText}', event)">
+                    <svg class="slot-publisher-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    <span class="slot-publisher-name" id="pub-label-${id}">${houseName || 'Sin casa asignada'}</span>
+                    ${houseName ? `<button class="slot-publisher-clear" onclick="clearSlotHouse('${id}', event)">
                         <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>` : ''}
                 </div>
@@ -2927,11 +2948,11 @@ async function confirmWeekToDatabase() {
             const territories = scheduleData[id] || [];
             const fecha = dateFromMonday(selectedMonday, day.offset).toISOString().split('T')[0];
             const turno = SHIFT_LABEL[shift];
-            const pub = slotPublishers[id] || {};
+            const house = slotHouses[id] || {};
             territories.forEach(num => toRegister.push({
                 territorio: String(num), fecha, turno,
-                publisher_id:   pub.id   || null,
-                publisher_name: pub.name || null
+                publisher_id:   house.id   || null,
+                publisher_name: house.name || null
             }));
         });
     });
@@ -3738,126 +3759,209 @@ function addTerritoryFromModal(num) {
 
 
 // ══════════════════════════════════════════════════════
-//  PUBLISHER ASSIGNMENT
+//  HOUSE ASSIGNMENT (asignar casa a un slot)
 // ══════════════════════════════════════════════════════
 
-let assignPubSlotId = null;
+let assignHouseSlotId = null;
 
-function openAssignPub(slotId, label, e) {
+function openAssignHouse(slotId, label, e) {
     if (e) e.stopPropagation();
-    assignPubSlotId = slotId;
+    assignHouseSlotId = slotId;
     document.getElementById('ap-slot-label').textContent = label;
     document.getElementById('ap-search').value = '';
-    renderAssignList();
+    renderAssignHouseList();
     document.getElementById('assign-pub-overlay').classList.add('open');
 }
 
-function closeAssignPub(e) {
+function closeAssignHouse(e) {
     if (e && e.target !== document.getElementById('assign-pub-overlay')) return;
     document.getElementById('assign-pub-overlay').classList.remove('open');
 }
-function closeAssignPubDirect() {
+function closeAssignHouseDirect() {
     document.getElementById('assign-pub-overlay').classList.remove('open');
 }
 
-function renderAssignList() {
-    const q = (document.getElementById('ap-search').value || '').toLowerCase();
+function renderAssignHouseList() {
+    const q = (document.getElementById('ap-search').value || '').trim().toLowerCase();
     const list = document.getElementById('ap-list');
-    const current = slotPublishers[assignPubSlotId];
+    const current = slotHouses[assignHouseSlotId];
+    const slotTerritories = (scheduleData[assignHouseSlotId] || []).map(n => parseInt(n));
 
-    let filtered = publishers.filter(p => p.name.toLowerCase().includes(q));
+    let filtered, sectionNote = '';
+    if (q) {
+        // Buscando: se busca en TODAS las casas (dirección, amo de casa, territorio)
+        filtered = houses.filter(h =>
+            (h.nombre_amo || '').toLowerCase().includes(q) ||
+            (h.direccion || '').toLowerCase().includes(q) ||
+            (h.territorios || []).some(t => String(t).includes(q))
+        );
+    } else if (slotTerritories.length > 0) {
+        // Sin búsqueda: solo casas cercanas a los territorios asignados en este slot
+        filtered = houses.filter(h => (h.territorios || []).some(t => slotTerritories.includes(t)));
+        sectionNote = `Casas cercanas al Territorio${slotTerritories.length > 1 ? 's' : ''} ${slotTerritories.join(', ')}`;
+    } else {
+        filtered = houses;
+    }
+
     if (filtered.length === 0) {
-        list.innerHTML = '<div class="ap-empty">No se encontró ningún publicador</div>';
+        list.innerHTML = `<div class="ap-empty">${
+            q ? 'No se encontró ninguna casa'
+              : (slotTerritories.length > 0 ? 'No hay casas registradas cerca de este territorio.<br>Usa la búsqueda para ver todas las casas.' : 'Aún no hay casas registradas.')
+        }</div>`;
         return;
     }
-    list.innerHTML = filtered.map(p => {
-        const isSel = current && current.id === p.id;
-        return `<div class="ap-item ${isSel ? 'selected' : ''}" onclick="selectPublisher('${p.id}', '${p.name.replace(/'/g,"\\'")}')">
-            <div class="ap-avatar">${p.name.charAt(0).toUpperCase()}</div>
-            <div class="ap-name">${p.name}</div>
+
+    list.innerHTML = (sectionNote ? `<div class="ap-section-note">${sectionNote}</div>` : '') + filtered.map(h => {
+        const isSel = current && current.id === h.id;
+        const initial = (h.nombre_amo || '?').charAt(0).toUpperCase();
+        const terrChips = (h.territorios || []).join(', ');
+        return `<div class="ap-item ${isSel ? 'selected' : ''}" onclick="selectHouse('${h.id}', '${(h.nombre_amo||'').replace(/'/g,"\\'")}')">
+            <div class="ap-avatar">${initial}</div>
+            <div class="ap-name">
+                ${h.nombre_amo}
+                <div class="ap-house-sub">${h.direccion || ''}${terrChips ? ` · Terr. ${terrChips}` : ''}</div>
+            </div>
             <svg class="ap-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
         </div>`;
     }).join('');
 }
 
-function selectPublisher(id, name) {
-    if (!assignPubSlotId) return;
-    slotPublishers[assignPubSlotId] = { id, name };
+function selectHouse(id, name) {
+    if (!assignHouseSlotId) return;
+    slotHouses[assignHouseSlotId] = { id, name };
     saveScheduleToCloud();
     renderSchedule();
-    closeAssignPubDirect();
-    showToast(`✅ Encargado: ${name}`);
+    closeAssignHouseDirect();
+    showToast(`✅ Casa asignada: ${name}`);
 }
 
-function clearSlotPublisher(slotId, e) {
+function clearSlotHouse(slotId, e) {
     if (e) e.stopPropagation();
-    delete slotPublishers[slotId];
+    delete slotHouses[slotId];
     saveScheduleToCloud();
     renderSchedule();
 }
 
 // ══════════════════════════════════════════════════════
-//  MANAGE PUBLISHERS
+//  MANAGE HOUSES
 // ══════════════════════════════════════════════════════
 
-async function openManagePublishers() {
+let editingHouseId = null;
+
+async function openManageHouses() {
     closeUserDropdown();
-    renderPublishersList();
+    resetHouseForm();
+    renderHousesList();
     document.getElementById('manage-pub-overlay').classList.add('open');
-    setTimeout(() => document.getElementById('mp-new-name').focus(), 200);
+    setTimeout(() => document.getElementById('mp-direccion').focus(), 200);
 }
 
-function closeManagePublishers(e) {
+function closeManageHouses(e) {
     if (e && e.target !== document.getElementById('manage-pub-overlay')) return;
     document.getElementById('manage-pub-overlay').classList.remove('open');
 }
-function closeManagePublishersDirect() {
+function closeManageHousesDirect() {
     document.getElementById('manage-pub-overlay').classList.remove('open');
 }
 
-function renderPublishersList() {
+// Convierte "3, 4, 12" en [3,4,12] — solo enteros válidos entre 1 y 36, sin duplicados
+function parseTerritoriosInput(str) {
+    const nums = (str || '').split(',')
+        .map(s => parseInt(s.trim()))
+        .filter(n => !isNaN(n) && n >= 1 && n <= 36);
+    return Array.from(new Set(nums)).sort((a,b) => a - b);
+}
+
+function resetHouseForm() {
+    editingHouseId = null;
+    document.getElementById('mp-direccion').value = '';
+    document.getElementById('mp-amo').value = '';
+    document.getElementById('mp-territorios').value = '';
+    document.getElementById('mp-form-title').textContent = 'Agregar casa';
+    document.getElementById('mp-save-btn').textContent = 'Agregar';
+    document.getElementById('mp-cancel-edit').style.display = 'none';
+}
+
+function editHouse(id) {
+    const h = houses.find(x => x.id === id);
+    if (!h) return;
+    editingHouseId = id;
+    document.getElementById('mp-direccion').value = h.direccion || '';
+    document.getElementById('mp-amo').value = h.nombre_amo || '';
+    document.getElementById('mp-territorios').value = (h.territorios || []).join(', ');
+    document.getElementById('mp-form-title').textContent = 'Editar casa';
+    document.getElementById('mp-save-btn').textContent = 'Guardar cambios';
+    document.getElementById('mp-cancel-edit').style.display = 'inline';
+    document.getElementById('mp-direccion').focus();
+}
+
+function renderHousesList() {
     const list = document.getElementById('mp-list');
-    if (publishers.length === 0) {
-        list.innerHTML = '<div class="mp-empty">Aún no hay publicadores. Agrega el primero.</div>';
+    if (houses.length === 0) {
+        list.innerHTML = '<div class="mp-empty">Aún no hay casas registradas. Agrega la primera.</div>';
         return;
     }
-    list.innerHTML = publishers.map(p => `
+    list.innerHTML = houses.map(h => `
         <div class="mp-pub-row">
-            <div class="mp-pub-avatar">${p.name.charAt(0).toUpperCase()}</div>
-            <div class="mp-pub-name">${p.name}</div>
-            <button class="mp-pub-del" onclick="deletePublisher('${p.id}', '${p.name.replace(/'/g,"\\'")}')">
+            <div class="mp-pub-avatar">${(h.nombre_amo || '?').charAt(0).toUpperCase()}</div>
+            <div class="mp-pub-name">
+                ${h.nombre_amo}
+                <div class="ap-house-sub">${h.direccion || ''}${(h.territorios||[]).length ? ` · Terr. ${h.territorios.join(', ')}` : ''}</div>
+            </div>
+            <button class="mp-pub-edit" onclick="editHouse('${h.id}')" title="Editar">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            </button>
+            <button class="mp-pub-del" onclick="deleteHouse('${h.id}', '${(h.nombre_amo||'').replace(/'/g,"\\'")}')" title="Eliminar">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>`).join('');
 }
 
-async function addPublisher() {
-    const input = document.getElementById('mp-new-name');
-    const name  = input.value.trim();
-    if (!name) return;
-    if (publishers.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-        showToast('⚠️ Ya existe un publicador con ese nombre.'); return;
+async function saveHouseForm() {
+    const direccion = document.getElementById('mp-direccion').value.trim();
+    const nombre_amo = document.getElementById('mp-amo').value.trim();
+    const territorios = parseTerritoriosInput(document.getElementById('mp-territorios').value);
+
+    if (!direccion || !nombre_amo || territorios.length === 0) {
+        showToast('⚠️ Completa dirección, amo de casa y al menos un territorio cercano (1–36).');
+        return;
     }
-    const { data, error } = await sbClient.from('tp_publishers').insert({ name }).select().single();
-    if (error) { showToast('❌ Error al agregar publicador.'); return; }
-    publishers.push(data);
-    publishers.sort((a,b) => a.name.localeCompare(b.name));
-    input.value = '';
-    renderPublishersList();
-    showToast(`✅ ${name} agregado.`);
+
+    if (editingHouseId) {
+        const { data, error } = await sbClient.from('tp_houses')
+            .update({ direccion, nombre_amo, territorios })
+            .eq('id', editingHouseId).select().single();
+        if (error) { showToast('❌ Error al actualizar la casa.'); return; }
+        const idx = houses.findIndex(h => h.id === editingHouseId);
+        if (idx >= 0) houses[idx] = data;
+        houses.sort((a,b) => (a.nombre_amo||'').localeCompare(b.nombre_amo||''));
+        resetHouseForm();
+        renderHousesList();
+        showToast(`✅ Casa de ${nombre_amo} actualizada.`);
+    } else {
+        const { data, error } = await sbClient.from('tp_houses')
+            .insert({ direccion, nombre_amo, territorios }).select().single();
+        if (error) { showToast('❌ Error al agregar la casa.'); return; }
+        houses.push(data);
+        houses.sort((a,b) => (a.nombre_amo||'').localeCompare(b.nombre_amo||''));
+        resetHouseForm();
+        renderHousesList();
+        showToast(`✅ Casa de ${nombre_amo} agregada.`);
+    }
 }
 
-async function deletePublisher(id, name) {
-    showConfirm(`¿Eliminar a "${name}"?`, 'Se quitará de todos los slots actuales.', async () => {
-        await sbClient.from('tp_publishers').delete().eq('id', id);
-        publishers = publishers.filter(p => p.id !== id);
+async function deleteHouse(id, name) {
+    showConfirm(`¿Eliminar la casa de "${name}"?`, 'Se quitará de todos los slots actuales.', async () => {
+        await sbClient.from('tp_houses').delete().eq('id', id);
+        houses = houses.filter(h => h.id !== id);
         // Remove from current week slots
-        for (const [slotId, pub] of Object.entries(slotPublishers)) {
-            if (pub.id === id) delete slotPublishers[slotId];
+        for (const [slotId, house] of Object.entries(slotHouses)) {
+            if (house.id === id) delete slotHouses[slotId];
         }
-        renderPublishersList();
+        if (editingHouseId === id) resetHouseForm();
+        renderHousesList();
         renderSchedule();
-        showToast('🗑 Publicador eliminado.');
+        showToast('🗑 Casa eliminada.');
     });
 }
 
@@ -4095,38 +4199,44 @@ function closeTerritoryDetailDirect() {
 </div>
 
 
-<!-- ══ ASSIGN PUBLISHER BOTTOM SHEET ══ -->
-<div id="assign-pub-overlay" onclick="closeAssignPub(event)">
+<!-- ══ ASSIGN HOUSE BOTTOM SHEET ══ -->
+<div id="assign-pub-overlay" onclick="closeAssignHouse(event)">
     <div id="assign-pub-sheet">
         <div class="ap-header">
             <div>
-                <div class="ap-title">Asignar encargado</div>
+                <div class="ap-title">Asignar casa</div>
                 <div class="ap-sub" id="ap-slot-label">—</div>
             </div>
-            <button class="ap-close" onclick="closeAssignPubDirect()">
+            <button class="ap-close" onclick="closeAssignHouseDirect()">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
         <div class="ap-search-wrap">
-            <input class="ap-search" id="ap-search" placeholder="Buscar publicador…" oninput="renderAssignList()">
+            <input class="ap-search" id="ap-search" placeholder="Buscar por dirección, amo de casa o territorio…" oninput="renderAssignHouseList()">
         </div>
         <div class="ap-list" id="ap-list"></div>
     </div>
 </div>
 
-<!-- ══ MANAGE PUBLISHERS MODAL ══ -->
-<div id="manage-pub-overlay" onclick="closeManagePublishers(event)">
+<!-- ══ MANAGE HOUSES MODAL ══ -->
+<div id="manage-pub-overlay" onclick="closeManageHouses(event)">
     <div id="manage-pub-modal">
         <div class="mp-header">
-            <div class="mp-title">Publicadores</div>
-            <button class="mp-close" onclick="closeManagePublishersDirect()">
+            <div class="mp-title">Casas</div>
+            <button class="mp-close" onclick="closeManageHousesDirect()">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
-        <div class="mp-add-row">
-            <input class="mp-input" id="mp-new-name" placeholder="Nombre del publicador…"
-                onkeydown="if(event.key==='Enter') addPublisher()">
-            <button class="btn-main" style="border-radius:12px;padding:0 16px;" onclick="addPublisher()">Agregar</button>
+        <div class="mp-form">
+            <div class="mp-form-title" id="mp-form-title">Agregar casa</div>
+            <input class="mp-input" id="mp-direccion" placeholder="Dirección…">
+            <input class="mp-input" id="mp-amo" placeholder="Nombre del amo de casa…">
+            <input class="mp-input" id="mp-territorios" placeholder="Territorios cercanos (ej: 3, 4, 12)"
+                onkeydown="if(event.key==='Enter') saveHouseForm()">
+            <div class="mp-form-actions">
+                <a href="javascript:void(0)" class="mp-cancel-edit" id="mp-cancel-edit" style="display:none;" onclick="resetHouseForm()">Cancelar edición</a>
+                <button class="btn-main" style="border-radius:12px;padding:0 16px;" id="mp-save-btn" onclick="saveHouseForm()">Agregar</button>
+            </div>
         </div>
         <div class="mp-list" id="mp-list"></div>
     </div>
